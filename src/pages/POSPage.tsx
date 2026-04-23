@@ -35,7 +35,15 @@ const POSPage = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('Tất cả');
   const [tables, setTables] = useState<Table[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [tableCarts, setTableCarts] = useState<Record<string, CartItem[]>>({});
+  const [tableCarts, setTableCarts] = useState<Record<string, CartItem[]>>(() => {
+    const saved = localStorage.getItem('tableCarts');
+    return saved ? JSON.parse(saved) : {};
+  });
+  
+  // Sync tableCarts to localStorage
+  useEffect(() => {
+    localStorage.setItem('tableCarts', JSON.stringify(tableCarts));
+  }, [tableCarts]);
   
   // Flow states
   const [step, setStep] = useState<'TYPE' | 'TABLE' | 'MENU'>('TYPE');
@@ -52,6 +60,16 @@ const POSPage = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'TRANSFER' | null>(null);
   const [paymentStep, setPaymentStep] = useState<'SELECT' | 'QR'>('SELECT');
+  const [orderCode, setOrderCode] = useState('');
+
+  const generateOrderCode = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+  };
 
   useEffect(() => {
     fetchInitialData();
@@ -158,6 +176,7 @@ const POSPage = () => {
 
   const handleCheckoutInitiate = () => {
     if (cart.length === 0 || !orderType) return;
+    setOrderCode(generateOrderCode());
     setShowPaymentModal(true);
     setPaymentStep('SELECT');
   };
@@ -176,6 +195,7 @@ const POSPage = () => {
     setOrdering(true);
     try {
       const orderData = {
+        orderCode: orderCode,
         orderType: orderType,
         tableId: selectedTable?._id,
         items: cart.map((item) => ({
@@ -264,22 +284,39 @@ const POSPage = () => {
               </div>
               
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {filteredTables.map((table) => (
-                  <button
-                    key={table._id}
-                    onClick={() => handleTableSelect(table)}
-                    disabled={table.status === 'OCCUPIED'}
-                    className={cn(
-                      "p-6 rounded-2xl border-2 font-bold text-lg transition-all flex flex-col items-center gap-2",
-                      table.status === 'EMPTY' 
-                        ? "bg-white border-slate-100 hover:border-emerald-500 hover:bg-emerald-50/10 text-slate-900" 
-                        : "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-50"
-                    )}
-                  >
-                    <span className="text-xs uppercase tracking-widest opacity-50">{table.status === 'OCCUPIED' ? 'Đang dùng' : 'Trống'}</span>
-                    <span className="font-black text-xl">{table.name}</span>
-                  </button>
-                ))}
+                {filteredTables.map((table) => {
+                  const hasItems = (tableCarts[table._id]?.length || 0) > 0;
+                  return (
+                    <button
+                      key={table._id}
+                      onClick={() => handleTableSelect(table)}
+                      disabled={table.status === 'OCCUPIED'}
+                      className={cn(
+                        "p-6 rounded-[24px] border-2 font-bold text-lg transition-all flex flex-col items-center gap-2 relative overflow-hidden group",
+                        table.status === 'OCCUPIED' 
+                          ? "bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed"
+                          : hasItems
+                            ? "bg-amber-50 border-amber-400 text-amber-900 shadow-lg shadow-amber-100/50"
+                            : "bg-white border-slate-100 hover:border-emerald-500 hover:bg-emerald-50/10 text-slate-900"
+                      )}
+                    >
+                      <div className={cn(
+                        "text-[9px] uppercase tracking-widest font-black px-2 py-0.5 rounded-full",
+                        table.status === 'OCCUPIED'
+                          ? "bg-slate-200 text-slate-400"
+                          : hasItems
+                            ? "bg-amber-400 text-white animate-pulse"
+                            : "bg-slate-100 text-slate-400"
+                      )}>
+                        {table.status === 'OCCUPIED' ? 'Đã khóa' : hasItems ? 'Phục vụ' : 'Trống'}
+                      </div>
+                      <span className="font-black text-2xl tracking-tighter italic">{table.name}</span>
+                      {hasItems && (
+                        <div className="absolute top-1 right-1 w-2 h-2 bg-amber-500 rounded-full" />
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </motion.div>
           )}
@@ -541,7 +578,7 @@ const POSPage = () => {
                     <div className="bg-slate-50 p-6 rounded-[32px] border border-slate-100 shadow-inner mb-8">
                        {settings && (
                           <img 
-                            src={`https://img.vietqr.io/image/${settings.bankCode || 'ICB'}-${settings.bankAccount || '0000'}-compact2.png?amount=${total}&addInfo=${encodeURIComponent(`Thanh toan ${selectedTable?.name || 'Don hang'}`)}&accountName=${encodeURIComponent(settings.bankAccountHolder || '')}`}
+                            src={`https://img.vietqr.io/image/${settings.bankCode || 'ICB'}-${settings.bankAccount || '0000'}-compact2.png?amount=${total}&addInfo=${encodeURIComponent(`TT ${orderCode} ${selectedTable?.name || ''}`)}&accountName=${encodeURIComponent(settings.bankAccountHolder || '')}`}
                             alt="VietQR"
                             className="w-64 h-auto rounded-xl shadow-xl mx-auto"
                           />
@@ -549,6 +586,10 @@ const POSPage = () => {
                     </div>
 
                     <div className="w-full space-y-2 mb-8 text-left">
+                       <div className="flex justify-between items-center p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
+                          <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest italic">Mã đơn hàng</span>
+                          <span className="text-sm font-black text-emerald-700 tracking-widest">{orderCode}</span>
+                       </div>
                        <div className="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
                           <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Người thụ hưởng</span>
                           <span className="text-xs font-black text-slate-900 uppercase">{settings?.bankAccountHolder}</span>
