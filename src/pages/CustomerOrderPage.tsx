@@ -66,7 +66,9 @@ const CustomerOrderPage = () => {
       setTable(tableRes.data);
       setSettings(setRes.data);
       
-      const cats = ['Tất cả', ...new Set(prodRes.data.map((p: any) => p.category))] as string[];
+      const rawCategories = prodRes.data.map((p: any) => p.category).filter(Boolean);
+      const uniqueCats = Array.from(new Set(rawCategories as string[]));
+      const cats: string[] = ['Tất cả', ...uniqueCats.filter(c => c !== 'Tất cả')];
       setCategories(cats);
     } catch (err) {
       console.error(err);

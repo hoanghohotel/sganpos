@@ -86,8 +86,10 @@ const POSPage = () => {
       setTables(tableRes.data);
       setSettings(setRes.data);
       
-      // Extract unique categories
-      const cats: string[] = ['Tất cả', ...new Set(prodRes.data.map((p: Product) => p.category))] as string[];
+      // Extract unique categories, filter out null/undefined/empty and keep unique
+      const rawCategories = prodRes.data.map((p: Product) => p.category).filter(Boolean);
+      const uniqueCats = Array.from(new Set(rawCategories as string[]));
+      const cats: string[] = ['Tất cả', ...uniqueCats.filter(c => c !== 'Tất cả')];
       setCategories(cats);
     } catch (error) {
       console.error('Lỗi khi lấy dữ liệu:', error);
@@ -253,9 +255,9 @@ const POSPage = () => {
                   { id: 'DINE_IN', label: 'Tại chỗ', icon: '🏠', color: 'bg-emerald-600' },
                   { id: 'TAKEAWAY', label: 'Mang về', icon: '🥡', color: 'bg-slate-900' },
                   { id: 'DELIVERY', label: 'Ship đi', icon: '🛵', color: 'bg-emerald-400' }
-                ].map((t) => (
+                ].map((t, idx) => (
                   <button
-                    key={t.id}
+                    key={`type-${t.id}-${idx}`}
                     onClick={() => handleTypeSelect(t.id as any)}
                     className="group bg-white p-10 rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/50 hover:border-emerald-500 hover:scale-[1.05] transition-all flex flex-col items-center gap-6"
                   >
@@ -284,11 +286,11 @@ const POSPage = () => {
               </div>
               
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {filteredTables.map((table) => {
+                {filteredTables.map((table, idx) => {
                   const hasItems = (tableCarts[table._id]?.length || 0) > 0;
                   return (
                     <button
-                      key={table._id}
+                      key={`table-${table._id}-${idx}`}
                       onClick={() => handleTableSelect(table)}
                       disabled={table.status === 'OCCUPIED'}
                       className={cn(
@@ -355,9 +357,9 @@ const POSPage = () => {
                   
                   {/* Category Filter */}
                   <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                    {categories.map(cat => (
+                    {categories.map((cat, index) => (
                       <button
-                        key={cat}
+                        key={`cat-${cat}-${index}`}
                         onClick={() => setSelectedCategory(cat)}
                         className={cn(
                           "px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all whitespace-nowrap border",
@@ -374,11 +376,11 @@ const POSPage = () => {
               </header>
 
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 overflow-auto pb-8">
-                {filteredProducts.map((product) => (
+                {filteredProducts.map((product, idx) => (
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    key={product._id}
+                    key={`prod-${product._id}-${idx}`}
                     onClick={() => addToCart(product)}
                     className="group bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:border-emerald-200 hover:shadow-emerald-100/20 transition-all text-left flex flex-col justify-between h-44"
                   >
@@ -418,12 +420,12 @@ const POSPage = () => {
             <div className="flex-1 overflow-auto p-4">
               <AnimatePresence initial={false}>
                 {cart.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-slate-200">
+                  <div key="empty-cart" className="h-full flex flex-col items-center justify-center text-slate-200">
                     <img src="/logo.svg" alt="Logo" className="w-20 h-20 opacity-20 grayscale mb-4" />
                     <p className="text-xs font-black uppercase tracking-widest text-slate-300">Chưa chọn món</p>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-3">
+                  <div key="cart-list" className="flex flex-col gap-3">
                     {cart.map((item) => (
                       <motion.div
                         layout
@@ -499,8 +501,9 @@ const POSPage = () => {
       {/* Payment Modal */}
       <AnimatePresence>
         {showPaymentModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div key="payment-modal-container" className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <motion.div
+              key="payment-modal-overlay"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -508,6 +511,7 @@ const POSPage = () => {
               className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
             />
             <motion.div
+              key="payment-modal-content"
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
