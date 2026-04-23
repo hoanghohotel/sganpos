@@ -3,6 +3,10 @@ import { createServer as createHttpServer } from 'http';
 import { Server } from 'socket.io';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import dbConnect from './src/lib/mongodb.ts';
 import { tenantMiddleware } from './src/middleware/tenant.ts';
 import { initSocket } from './src/lib/socketService.ts'; // Add this
@@ -11,57 +15,57 @@ import orderRoutes from './src/routes/orders.ts';
 import tableRoutes from './src/routes/tables.ts';
 import settingsRoutes from './src/routes/settings.ts';
 
-async function startServer() {
-  const app = express();
-  const httpServer = createHttpServer(app);
-  const io = new Server(httpServer, {
-    cors: { origin: "*", methods: ["GET", "POST"] }
-  });
+const app = express();
+const httpServer = createHttpServer(app);
+const io = new Server(httpServer, {
+  cors: { origin: "*", methods: ["GET", "POST"] }
+});
 
-  // Initialize the singleton so routes can use it
-  initSocket(io);
+// Initialize the singleton so routes can use it
+initSocket(io);
 
-  const PORT = 3000;
+const PORT = 3000;
 
-  // Socket.io Multi-tenant logic
-  io.on('connection', (socket) => {
-    // Extract tenant from host or query
-    const host = socket.handshake.headers.host || '';
-    let tenantId = 'demo';
-    
-    if (host && !host.includes('localhost')) {
-      const parts = host.split('.');
-      if (parts.length > 2) tenantId = parts[0];
-    }
-
-    // Join the tenant-specific room
-    socket.join(tenantId);
-    console.log(`[Socket] User ${socket.id} joined room: ${tenantId}`);
-
-    socket.on('disconnect', () => {
-      console.log(`[Socket] User ${socket.id} disconnected`);
-    });
-  });
-
-  // Middleware
-  app.use(express.json());
-  app.use(tenantMiddleware);
+// Socket.io Multi-tenant logic
+io.on('connection', (socket) => {
+  // Extract tenant from host or query
+  const host = socket.handshake.headers.host || '';
+  let tenantId = 'demo';
   
+  if (host && !host.includes('localhost')) {
+    const parts = host.split('.');
+    if (parts.length > 2) tenantId = parts[0];
+  }
+
+  // Join the tenant-specific room
+  socket.join(tenantId);
+  console.log(`[Socket] User ${socket.id} joined room: ${tenantId}`);
+
+  socket.on('disconnect', () => {
+    console.log(`[Socket] User ${socket.id} disconnected`);
+  });
+});
+
+// Middleware
+app.use(express.json());
+app.use(tenantMiddleware);
+
+// API Routes
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', database: 'connected' });
+});
+
+app.use('/api/products', productRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/tables', tableRoutes);
+app.use('/api/settings', settingsRoutes);
+
+async function startServer() {
   // Connect to Database
   dbConnect().catch(err => console.error('Failed to connect to MongoDB:', err));
-  
-  // API Routes
-  app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', database: 'connected' });
-  });
-
-  app.use('/api/products', productRoutes);
-  app.use('/api/orders', orderRoutes);
-  app.use('/api/tables', tableRoutes);
-  app.use('/api/settings', settingsRoutes);
 
   // Vite integration
-  if (process.env.NODE_ENV !== 'production') {
+  if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
@@ -83,17 +87,24 @@ async function startServer() {
         next(e);
       }
     });
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
+  } else if (!process.env.VERCEL) {
+    // Only serve static files if NOT on Vercel (e.g. Docker, manual VPS)
+    // On Vercel, we let Vercel framework serve the dist folder.
+    const distPath = path.join(__dirname, 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+      const indexPath = path.join(distPath, 'index.html');
+      res.sendFile(indexPath);
     });
   }
 
-  httpServer.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
-  });
+  if (!process.env.VERCEL) {
+    httpServer.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
+    });
+  }
 }
 
 startServer();
+
+export default app;

@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "framework": "vite",
+  "functions": {
+    "server.ts": {
+      "runtime": "@vercel/node"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/server.ts"
+    }
+  ]
+}
