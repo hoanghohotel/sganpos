@@ -9,6 +9,7 @@ import { initSocket } from './src/lib/socketService.ts'; // Add this
 import productRoutes from './src/routes/products.ts';
 import orderRoutes from './src/routes/orders.ts';
 import tableRoutes from './src/routes/tables.ts';
+import settingsRoutes from './src/routes/settings.ts';
 
 async function startServer() {
   const app = express();
@@ -57,6 +58,7 @@ async function startServer() {
   app.use('/api/products', productRoutes);
   app.use('/api/orders', orderRoutes);
   app.use('/api/tables', tableRoutes);
+  app.use('/api/settings', settingsRoutes);
 
   // Vite integration
   if (process.env.NODE_ENV !== 'production') {

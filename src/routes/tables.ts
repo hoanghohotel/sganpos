@@ -15,6 +15,18 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /api/tables/:id - Get specific table info
+router.get('/:id', async (req, res) => {
+  try {
+    const tenantId = getTenantId();
+    const table = await Table.findOne({ _id: req.params.id, tenantId });
+    if (!table) return res.status(404).json({ error: 'Table not found' });
+    res.json(table);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch table' });
+  }
+});
+
 // POST /api/tables - Helper to setup tables
 router.post('/', async (req, res) => {
   try {

@@ -98,8 +98,8 @@ const KitchenPage = () => {
       {/* Top Header */}
       <header className="p-6 bg-white border-b border-slate-200 flex justify-between items-center shadow-sm z-10">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-100">
-            <ChefHat className="text-white" />
+          <div className="w-14 h-14 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-100">
+            <img src="/logo.svg" alt="Logo" className="w-10 h-10" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Khu vực Nhà Bếp</h1>
