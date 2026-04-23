@@ -94,113 +94,120 @@ const KitchenPage = () => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#F5F5F0]">
+    <div className="h-full flex flex-col bg-[#F8FAFC]">
       {/* Top Header */}
-      <header className="p-6 bg-[#141414] text-white flex justify-between items-center shadow-lg">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-[#FF6321] rounded-full flex items-center justify-center">
-            <ChefHat className="text-black" />
+      <header className="p-6 bg-white border-b border-slate-200 flex justify-between items-center shadow-sm z-10">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-100">
+            <ChefHat className="text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold uppercase tracking-tight">Điều Phối Nhà Bếp</h1>
-            <p className="text-[10px] text-gray-400 uppercase tracking-widest flex items-center gap-1">
-              <Clock size={10} /> Cập nhật lúc: {lastRefreshed.toLocaleTimeString('vi-VN')}
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Khu vực Nhà Bếp</h1>
+            <p className="text-xs text-slate-400 uppercase tracking-widest flex items-center gap-1 font-bold">
+              <Clock size={12} className="text-emerald-500" /> Cập nhật: {lastRefreshed.toLocaleTimeString('vi-VN')}
             </p>
           </div>
         </div>
         
-        <div className="flex gap-4">
-          <div className="flex flex-col items-end">
-            <span className="text-2xl font-mono font-bold text-[#FF6321]">{orders.length}</span>
-            <span className="text-[10px] text-gray-500 uppercase font-bold">Đơn hiện tại</span>
+        <div className="bg-slate-50 px-6 py-2 rounded-2xl border border-slate-100 flex items-center gap-4">
+          <div className="flex flex-col">
+            <span className="text-2xl font-black text-emerald-600 leading-none">{orders.length}</span>
+            <span className="text-[10px] text-slate-400 uppercase font-black tracking-tighter">Đơn chờ</span>
           </div>
         </div>
       </header>
 
       {/* Orders Grid */}
-      <div className="flex-1 p-6 overflow-auto">
+      <div className="flex-1 p-8 overflow-auto">
         {loading && orders.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-gray-400">
-            <div className="w-12 h-12 border-4 border-[#FF6321]/20 border-t-[#FF6321] rounded-full animate-spin mb-4" />
-            <p className="italic serif">Đang tải đơn hàng...</p>
+          <div className="h-full flex flex-col items-center justify-center text-slate-300">
+            <div className="w-12 h-12 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin mb-4" />
+            <p className="text-sm font-medium">Đang đồng bộ đơn hàng...</p>
           </div>
         ) : orders.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-gray-300">
-            <CookingPot size={64} className="mb-4 opacity-10" />
-            <p className="text-xl italic serif">Chưa có đơn hàng nào cần chế biến</p>
+          <div className="h-full flex flex-col items-center justify-center text-slate-200">
+            <CookingPot size={80} className="mb-4 opacity-50" />
+            <p className="text-lg font-bold text-slate-400">Không có đơn hàng nào cần xử lý</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             <AnimatePresence>
               {orders.map((order) => (
                 <motion.div
                   layout
-                  initial={{ opacity: 0, scale: 0.9 }}
+                  initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
                   key={order._id}
                   className={cn(
-                    "flex flex-col bg-white rounded-2xl border-2 overflow-hidden shadow-sm transition-all",
-                    order.status === 'PENDING' ? "border-[#FF6321] animate-pulse-subtle" : "border-transparent"
+                    "flex flex-col bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden transition-all",
+                    order.status === 'PENDING' ? "ring-2 ring-emerald-500 ring-offset-4 animate-pulse-subtle bg-emerald-50/10" : ""
                   )}
                 >
                   {/* Order Card Header */}
-                  <div className="p-4 bg-gray-50 border-b flex justify-between items-center">
+                  <div className="p-5 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
                     <div>
-                      <span className="text-xs font-mono font-bold text-gray-400">#{order.orderNumber}</span>
-                      <h3 className="font-bold">{order.orderType === 'TAKEAWAY' ? 'Mang Về' : 'Tại Chỗ'}</h3>
+                      <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">#{order.orderNumber}</span>
+                      <h3 className="font-bold text-slate-800">{order.orderType === 'TAKEAWAY' ? 'Mang Về' : 'Tại Chỗ'}</h3>
                     </div>
-                    <div className={cn("px-2 py-1 rounded-full text-[10px] font-bold uppercase border", getStatusColor(order.status))}>
+                    <div className={cn("px-3 py-1 rounded-full text-[10px] font-black uppercase border-2", 
+                      order.status === 'PENDING' ? "bg-white text-emerald-600 border-emerald-100" : 
+                      order.status === 'PREPARING' ? "bg-orange-50 text-orange-600 border-orange-100" : 
+                      "bg-blue-50 text-blue-600 border-blue-100"
+                    )}>
                       {getStatusLabel(order.status)}
                     </div>
                   </div>
 
                   {/* Order Items */}
-                  <div className="flex-1 p-4 space-y-3">
+                  <div className="flex-1 p-5 space-y-4">
                     {order.items.map((item, idx) => (
-                      <div key={idx} className="flex justify-between items-start">
-                        <div className="flex gap-3">
-                          <span className="w-6 h-6 rounded bg-gray-100 flex items-center justify-center font-mono font-bold text-xs">
-                            {item.quantity}
-                          </span>
-                          <div>
-                            <p className="font-bold text-sm leading-tight">{item.name}</p>
-                            {item.notes && <p className="text-[10px] text-[#FF6321] italic mt-1 flex items-center gap-1"><AlertCircle size={10} /> {item.notes}</p>}
-                          </div>
+                      <div key={idx} className="flex gap-4">
+                        <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center font-bold text-emerald-600">
+                          {item.quantity}
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-bold text-slate-900 leading-tight">{item.name}</p>
+                          {item.notes && (
+                            <div className="mt-1 flex items-center gap-1 p-2 bg-emerald-50 rounded-lg">
+                               <AlertCircle size={10} className="text-emerald-500" />
+                               <p className="text-[10px] text-emerald-700 font-medium">{item.notes}</p>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
                   </div>
 
                   {/* Order Card Footer */}
-                  <div className="p-4 bg-gray-50 mt-auto border-t space-y-2">
-                    <div className="flex justify-between items-center text-[10px] text-gray-400 uppercase font-bold tracking-tight">
-                      <span>Đợi: {Math.floor((new Date().getTime() - new Date(order.createdAt).getTime()) / 60000)} phút</span>
+                  <div className="p-5 bg-slate-50/30 mt-auto border-t border-slate-50 flex flex-col gap-4">
+                    <div className="flex justify-between items-center text-[10px] text-slate-400 uppercase font-black tracking-widest">
+                      <span className="flex items-center gap-1"><Clock size={10} /> Đợi: {Math.floor((new Date().getTime() - new Date(order.createdAt).getTime()) / 60000)} phút</span>
                     </div>
 
                     <div className="flex gap-2">
                       {order.status === 'PENDING' && (
                         <button
                           onClick={() => updateStatus(order._id, 'PREPARING')}
-                          className="flex-1 py-2 bg-black text-white rounded-xl text-xs font-bold uppercase transition-transform active:scale-95"
+                          className="flex-1 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-colors"
                         >
-                          Chế biến ngay
+                          Bắt đầu làm
                         </button>
                       )}
                       {(order.status === 'PREPARING' || order.status === 'PENDING') && (
                         <button
                           onClick={() => updateStatus(order._id, 'READY')}
-                          className="flex-1 py-2 bg-[#FF6321] text-black rounded-xl text-xs font-bold uppercase transition-transform active:scale-95"
+                          className="flex-1 py-3 bg-emerald-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all"
                         >
-                          Hoàn thành
+                          Xong món
                         </button>
                       )}
                       {order.status === 'READY' && (
                         <button
                           onClick={() => updateStatus(order._id, 'COMPLETED')}
-                          className="flex-1 py-2 bg-green-500 text-white rounded-xl text-xs font-bold uppercase flex items-center justify-center gap-2 transition-transform active:scale-95"
+                          className="flex-1 py-3 bg-white border-2 border-emerald-600 text-emerald-600 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-50 transition-colors"
                         >
-                          <CheckCircle size={14} /> Giao Sản Phẩm
+                          <CheckCircle size={12} /> Đã Giao
                         </button>
                       )}
                     </div>
@@ -214,11 +221,11 @@ const KitchenPage = () => {
 
       <style>{`
         @keyframes pulse-subtle {
-          0%, 100% { opacity: 1; }
-          50% { border-color: rgba(255, 99, 33, 0.5); }
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { border-color: #059669; }
         }
         .animate-pulse-subtle {
-          animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+          animation: pulse-subtle 2.5s infinite;
         }
       `}</style>
     </div>

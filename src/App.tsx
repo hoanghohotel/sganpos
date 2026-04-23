@@ -14,50 +14,37 @@ const AdminPage = () => (
 export default function App() {
   return (
     <Router>
-      <div className="flex h-screen bg-[#F5F5F0]">
+      <div className="flex h-screen bg-[#F8FAFC] text-slate-800">
         {/* Sidebar */}
-        <aside className="w-64 bg-[#141414] text-white flex flex-col">
-          <div className="p-6">
-            <div className="flex items-center gap-2 mb-8">
-              <div className="w-10 h-10 bg-[#FF6321] rounded-full flex items-center justify-center">
-                <Coffee className="text-black" />
-              </div>
-              <span className="font-bold text-xl tracking-tight">CÀ PHÊ POS</span>
-            </div>
-            
-            <nav className="space-y-4">
-              <Link to="/" className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors group">
-                <LayoutDashboard className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                <span className="text-sm font-medium uppercase tracking-wider">Tổng quan</span>
-              </Link>
-              <Link to="/pos" className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors group">
-                <Coffee className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                <span className="text-sm font-medium uppercase tracking-wider">Bán hàng</span>
-              </Link>
-              <Link to="/kitchen" className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors group">
-                <CookingPot className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                <span className="text-sm font-medium uppercase tracking-wider">Nhà bếp</span>
-              </Link>
-              <Link to="/admin" className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors group">
-                <Settings className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                <span className="text-sm font-medium uppercase tracking-wider">Cài đặt</span>
-              </Link>
-            </nav>
+        <aside className="w-20 bg-white border-r border-slate-200 flex flex-col items-center py-8 gap-10">
+          <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200">
+            <Coffee className="text-white w-6 h-6" />
           </div>
           
-          <div className="mt-auto p-6 border-t border-white/10">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-gray-600"></div>
-              <div>
-                <p className="text-xs font-bold">Admin</p>
-                <p className="text-[10px] text-gray-500 italic">Quản Lý</p>
-              </div>
+          <nav className="flex flex-col gap-6">
+            <Link to="/" className="p-3 text-slate-400 hover:text-emerald-600 transition-colors rounded-xl hover:bg-slate-50 group">
+              <LayoutDashboard className="w-6 h-6 group-hover:scale-110 transition-transform" />
+            </Link>
+            <Link to="/pos" className="p-3 bg-emerald-50 text-emerald-600 rounded-xl group transition-all">
+              <Coffee className="w-6 h-6 group-hover:scale-110 transition-transform" />
+            </Link>
+            <Link to="/kitchen" className="p-3 text-slate-400 hover:text-emerald-600 transition-colors rounded-xl hover:bg-slate-50 group">
+              <CookingPot className="w-6 h-6 group-hover:scale-110 transition-transform" />
+            </Link>
+            <Link to="/admin" className="p-3 text-slate-400 hover:text-emerald-600 transition-colors rounded-xl hover:bg-slate-50 group">
+              <Settings className="w-6 h-6 group-hover:scale-110 transition-transform" />
+            </Link>
+          </nav>
+          
+          <div className="mt-auto mb-4 px-4">
+            <div className="w-10 h-10 rounded-full bg-slate-200 border-2 border-white shadow-sm overflow-hidden">
+               <div className="w-full h-full bg-slate-300" />
             </div>
           </div>
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-hidden">
           <AnimatePresence mode="wait">
             <Routes>
               <Route path="/" element={
@@ -65,11 +52,12 @@ export default function App() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="p-8"
+                  className="p-10"
                 >
-                  <h1 className="text-6vw font-bold font-sans tracking-tighter leading-tight mb-8">
-                    Chào mừng trở lại,<br/>
-                    <span className="text-[#FF6321]">Hôm nay thế nào?</span>
+                  <p className="text-emerald-600 font-bold text-sm uppercase tracking-widest mb-2">Hệ thống POS</p>
+                  <h1 className="text-5xl font-black text-slate-900 tracking-tighter leading-none mb-8">
+                    Chào mừng,<br/>
+                    <span className="text-slate-400">Ngày mới tốt lành.</span>
                   </h1>
                 </motion.div>
               } />
