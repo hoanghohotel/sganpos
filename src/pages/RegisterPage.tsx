@@ -7,6 +7,7 @@ import { UserPlus, ArrowLeft, Coffee } from 'lucide-react';
 const RegisterPage = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const register = useAuthStore((state) => state.register);
@@ -14,8 +15,12 @@ const RegisterPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email && !phone) {
+      setError('Vui lòng nhập Email hoặc Số điện thoại');
+      return;
+    }
     try {
-      await register(name, email, password);
+      await register(name, { email, phone }, password);
       navigate('/login');
     } catch (err: any) {
       console.error('Register error:', err);
@@ -65,16 +70,28 @@ const RegisterPage = () => {
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Email</label>
-            <input 
-              type="email" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full h-14 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-emerald-500 px-6 font-medium text-slate-900"
-              placeholder="admin@coffee.com"
-              required
-            />
+          <div className="grid grid-cols-1 gap-6">
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Email (Tùy chọn)</label>
+              <input 
+                type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full h-14 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-emerald-500 px-6 font-medium text-slate-900"
+                placeholder="admin@coffee.com"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Số điện thoại (Tùy chọn)</label>
+              <input 
+                type="tel" 
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full h-14 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-emerald-500 px-6 font-medium text-slate-900"
+                placeholder="0901234567"
+              />
+            </div>
           </div>
 
           <div className="space-y-2">

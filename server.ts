@@ -112,9 +112,20 @@ app.get('/api/dev/db-status', async (req, res) => {
   console.log('[Dev] Checking DB status...');
   const state = mongoose.connection.readyState;
   const states = ['Disconnected', 'Connected', 'Connecting', 'Disconnecting'];
+  
+  let host = 'N/A';
+  let dbName = 'N/A';
+  if (state === 1) { // Connected
+    host = mongoose.connection.host;
+    dbName = mongoose.connection.name;
+  }
+
   res.json({ 
     status: states[state], 
-    atlas: (process.env.MONGODB_URI || '').includes('mongodb+srv') 
+    atlas: (process.env.MONGODB_URI || '').includes('mongodb+srv'),
+    host: host,
+    dbName: dbName,
+    uri: (process.env.MONGODB_URI || '').replace(/:([^@]+)@/, ':****@') // Mask password
   });
 });
 
@@ -135,8 +146,12 @@ app.post('/api/admin/users', async (req, res) => {
     const user = new User({ ...req.body, password: hashedPassword });
     await user.save();
     res.json(user);
-  } catch (err) {
+  } catch (err: any) {
     console.error('Failed to create user:', err);
+    if (err.code === 11000) {
+      const field = Object.keys(err.keyPattern)[0];
+      return res.status(400).json({ error: `Trùng lặp: ${field === 'email' ? 'Email' : 'Số điện thoại'} đã tồn tại` });
+    }
     res.status(500).json({ error: 'Failed to create user' });
   }
 });
@@ -149,8 +164,12 @@ app.put('/api/admin/users/:id', async (req, res) => {
     }
     const user = await User.findByIdAndUpdate(req.params.id, updateData, { new: true });
     res.json(user);
-  } catch (err) {
+  } catch (err: any) {
     console.error('Failed to update user:', err);
+    if (err.code === 11000) {
+      const field = Object.keys(err.keyPattern)[0];
+      return res.status(400).json({ error: `Trùng lặp: ${field === 'email' ? 'Email' : 'Số điện thoại'} đã tồn tại` });
+    }
     res.status(500).json({ error: 'Failed to update user' });
   }
 });

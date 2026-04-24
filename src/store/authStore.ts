@@ -4,7 +4,8 @@ import api from '../lib/api';
 interface User {
   id: string;
   name: string;
-  email: string;
+  email?: string;
+  phone?: string;
   role: 'ADMIN' | 'STAFF';
 }
 
@@ -21,8 +22,8 @@ interface AuthState {
   user: User | null;
   shift: Shift | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  login: (identifier: string, password: string) => Promise<void>;
+  register: (name: string, identifier: { email?: string; phone?: string }, password: string) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
   checkShift: () => Promise<void>;
@@ -35,9 +36,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   shift: null,
   isLoading: true,
 
-  login: async (email, password) => {
+  login: async (identifier, password) => {
     try {
-      const res = await api.post('/api/auth/login', { email, password });
+      const res = await api.post('/api/auth/login', { identifier, password });
       if (res.data.token) {
         localStorage.setItem('token', res.data.token);
       }
@@ -49,9 +50,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  register: async (name, email, password) => {
+  register: async (name, identifier, password) => {
     try {
-      await api.post('/api/auth/register', { name, email, password });
+      await api.post('/api/auth/register', { 
+        name, 
+        email: identifier.email, 
+        phone: identifier.phone, 
+        password 
+      });
     } catch (err) {
       console.error('Register error:', err);
       throw err;

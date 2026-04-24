@@ -5,7 +5,7 @@ import { motion } from 'motion/react';
 import { LogIn, UserPlus, Fingerprint } from 'lucide-react';
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const login = useAuthStore((state) => state.login);
@@ -14,7 +14,7 @@ const LoginPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await login(email, password);
+      await login(identifier, password);
       navigate('/');
     } catch (err: any) {
       console.error('Login error:', err);
@@ -54,13 +54,13 @@ const LoginPage = () => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Email</label>
+            <label className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Email hoặc Số điện thoại</label>
             <input 
-              type="email" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text" 
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               className="w-full h-14 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-emerald-500 px-6 font-medium text-slate-900"
-              placeholder="admin@example.com"
+              placeholder="admin@example.com hoặc 090..."
               required
             />
           </div>

@@ -16,7 +16,8 @@ interface LogEntry {
 interface User {
   _id: string;
   name: string;
-  email: string;
+  email?: string;
+  phone?: string;
   role: string;
   tenantId: string;
 }
@@ -94,7 +95,10 @@ const DevelopPage = () => {
 
   const handleSaveUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingUser?.email || !editingUser?.name) return;
+    if (!editingUser?.name || (!editingUser?.email && !editingUser?.phone)) {
+      alert('Vui lòng nhập tên và ít nhất 1 định danh (Email hoặc Số điện thoại)');
+      return;
+    }
     try {
       if (editingUser._id) {
         await api.put(`/api/admin/users/${editingUser._id}`, editingUser);
@@ -104,6 +108,7 @@ const DevelopPage = () => {
         await api.post('/api/auth/register', {
           name: editingUser.name,
           email: editingUser.email,
+          phone: editingUser.phone,
           password: editingUser.password || '123456',
           tenantId: editingUser.tenantId || 'demo'
         });
@@ -111,7 +116,17 @@ const DevelopPage = () => {
       setEditingUser(null);
       fetchData();
     } catch (err: any) {
-      const msg = err.response?.data?.error || err.message;
+      console.error('Save user failed:', err);
+      let msg = 'Lỗi không xác định';
+      if (err.response?.data) {
+        if (typeof err.response.data === 'string') {
+          msg = err.response.data;
+        } else {
+          msg = err.response.data.error || err.response.data.message || JSON.stringify(err.response.data);
+        }
+      } else {
+        msg = err.message;
+      }
       alert(`Lỗi khi lưu người dùng: ${msg}`);
     }
   };
@@ -272,7 +287,7 @@ const DevelopPage = () => {
                 <thead>
                   <tr className="border-b border-slate-900">
                     <th className="p-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Name & Entity</th>
-                    <th className="p-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Email Address</th>
+                    <th className="p-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Contact Info</th>
                     <th className="p-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Access Role</th>
                     <th className="p-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Operations</th>
                   </tr>
@@ -284,7 +299,10 @@ const DevelopPage = () => {
                         <div className="font-bold text-white uppercase">{user.name}</div>
                         <div className="text-[10px] text-slate-500 mt-1">UUID: {user._id} | Org: {user.tenantId}</div>
                       </td>
-                      <td className="p-6 text-slate-400 font-medium">{user.email}</td>
+                      <td className="p-6">
+                        <div className="text-slate-400 font-medium">{user.email || '—'}</div>
+                        <div className="text-[10px] text-slate-600 mt-0.5">{user.phone || '—'}</div>
+                      </td>
                       <td className="p-6">
                         <span className={cn(
                           "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter",
@@ -336,23 +354,33 @@ const DevelopPage = () => {
                       {editingUser._id ? 'Update Entity' : 'New User Instance'}
                     </h2>
                     <form onSubmit={handleSaveUser} className="space-y-6">
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Full Name</label>
+                        <input 
+                          type="text" required
+                          className="w-full h-12 bg-slate-800 border border-slate-700 rounded-xl px-4 text-white focus:border-emerald-500 transition-all font-bold"
+                          value={editingUser.name || ''}
+                          onChange={e => setEditingUser({ ...editingUser, name: e.target.value })}
+                        />
+                      </div>
+
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Full Name</label>
-                          <input 
-                            type="text" required
-                            className="w-full h-12 bg-slate-800 border border-slate-700 rounded-xl px-4 text-white focus:border-emerald-500 transition-all font-bold"
-                            value={editingUser.name || ''}
-                            onChange={e => setEditingUser({ ...editingUser, name: e.target.value })}
-                          />
-                        </div>
                         <div className="space-y-1">
                           <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Email</label>
                           <input 
-                            type="email" required
+                            type="email"
                             className="w-full h-12 bg-slate-800 border border-slate-700 rounded-xl px-4 text-white focus:border-emerald-500 transition-all font-bold"
                             value={editingUser.email || ''}
                             onChange={e => setEditingUser({ ...editingUser, email: e.target.value })}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Phone</label>
+                          <input 
+                            type="tel"
+                            className="w-full h-12 bg-slate-800 border border-slate-700 rounded-xl px-4 text-white focus:border-emerald-500 transition-all font-bold"
+                            value={editingUser.phone || ''}
+                            onChange={e => setEditingUser({ ...editingUser, phone: e.target.value })}
                           />
                         </div>
                       </div>
@@ -447,6 +475,22 @@ const DevelopPage = () => {
                     {dbStatus?.atlas ? 'YES (Cloud)' : 'NO (Local)'}
                   </span>
                 </div>
+                {dbStatus?.host && (
+                  <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Host</span>
+                      <span className="text-white font-bold text-[10px] truncate max-w-[200px]">{dbStatus.host}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">DB Name</span>
+                      <span className="text-white font-bold text-[10px]">{dbStatus.dbName}</span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">URI (Masked)</span>
+                      <code className="text-[9px] text-slate-400 bg-slate-900 p-2 rounded block break-all">{dbStatus.uri}</code>
+                    </div>
+                  </div>
+                )}
               </div>
             </div >
             <div className="bg-slate-900 border border-slate-800 p-10 rounded-[40px] flex flex-col items-center justify-center text-center">
