@@ -205,26 +205,33 @@ async function startServer() {
   // Connect to Database
   await dbConnect().catch(err => console.error('Failed to connect to MongoDB:', err));
 
-  // Reset/Seed Super Admin
+  // Seed Super Admin if not exists
   try {
     const superAdminEmail = 'admin@sganpos.vn';
-    await User.deleteOne({ email: superAdminEmail });
+    const existing = await User.findOne({ email: superAdminEmail });
     
     const hashedPassword = await bcrypt.hash('admin@123', 10);
-    const superAdmin = new User({
-      tenantId: 'demo',
-      name: 'Super Admin',
-      email: superAdminEmail,
-      password: hashedPassword,
-      role: 'ADMIN',
-      isActive: true
-    });
-    await superAdmin.save();
-    console.log('--- Super Admin synced to database ---');
+    if (!existing) {
+      const superAdmin = new User({
+        tenantId: 'demo',
+        name: 'Super Admin',
+        email: superAdminEmail,
+        password: hashedPassword,
+        role: 'ADMIN',
+        isActive: true
+      });
+      await superAdmin.save();
+      console.log('--- Super Admin created ---');
+    } else {
+      // Update password/status but keep the ID
+      existing.password = hashedPassword;
+      existing.role = 'ADMIN';
+      existing.isActive = true;
+      existing.tenantId = 'demo';
+      await existing.save();
+      console.log('--- Super Admin synced (ID preserved) ---');
+    }
     console.log('Email:', superAdminEmail);
-    console.log('Role:', superAdmin.role);
-    console.log('Tenant:', superAdmin.tenantId);
-    console.log('---------------------------------------');
   } catch (err) {
     console.error('Failed to sync super admin:', err);
   }

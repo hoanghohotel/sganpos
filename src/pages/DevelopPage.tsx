@@ -29,7 +29,7 @@ const DevelopPage = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [dbStatus, setDbStatus] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [editingUser, setEditingUser] = useState<Partial<User> | null>(null);
+  const [editingUser, setEditingUser] = useState<Partial<User> & { password?: string } | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,9 +46,9 @@ const DevelopPage = () => {
             console.log('Login success: Backend token stored');
           }
         } catch (authErr: any) {
-          const msg = authErr.response?.data?.error || authErr.message;
-          console.error('Backend auth failed:', msg);
-          alert(`Backend Auth Error: ${msg}. Terminal will still open but admin APIs may fail.`);
+          console.error('Backend auth failed:', authErr);
+          const errorMsg = authErr.response?.data?.error || authErr.message || 'Unknown error';
+          alert(`Backend Auth Error: ${errorMsg}. Terminal will still open but admin APIs may fail.`);
         }
         
         setIsAuthenticated(true);
@@ -99,7 +99,14 @@ const DevelopPage = () => {
       if (editingUser._id) {
         await api.put(`/api/admin/users/${editingUser._id}`, editingUser);
       } else {
-        await api.post('/api/admin/users', editingUser);
+        // When creating through admin, we often need to call a specific endpoint or use register
+        // But /api/admin/users is specifically for the dev portal list
+        await api.post('/api/auth/register', {
+          name: editingUser.name,
+          email: editingUser.email,
+          password: editingUser.password || '123456',
+          tenantId: editingUser.tenantId || 'demo'
+        });
       }
       setEditingUser(null);
       fetchData();
@@ -363,14 +370,25 @@ const DevelopPage = () => {
                           </select>
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Tenant ID</label>
+                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Password</label>
                           <input 
-                            type="text" required
+                            type="text" 
+                            placeholder={editingUser._id ? "(Unchanged)" : "123456"}
                             className="w-full h-12 bg-slate-800 border border-slate-700 rounded-xl px-4 text-white focus:border-emerald-500 transition-all font-bold"
-                            value={editingUser.tenantId || 'demo'}
-                            onChange={e => setEditingUser({ ...editingUser, tenantId: e.target.value })}
+                            value={editingUser.password || ''}
+                            onChange={e => setEditingUser({ ...editingUser, password: e.target.value })}
                           />
                         </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Tenant ID</label>
+                        <input 
+                          type="text" required
+                          className="w-full h-12 bg-slate-800 border border-slate-700 rounded-xl px-4 text-white focus:border-emerald-500 transition-all font-bold"
+                          value={editingUser.tenantId || 'demo'}
+                          onChange={e => setEditingUser({ ...editingUser, tenantId: e.target.value })}
+                        />
                       </div>
 
                       <div className="flex gap-4 pt-6">

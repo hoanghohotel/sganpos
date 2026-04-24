@@ -11,8 +11,8 @@ const JWT_SECRET = process.env.JWT_SECRET || 'default_secret';
 // Register
 router.post('/register', async (req: any, res) => {
   try {
-    const { name, email, password } = req.body;
-    const tenantId = getTenantId();
+    const { name, email, password, tenantId: bodyTenantId } = req.body;
+    const tenantId = bodyTenantId || getTenantId();
 
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Missing fields' });
