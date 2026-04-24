@@ -161,15 +161,16 @@ const DevelopPage = () => {
   };
 
   const handleSeedData = async () => {
-    if (!confirm('Seed demo data for org "demo"? Only works if collections are empty.')) return;
+    if (!confirm('Run database migration/seed? This will update schema and add missing data for demo tenant.')) return;
     setLoading(true);
     try {
-      await api.post('/api/dev/seed', { tenantId: 'demo' });
-      alert('Seeding complete!');
+      const res = await api.post('/api/dev/migrate');
+      alert(res.data.message || 'Migration complete!');
+      fetchData();
     } catch (err: any) {
-      console.error('Seeding failed:', err);
+      console.error('Migration failed:', err);
       const msg = err.response?.data?.error || err.message || 'Unknown error';
-      alert(`Seeding failed: ${msg}`);
+      alert(`Migration failed: ${msg}`);
     } finally {
       setLoading(false);
     }
@@ -523,9 +524,10 @@ const DevelopPage = () => {
                <div className="text-emerald-500 font-black animate-pulse uppercase tracking-[0.2em] mb-8">All Systems Nominal</div>
                <button 
                 onClick={handleSeedData}
-                className="w-full h-14 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold uppercase tracking-widest transition-all"
+                disabled={loading}
+                className="w-full h-14 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold uppercase tracking-widest transition-all disabled:opacity-50"
                >
-                 Seed Demo Data
+                 {loading ? 'Processing...' : 'Seed / Migrate Data'}
                </button>
             </div>
           </div>

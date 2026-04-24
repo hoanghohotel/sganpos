@@ -110,6 +110,15 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', database: 'connected' });
 });
 
+app.post('/api/dev/migrate', async (req, res) => {
+  try {
+    await runMigration();
+    res.json({ success: true, message: 'Migration/Seed completed successfully' });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/shifts', shiftRoutes);
 app.use('/api/products', productRoutes);
