@@ -9,6 +9,13 @@ export const tenantStorage = new AsyncLocalStorage<{ tenantId: string }>();
  * Useful for Mongoose queries and business logic.
  */
 export function getTenantId(): string {
+  // If we are in a request context with AsyncLocalStorage
   const store = tenantStorage.getStore();
-  return store?.tenantId || 'demo';
+  if (store?.tenantId) return store.tenantId;
+
+  // Fallback: If AsyncLocalStorage is lost (e.g. on serverless sometimes)
+  // we might have it on req.headers if we follow that pattern, 
+  // but getTenantId is often called without req object.
+  
+  return 'demo';
 }

@@ -33,7 +33,6 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', database: 'connected' });
 });
 
-// Use a mount point that works both with and without /api prefix
 const apiRouter = express.Router();
 apiRouter.use('/auth', authRoutes);
 apiRouter.use('/shifts', shiftRoutes);
@@ -42,9 +41,9 @@ apiRouter.use('/orders', orderRoutes);
 apiRouter.use('/tables', tableRoutes);
 apiRouter.use('/settings', settingsRoutes);
 
+// Mount under both to be safe
 app.use('/api', apiRouter);
+app.use(apiRouter); // Fallback
 
-// Fallback for sub-routes if /api is already stripped (some Vercel setups)
-app.use(apiRouter);
-
+// Export the app for Vercel
 export default app;

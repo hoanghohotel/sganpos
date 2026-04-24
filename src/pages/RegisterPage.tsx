@@ -40,7 +40,7 @@ const RegisterPage = () => {
 
         {error && (
           <div className="bg-rose-50 text-rose-600 p-4 rounded-2xl text-sm mb-6 font-medium border border-rose-100">
-             {error}
+             {typeof error === 'string' ? error : JSON.stringify(error)}
           </div>
         )}
 

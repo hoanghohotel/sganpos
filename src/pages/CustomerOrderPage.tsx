@@ -148,7 +148,7 @@ const CustomerOrderPage = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-white text-center">
         <Info size={48} className="text-slate-300 mb-4" />
-        <h2 className="text-xl font-bold text-slate-800 mb-2">{error}</h2>
+        <h2 className="text-xl font-bold text-slate-800 mb-2">{typeof error === 'string' ? error : JSON.stringify(error)}</h2>
         <p className="text-slate-500 text-sm italic">Cảm ơn bạn đã ghé thăm quán!</p>
       </div>
     );

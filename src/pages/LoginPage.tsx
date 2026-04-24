@@ -40,7 +40,7 @@ const LoginPage = () => {
         {error && (
           <div className="bg-rose-50 text-rose-600 p-4 rounded-2xl text-sm mb-6 font-medium border border-rose-100 flex items-center gap-3">
              <span className="w-2 h-2 bg-rose-600 rounded-full animate-pulse" />
-             {error}
+             {typeof error === 'string' ? error : JSON.stringify(error)}
           </div>
         )}
 

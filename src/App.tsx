@@ -3,15 +3,15 @@ import { Coffee, CookingPot, Settings, LayoutDashboard, QrCode, LogOut } from 'l
 import { motion, AnimatePresence } from 'motion/react';
 import { useEffect } from 'react';
 import { useAuthStore } from './store/authStore.ts';
-import ProtectedRoute from './components/ProtectedRoute.tsx';
-import ShiftGuard from './components/ShiftGuard.tsx';
-import POSPage from './pages/POSPage.tsx';
-import KitchenPage from './pages/KitchenPage.tsx';
-import CustomerOrderPage from './pages/CustomerOrderPage.tsx';
-import QRManagerPage from './pages/QRManagerPage.tsx';
-import SettingsPage from './pages/SettingsPage.tsx';
-import LoginPage from './pages/LoginPage.tsx';
-import RegisterPage from './pages/RegisterPage.tsx';
+import ProtectedRoute from './components/ProtectedRoute';
+import ShiftGuard from './components/ShiftGuard';
+import POSPage from './pages/POSPage';
+import KitchenPage from './pages/KitchenPage';
+import CustomerOrderPage from './pages/CustomerOrderPage';
+import QRManagerPage from './pages/QRManagerPage';
+import SettingsPage from './pages/SettingsPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 
 // Separate Layout to use location hook
 const MainLayout = () => {
@@ -19,8 +19,8 @@ const MainLayout = () => {
   const logout = useAuthStore((state) => state.logout);
   const user = useAuthStore((state) => state.user);
   
-  const isCustomerPage = location.pathname === '/order';
-  const isAuthPage = ['/login', '/register'].includes(location.pathname);
+  const isCustomerPage = location.pathname.startsWith('/order');
+  const isAuthPage = ['/login', '/register'].includes(location.pathname.replace(/\/$/, ''));
 
   if (isAuthPage) {
     return (
