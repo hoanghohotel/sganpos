@@ -196,7 +196,7 @@ const POSPage = () => {
   const filteredTables = tables.filter(t => {
     if (orderType === 'DINE_IN') return t.name.startsWith('Bàn');
     if (orderType === 'TAKEAWAY') return t.name.startsWith('Mang về');
-    if (orderType === 'DELIVERY') return t.name.startsWith('Ship đi');
+    if (orderType === 'DELIVERY') return t.name.startsWith('Ship');
     return true;
   });
 
@@ -260,7 +260,8 @@ const POSPage = () => {
         })),
         total: total,
         paymentMethod: method,
-        status: 'PENDING'
+        status: 'COMPLETED',
+        paymentStatus: 'PAID'
       };
 
       await api.post('/api/orders', orderData);

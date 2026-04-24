@@ -2,12 +2,14 @@ import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react
 import { Coffee, CookingPot, Settings, LayoutDashboard, QrCode, LogOut, UtensilsCrossed } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useEffect } from 'react';
+import { cn } from './lib/utils';
 import { useAuthStore } from './store/authStore';
 import ProtectedRoute from './components/ProtectedRoute';
 import ShiftGuard from './components/ShiftGuard';
 import POSPage from './pages/POSPage';
 import KitchenPage from './pages/KitchenPage';
 import MenuPage from './pages/MenuPage';
+import TablesPage from './pages/TablesPage';
 import CustomerOrderPage from './pages/CustomerOrderPage';
 import QRManagerPage from './pages/QRManagerPage';
 import SettingsPage from './pages/SettingsPage';
@@ -38,6 +40,16 @@ const MainLayout = () => {
     );
   }
 
+  const navItems = [
+    { to: '/', icon: LayoutDashboard, label: 'Thống kê' },
+    { to: '/pos', icon: Coffee, label: 'Bán hàng' },
+    { to: '/kitchen', icon: CookingPot, label: 'Bếp' },
+    { to: '/menu', icon: UtensilsCrossed, label: 'Thực đơn' },
+    { to: '/tables', icon: UtensilsCrossed, label: 'Bàn' },
+    { to: '/qr', icon: QrCode, label: 'Mã QR' },
+    { to: '/settings', icon: Settings, label: 'Cài đặt' },
+  ];
+
   return (
     <div className="flex h-screen bg-[#F8FAFC] text-slate-800">
       {!isCustomerPage && (
@@ -47,22 +59,25 @@ const MainLayout = () => {
           </Link>
           
           <nav className="flex-1 flex flex-col gap-6">
-            <Link to="/" className="p-3 text-slate-400 hover:text-emerald-600 transition-colors rounded-xl hover:bg-slate-50 group">
+            <Link to="/" className={cn("p-3 transition-colors rounded-xl hover:bg-slate-50 group", location.pathname === '/' ? "text-emerald-600 bg-emerald-50" : "text-slate-400 hover:text-emerald-600")}>
               <LayoutDashboard className="w-6 h-6 group-hover:scale-110 transition-transform" />
             </Link>
-            <Link to="/pos" className="p-3 text-slate-400 hover:text-emerald-600 transition-colors rounded-xl hover:bg-slate-50 group transition-all">
+            <Link to="/pos" className={cn("p-3 transition-colors rounded-xl hover:bg-slate-50 group", location.pathname === '/pos' ? "text-emerald-600 bg-emerald-50" : "text-slate-400 hover:text-emerald-600")}>
               <Coffee className="w-6 h-6 group-hover:scale-110 transition-transform" />
             </Link>
-            <Link to="/kitchen" className="p-3 text-slate-400 hover:text-emerald-600 transition-colors rounded-xl hover:bg-slate-50 group">
+            <Link to="/kitchen" className={cn("p-3 transition-colors rounded-xl hover:bg-slate-50 group", location.pathname === '/kitchen' ? "text-emerald-600 bg-emerald-50" : "text-slate-400 hover:text-emerald-600")}>
               <CookingPot className="w-6 h-6 group-hover:scale-110 transition-transform" />
             </Link>
-            <Link to="/menu" className="p-3 text-slate-400 hover:text-emerald-600 transition-colors rounded-xl hover:bg-slate-50 group">
+            <Link to="/menu" className={cn("p-3 transition-colors rounded-xl hover:bg-slate-50 group", location.pathname === '/menu' ? "text-emerald-600 bg-emerald-50" : "text-slate-400 hover:text-emerald-600")}>
               <UtensilsCrossed className="w-6 h-6 group-hover:scale-110 transition-transform" />
             </Link>
-            <Link to="/qr" className="p-3 text-slate-400 hover:text-emerald-600 transition-colors rounded-xl hover:bg-slate-50 group">
+            <Link to="/tables" className={cn("p-3 transition-colors rounded-xl hover:bg-slate-50 group", location.pathname === '/tables' ? "text-emerald-600 bg-emerald-50" : "text-slate-400 hover:text-emerald-600")}>
+              <UtensilsCrossed className="w-6 h-6 group-hover:scale-110 transition-transform" />
+            </Link>
+            <Link to="/qr" className={cn("p-3 transition-colors rounded-xl hover:bg-slate-50 group", location.pathname === '/qr' ? "text-emerald-600 bg-emerald-50" : "text-slate-400 hover:text-emerald-600")}>
               <QrCode className="w-6 h-6 group-hover:scale-110 transition-transform" />
             </Link>
-            <Link to="/settings" className="p-3 text-slate-400 hover:text-emerald-600 transition-colors rounded-xl hover:bg-slate-50 group">
+            <Link to="/settings" className={cn("p-3 transition-colors rounded-xl hover:bg-slate-50 group", location.pathname === '/settings' ? "text-emerald-600 bg-emerald-50" : "text-slate-400 hover:text-emerald-600")}>
               <Settings className="w-6 h-6 group-hover:scale-110 transition-transform" />
             </Link>
           </nav>
@@ -89,6 +104,7 @@ const MainLayout = () => {
                 } />
                 <Route path="/kitchen" element={<KitchenPage />} />
                 <Route path="/menu" element={<MenuPage />} />
+                <Route path="/tables" element={<TablesPage />} />
                 <Route path="/qr" element={<QRManagerPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/admin" element={<AdminPage />} />

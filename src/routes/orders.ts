@@ -37,7 +37,14 @@ router.post('/', async (req, res) => {
        return res.status(400).json({ error: 'Không có ca làm việc nào đang mở. Vui lòng mở ca để tiếp nhận đơn hàng.' });
     }
 
-    const orderData = { ...req.body, orderNumber, tenantId, shiftId, status: 'PENDING', paymentStatus: 'UNPAID' };
+    const orderData = { 
+      ...req.body, 
+      orderNumber, 
+      tenantId, 
+      shiftId, 
+      status: req.body.status || 'PENDING', 
+      paymentStatus: req.body.paymentStatus || 'UNPAID' 
+    };
     const order = new Order(orderData);
     await order.save();
     

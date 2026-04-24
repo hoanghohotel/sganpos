@@ -32,7 +32,7 @@ const QRManagerPage = () => {
   const filteredTables = tables.filter(t => {
     if (filter === 'DINE_IN') return t.name.startsWith('Bàn');
     if (filter === 'TAKEAWAY') return t.name.startsWith('Mang về');
-    if (filter === 'DELIVERY') return t.name.startsWith('Ship đi');
+    if (filter === 'DELIVERY') return t.name.startsWith('Ship');
     return true;
   });
 

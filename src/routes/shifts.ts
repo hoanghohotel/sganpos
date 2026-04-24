@@ -80,7 +80,7 @@ router.get('/summary', authenticate, async (req: AuthRequest, res) => {
     const orders = await Order.find({
       tenantId,
       shiftId: shift._id,
-      status: 'COMPLETED'
+      paymentStatus: 'PAID'
     });
 
     let totalSales = 0;
@@ -145,7 +145,7 @@ router.post('/close', authenticate, async (req: AuthRequest, res) => {
     const orders = await Order.find({
       tenantId,
       shiftId: shift._id,
-      status: 'COMPLETED' // Only count completed orders
+      paymentStatus: 'PAID' // Only count paid orders
     });
     
     let totalSales = 0;

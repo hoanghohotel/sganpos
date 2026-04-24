@@ -25,6 +25,7 @@ export interface IOrder extends Document {
   status: 'PENDING' | 'PREPARING' | 'READY' | 'COMPLETED';
   paymentStatus: 'UNPAID' | 'PAID';
   total: number;
+  paymentMethod?: 'CASH' | 'TRANSFER';
   shiftId: mongoose.Types.ObjectId;
 }
 
@@ -37,6 +38,10 @@ const OrderSchema: Schema = new Schema({
     required: true 
   },
   tableId: { type: Schema.Types.ObjectId, ref: 'Table' },
+  paymentMethod: {
+    type: String,
+    enum: ['CASH', 'TRANSFER'],
+  },
   customer: {
     name: { type: String },
     phone: { type: String },
