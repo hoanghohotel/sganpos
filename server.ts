@@ -9,6 +9,8 @@ import cookieParser from 'cookie-parser';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 import dbConnect from './src/lib/mongodb';
+import User from './src/models/User';
+import mongoose from 'mongoose';
 import { tenantMiddleware } from './src/middleware/tenant';
 import { initSocket } from './src/lib/socketService'; // Add this
 import productRoutes from './src/routes/products';
@@ -19,6 +21,28 @@ import authRoutes from './src/routes/auth';
 import shiftRoutes from './src/routes/shifts';
 
 const app = express();
+
+// Logging buffer for development
+const systemLogs: any[] = [];
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    if (!req.path.startsWith('/api/dev')) {
+      systemLogs.push({
+        timestamp: new Date(),
+        method: req.method,
+        path: req.path,
+        status: res.statusCode,
+        duration: `${duration}ms`,
+        ip: req.ip
+      });
+      if (systemLogs.length > 200) systemLogs.shift();
+    }
+  });
+  next();
+});
+
 app.set('trust proxy', 1);
 const httpServer = createHttpServer(app);
 const io = new Server(httpServer, {
@@ -73,6 +97,55 @@ app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/tables', tableRoutes);
 app.use('/api/settings', settingsRoutes);
+
+// --- Development & Admin APIs ---
+app.get('/api/dev/logs', (req, res) => res.json(systemLogs.slice().reverse()));
+app.get('/api/dev/db-status', async (req, res) => {
+  const state = mongoose.connection.readyState;
+  const states = ['Disconnected', 'Connected', 'Connecting', 'Disconnecting'];
+  res.json({ 
+    status: states[state], 
+    atlas: (process.env.MONGODB_URI || '').includes('mongodb+srv') 
+  });
+});
+
+app.get('/api/admin/users', async (req, res) => {
+  try {
+    const users = await User.find({}, '-password');
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+app.post('/api/admin/users', async (req, res) => {
+  try {
+    const user = new User({ ...req.body, password: 'password@123' }); // Default password for new users
+    await user.save();
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to create user' });
+  }
+});
+
+app.put('/api/admin/users/:id', async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update user' });
+  }
+});
+
+app.delete('/api/admin/users/:id', async (req, res) => {
+  try {
+    await User.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete user' });
+  }
+});
+// --------------------------------
 
 async function startServer() {
   // Connect to Database

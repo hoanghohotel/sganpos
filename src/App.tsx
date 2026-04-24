@@ -10,6 +10,7 @@ import POSPage from './pages/POSPage';
 import KitchenPage from './pages/KitchenPage';
 import MenuPage from './pages/MenuPage';
 import TablesPage from './pages/TablesPage';
+import DevelopPage from './pages/DevelopPage';
 import CustomerOrderPage from './pages/CustomerOrderPage';
 import QRManagerPage from './pages/QRManagerPage';
 import SettingsPage from './pages/SettingsPage';
@@ -105,6 +106,7 @@ const MainLayout = () => {
                 <Route path="/kitchen" element={<KitchenPage />} />
                 <Route path="/menu" element={<MenuPage />} />
                 <Route path="/tables" element={<TablesPage />} />
+                <Route path="/develop" element={<DevelopPage />} />
                 <Route path="/qr" element={<QRManagerPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/admin" element={<AdminPage />} />
