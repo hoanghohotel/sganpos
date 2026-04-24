@@ -17,7 +17,8 @@ const LoginPage = () => {
       await login(email, password);
       navigate('/');
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Đăng nhập thất bại');
+      const msg = err.response?.data?.error;
+      setError(typeof msg === 'string' ? msg : 'Đăng nhập thất bại');
     }
   };
 

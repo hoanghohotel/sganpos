@@ -18,7 +18,8 @@ const RegisterPage = () => {
       await register(name, email, password);
       navigate('/login');
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Đăng ký thất bại');
+      const msg = err.response?.data?.error;
+      setError(typeof msg === 'string' ? msg : 'Đăng ký thất bại');
     }
   };
 
