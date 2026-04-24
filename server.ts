@@ -51,6 +51,13 @@ io.on('connection', (socket) => {
 });
 
 // Middleware
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`[Request] ${req.method} ${req.originalUrl}`);
+  }
+  next();
+});
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(tenantMiddleware);
@@ -79,10 +86,15 @@ async function startServer() {
     });
     app.use(vite.middlewares);
     
-    // Explicitly handle SPA fallback for development if vite middleware doesn't catch it
+    // Explicitly handle SPA fallback for development
     app.get('*', async (req, res, next) => {
       const url = req.originalUrl;
-      if (url.startsWith('/api')) return next();
+      
+      // Skip API routes and files with extensions (assets)
+      if (url.startsWith('/api') || url.includes('.')) {
+        return next();
+      }
+
       try {
         const fs = await import('fs');
         const templateFile = path.resolve(process.cwd(), 'index.html');
@@ -90,6 +102,7 @@ async function startServer() {
         template = await vite.transformIndexHtml(url, template);
         res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
       } catch (e) {
+        console.error('Vite SPA Fallback Error:', e);
         vite.ssrFixStacktrace(e as Error);
         next(e);
       }
