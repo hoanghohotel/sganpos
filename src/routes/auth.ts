@@ -158,7 +158,12 @@ router.post('/logout', (req, res) => {
 
 // Me
 router.get('/me', authenticate, (req: AuthRequest, res) => {
-  res.json(req.user);
+  try {
+    res.json(req.user);
+  } catch (error) {
+    console.error('Auth /me error:', error);
+    res.status(500).json({ error: 'Auth failed internal' });
+  }
 });
 
 export default router;

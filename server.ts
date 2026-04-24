@@ -134,23 +134,36 @@ app.get('/api/dev/logs', (req, res) => {
 
 app.get('/api/dev/db-status', async (req, res) => {
   console.log('[Dev] Checking DB status...');
-  const state = mongoose.connection.readyState;
-  const states = ['Disconnected', 'Connected', 'Connecting', 'Disconnecting'];
-  
-  let host = 'N/A';
-  let dbName = 'N/A';
-  if (state === 1) { // Connected
-    host = mongoose.connection.host;
-    dbName = mongoose.connection.name;
-  }
+  try {
+    const state = mongoose.connection.readyState;
+    const states = ['Disconnected', 'Connected', 'Connecting', 'Disconnecting'];
+    
+    let host = 'N/A';
+    let dbName = 'N/A';
+    let queryTest = 'Not tested';
 
-  res.json({ 
-    status: states[state], 
-    atlas: (process.env.MONGODB_URI || '').includes('mongodb+srv'),
-    host: host,
-    dbName: dbName,
-    uri: (process.env.MONGODB_URI || '').replace(/:([^@]+)@/, ':****@') // Mask password
-  });
+    if (state === 1) { // Connected
+      host = mongoose.connection.host;
+      dbName = mongoose.connection.name;
+      try {
+        await mongoose.connection.db?.command({ ping: 1 });
+        queryTest = 'Success';
+      } catch (qErr: any) {
+        queryTest = `Failed: ${qErr.message}`;
+      }
+    }
+
+    res.json({ 
+      status: states[state], 
+      atlas: (process.env.MONGODB_URI || '').includes('mongodb+srv'),
+      host: host,
+      dbName: dbName,
+      queryTest,
+      uri: (process.env.MONGODB_URI || '').replace(/:([^@]+)@/, ':****@') // Mask password
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.get('/api/admin/users', async (req, res) => {
@@ -242,6 +255,16 @@ app.post('/api/dev/seed', async (req, res) => {
     console.error('Seed failed:', err);
     res.status(500).json({ error: 'Seed failed' });
   }
+});
+
+// Final catch-all for errors
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error('[Global Error Handler]', err);
+  res.status(500).json({ 
+    error: 'Internal Server Error', 
+    message: err.message,
+    details: err.stack 
+  });
 });
 
 async function startServer() {

@@ -11,6 +11,11 @@ export interface AuthRequest extends Request {
 
 export const authenticate = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+    // Check DB state first to avoid 500 on timeout
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ error: 'Database unstable', status: mongoose.connection.readyState });
+    }
+
     const token = req.cookies?.token || req.headers.authorization?.split(' ')[1];
     const tenantId = getTenantId();
 

@@ -492,6 +492,15 @@ const DevelopPage = () => {
                   </div>
                 </div>
                 <div className="flex justify-between items-center p-4 bg-slate-950 rounded-2xl border border-slate-800">
+                  <span className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Query Pulse</span>
+                  <span className={cn(
+                    "font-black truncate max-w-[150px]",
+                    dbStatus?.queryTest === 'Success' ? "text-emerald-500" : "text-rose-500"
+                  )}>
+                    {dbStatus?.queryTest || 'Pending'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center p-4 bg-slate-950 rounded-2xl border border-slate-800">
                   <span className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Atlas Verified</span>
                   <span className={cn("font-black", dbStatus?.atlas ? "text-emerald-500" : "text-amber-500")}>
                     {dbStatus?.atlas ? 'YES (Cloud)' : 'NO (Local)'}

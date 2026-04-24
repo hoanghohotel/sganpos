@@ -17,6 +17,7 @@ router.get('/current', authenticate, async (req: AuthRequest, res) => {
     });
     res.json(shift);
   } catch (error) {
+    console.error('Get Current Shift Error:', error);
     res.status(500).json({ error: 'Failed to get current shift' });
   }
 });
@@ -125,6 +126,7 @@ router.get('/summary', authenticate, async (req: AuthRequest, res) => {
       productSales
     });
   } catch (error) {
+    console.error('Get Shift Summary Error:', error);
     res.status(500).json({ error: 'Failed to get shift summary' });
   }
 });
