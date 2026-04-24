@@ -23,7 +23,7 @@ interface User {
 
 const DevelopPage = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [credentials, setCredentials] = useState({ username: '', password: '' });
+  const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [activeTab, setActiveTab] = useState<'users' | 'logs' | 'db'>('users');
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -33,11 +33,11 @@ const DevelopPage = () => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (credentials.username === 'super-admin' && credentials.password === 'admin@123') {
+    if (credentials.email === 'admin@sganpos.vn' && credentials.password === 'admin@123') {
       setIsAuthenticated(true);
       fetchData();
     } else {
-      alert('Sai tài khoản hoặc mật khẩu!');
+      alert('Sai tài khoản hoặc mật khẩu hệ quản trị!');
     }
   };
 
@@ -96,6 +96,19 @@ const DevelopPage = () => {
     }
   };
 
+  const handleSeedData = async () => {
+    if (!confirm('Seed demo data for org "demo"? Only works if collections are empty.')) return;
+    setLoading(true);
+    try {
+      await api.post('/api/dev/seed', { tenantId: 'demo' });
+      alert('Seeding complete!');
+    } catch (err) {
+      alert('Seeding failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 font-mono">
@@ -114,13 +127,14 @@ const DevelopPage = () => {
           
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest px-1">User ID</label>
+              <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest px-1">Admin Email</label>
               <input 
-                type="text"
+                type="email"
                 required
+                placeholder="admin@sganpos.vn"
                 className="w-full h-12 bg-slate-800 border border-slate-700 rounded-xl px-4 text-white focus:outline-none focus:border-emerald-500 transition-all font-bold"
-                value={credentials.username}
-                onChange={e => setCredentials({ ...credentials, username: e.target.value })}
+                value={credentials.email}
+                onChange={e => setCredentials({ ...credentials, email: e.target.value })}
               />
             </div>
             <div className="space-y-1">
@@ -400,7 +414,13 @@ const DevelopPage = () => {
                </div>
                <h3 className="text-2xl font-black text-white mb-2 tracking-tighter uppercase">Atlas Status</h3>
                <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-6">Cluster Health & Performance</p>
-               <div className="text-emerald-500 font-black animate-pulse uppercase tracking-[0.2em]">All Systems Nominal</div>
+               <div className="text-emerald-500 font-black animate-pulse uppercase tracking-[0.2em] mb-8">All Systems Nominal</div>
+               <button 
+                onClick={handleSeedData}
+                className="w-full h-14 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold uppercase tracking-widest transition-all"
+               >
+                 Seed Demo Data
+               </button>
             </div>
           </div>
         )}

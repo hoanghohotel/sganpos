@@ -147,6 +147,42 @@ app.delete('/api/admin/users/:id', async (req, res) => {
 });
 // --------------------------------
 
+app.post('/api/dev/seed', async (req, res) => {
+  try {
+    const { tenantId } = req.body;
+    if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
+
+    // Seed Tables if empty
+    const Table = (await import('./src/models/Table')).default;
+    const existingTables = await Table.find({ tenantId });
+    if (existingTables.length === 0) {
+      const demoTables = [];
+      for (let i = 1; i <= 10; i++) demoTables.push({ name: `Bàn ${String(i).padStart(2, '0')}`, tenantId, isActive: true });
+      for (let i = 1; i <= 5; i++) demoTables.push({ name: `Mang về ${String(i).padStart(2, '0')}`, tenantId, isActive: true });
+      for (let i = 1; i <= 5; i++) demoTables.push({ name: `Ship ${String(i).padStart(2, '0')}`, tenantId, isActive: true });
+      await Table.insertMany(demoTables);
+    }
+
+    // Seed Products if empty
+    const Product = (await import('./src/models/Product')).default;
+    const existingProducts = await Product.find({ tenantId });
+    if (existingProducts.length === 0) {
+      const demoProducts = [
+        { name: 'Cà phê Đen', price: 25000, category: 'Đồ uống', tenantId, description: 'Cà phê nguyên chất', image: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=500' },
+        { name: 'Cà phê Sữa', price: 29000, category: 'Đồ uống', tenantId, description: 'Cà phê sữa pha máy', image: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=500' },
+        { name: 'Bạc Xỉu', price: 32000, category: 'Đồ uống', tenantId, image: 'https://images.unsplash.com/photo-1544787210-22dbce921500?w=500' },
+        { name: 'Trà Đào Cam Sả', price: 45000, category: 'Trà', tenantId, image: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=500' }
+      ];
+      await Product.insertMany(demoProducts);
+    }
+
+    res.json({ success: true, message: 'Data seeded successfully' });
+  } catch (err) {
+    console.error('Seed failed:', err);
+    res.status(500).json({ error: 'Seed failed' });
+  }
+});
+
 async function startServer() {
   // Connect to Database
   dbConnect().catch(err => console.error('Failed to connect to MongoDB:', err));
