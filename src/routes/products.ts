@@ -16,10 +16,18 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST /api/products - Create a new product (Auth required)
+// POST /api/products - Create a new product or bulk products (Auth required)
 router.post('/', authenticate, async (req, res) => {
   try {
     const tenantId = getTenantId();
+    
+    if (Array.isArray(req.body)) {
+      // Bulk create
+      const productsData = req.body.map(p => ({ ...p, tenantId }));
+      const products = await Product.insertMany(productsData);
+      return res.status(201).json(products);
+    }
+
     const productData = { 
       ...req.body, 
       tenantId // Force the tenantId from context
@@ -29,7 +37,35 @@ router.post('/', authenticate, async (req, res) => {
     await product.save();
     res.status(201).json(product);
   } catch (error) {
-    res.status(400).json({ error: 'Failed to create product', details: error });
+    res.status(400).json({ error: 'Failed to create product(s)', details: error });
+  }
+});
+
+// PUT /api/products/:id - Update an existing product (Auth required)
+router.put('/:id', authenticate, async (req, res) => {
+  try {
+    const tenantId = getTenantId();
+    const product = await Product.findOneAndUpdate(
+      { _id: req.params.id, tenantId },
+      req.body,
+      { new: true }
+    );
+    if (!product) return res.status(404).json({ error: 'Product not found' });
+    res.json(product);
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to update product', details: error });
+  }
+});
+
+// DELETE /api/products/:id - Delete a product (Auth required)
+router.delete('/:id', authenticate, async (req, res) => {
+  try {
+    const tenantId = getTenantId();
+    const product = await Product.findOneAndDelete({ _id: req.params.id, tenantId });
+    if (!product) return res.status(404).json({ error: 'Product not found' });
+    res.json({ message: 'Product deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete product' });
   }
 });
 

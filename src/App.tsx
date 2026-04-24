@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Coffee, CookingPot, Settings, LayoutDashboard, QrCode, LogOut } from 'lucide-react';
+import { Coffee, CookingPot, Settings, LayoutDashboard, QrCode, LogOut, UtensilsCrossed } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useEffect } from 'react';
 import { useAuthStore } from './store/authStore';
@@ -7,6 +7,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ShiftGuard from './components/ShiftGuard';
 import POSPage from './pages/POSPage';
 import KitchenPage from './pages/KitchenPage';
+import MenuPage from './pages/MenuPage';
 import CustomerOrderPage from './pages/CustomerOrderPage';
 import QRManagerPage from './pages/QRManagerPage';
 import SettingsPage from './pages/SettingsPage';
@@ -55,6 +56,9 @@ const MainLayout = () => {
             <Link to="/kitchen" className="p-3 text-slate-400 hover:text-emerald-600 transition-colors rounded-xl hover:bg-slate-50 group">
               <CookingPot className="w-6 h-6 group-hover:scale-110 transition-transform" />
             </Link>
+            <Link to="/menu" className="p-3 text-slate-400 hover:text-emerald-600 transition-colors rounded-xl hover:bg-slate-50 group">
+              <UtensilsCrossed className="w-6 h-6 group-hover:scale-110 transition-transform" />
+            </Link>
             <Link to="/qr" className="p-3 text-slate-400 hover:text-emerald-600 transition-colors rounded-xl hover:bg-slate-50 group">
               <QrCode className="w-6 h-6 group-hover:scale-110 transition-transform" />
             </Link>
@@ -84,6 +88,7 @@ const MainLayout = () => {
                   </ShiftGuard>
                 } />
                 <Route path="/kitchen" element={<KitchenPage />} />
+                <Route path="/menu" element={<MenuPage />} />
                 <Route path="/qr" element={<QRManagerPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/admin" element={<AdminPage />} />

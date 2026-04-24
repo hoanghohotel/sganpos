@@ -3,6 +3,8 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IProduct extends Document {
   tenantId: string;
   name: string;
+  category: string;
+  image?: string;
   basePrice: number;
   sizes: { name: string; price: number }[];
   sugarLevels: string[];
@@ -13,6 +15,8 @@ export interface IProduct extends Document {
 const ProductSchema: Schema = new Schema({
   tenantId: { type: String, required: true, index: true },
   name: { type: String, required: true },
+  category: { type: String, required: true, default: 'Chưa phân loại' },
+  image: { type: String },
   basePrice: { type: Number, required: true },
   sizes: [
     {

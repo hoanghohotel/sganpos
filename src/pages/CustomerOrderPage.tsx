@@ -16,6 +16,7 @@ interface Product {
   name: string;
   basePrice: number;
   category: string;
+  image?: string;
 }
 
 interface CartItem {
@@ -218,17 +219,21 @@ const CustomerOrderPage = () => {
             className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between"
           >
             <div>
-              <div className="aspect-square bg-slate-50 rounded-xl mb-3 flex items-center justify-center">
-                <Coffee className="text-slate-200" size={32} />
+              <div className="aspect-square bg-slate-50 rounded-xl mb-3 flex items-center justify-center overflow-hidden">
+                {product.image ? (
+                  <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                ) : (
+                  <Coffee className="text-slate-200" size={32} />
+                )}
               </div>
-              <h3 className="text-xs font-black text-slate-900 leading-tight mb-1 uppercase tracking-tighter">{product.name}</h3>
-              <p className="text-[10px] font-bold text-slate-400">{product.category}</p>
+              <h3 className="text-[10px] font-black text-slate-900 leading-tight mb-1 uppercase tracking-tighter line-clamp-2 h-8">{product.name}</h3>
+              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{product.category}</p>
             </div>
             <div className="flex items-center justify-between mt-3">
-              <span className="text-xs font-black text-emerald-600">{product.basePrice.toLocaleString('vi-VN')}đ</span>
+              <span className="text-[11px] font-black text-emerald-600 font-mono">{product.basePrice.toLocaleString('vi-VN')}đ</span>
               <button 
                 onClick={() => addToCart(product)}
-                className="w-8 h-8 bg-emerald-600 text-white rounded-lg flex items-center justify-center shadow-lg shadow-emerald-100"
+                className="w-8 h-8 bg-emerald-600 text-white rounded-lg flex items-center justify-center shadow-lg shadow-emerald-100 active:scale-90 transition-transform"
               >
                 <Plus size={16} />
               </button>

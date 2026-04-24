@@ -16,6 +16,7 @@ interface Product {
   name: string;
   basePrice: number;
   category: string;
+  image?: string;
 }
 
 interface CartItem {
@@ -39,8 +40,12 @@ const ProductCard: React.FC<{ product: Product, onAdd: () => void }> = ({ produc
     className="group bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:border-emerald-200 hover:shadow-emerald-100/20 transition-all text-left flex flex-col justify-between h-44"
   >
     <div>
-      <div className="w-full h-20 bg-slate-50 rounded-xl mb-3 flex items-center justify-center group-hover:bg-emerald-50 transition-colors">
-        <Coffee className="text-slate-300 group-hover:text-emerald-300 transition-colors" />
+      <div className="w-full h-20 bg-slate-50 rounded-xl mb-3 flex items-center justify-center group-hover:bg-emerald-50 transition-colors overflow-hidden">
+        {product.image ? (
+          <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+        ) : (
+          <Coffee className="text-slate-300 group-hover:text-emerald-300 transition-colors" />
+        )}
       </div>
       <h3 className="font-bold text-slate-900 leading-tight group-hover:text-emerald-600 transition-colors line-clamp-1 text-sm uppercase tracking-tighter font-sans">{product.name}</h3>
     </div>
