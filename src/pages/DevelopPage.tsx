@@ -72,14 +72,24 @@ const DevelopPage = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [u, l, d] = await Promise.all([
+      const results = await Promise.allSettled([
         api.get('/api/admin/users'),
         api.get('/api/dev/logs'),
         api.get('/api/dev/db-status')
       ]);
-      setUsers(u.data);
-      setLogs(l.data);
-      setDbStatus(d.data);
+      
+      if (results[0].status === 'fulfilled' && Array.isArray(results[0].value.data)) {
+        setUsers(results[0].value.data);
+      }
+      if (results[1].status === 'fulfilled' && Array.isArray(results[1].value.data)) {
+        setLogs(results[1].value.data);
+      }
+      if (results[2].status === 'fulfilled') setDbStatus(results[2].value.data);
+      
+      const failures = results.filter(r => r.status === 'rejected');
+      if (failures.length > 0) {
+        console.warn('Some dev data failed to fetch', failures);
+      }
     } catch (err) {
       console.error('Failed to fetch dev data');
     } finally {
@@ -91,7 +101,11 @@ const DevelopPage = () => {
     if (isAuthenticated) {
       const interval = setInterval(() => {
         if (activeTab === 'logs') {
-          api.get('/api/dev/logs').then(res => setLogs(res.data));
+          api.get('/api/dev/logs').then(res => {
+            if (Array.isArray(res.data)) {
+              setLogs(res.data);
+            }
+          });
         }
       }, 5000);
       return () => clearInterval(interval);

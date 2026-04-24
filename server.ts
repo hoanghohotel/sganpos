@@ -90,6 +90,20 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(tenantMiddleware);
 
+// DB Connection Check Middleware
+app.use('/api', (req, res, next) => {
+  const state = mongoose.connection.readyState;
+  if (state !== 1 && !req.path.startsWith('/health') && !req.path.startsWith('/dev/db-status')) {
+    const states = ['Disconnected', 'Connected', 'Connecting', 'Disconnecting'];
+    return res.status(503).json({ 
+      error: 'Database is currently unavailable', 
+      status: states[state],
+      details: 'Please check the MongoDB connection string in the environment terminal or settings.'
+    });
+  }
+  next();
+});
+
 // API Routes
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', database: 'connected' });
@@ -221,38 +235,57 @@ app.post('/api/dev/seed', async (req, res) => {
 });
 
 async function startServer() {
+  console.log('[Server] Initializing system...');
+  
   // Connect to Database
-  await dbConnect().catch(err => console.error('Failed to connect to MongoDB:', err));
-
-  // Seed Super Admin if not exists
+  let dbConnected = false;
   try {
-    const superAdminEmail = 'admin@sganpos.vn';
-    const existing = await User.findOne({ email: superAdminEmail });
-    
-    const hashedPassword = await bcrypt.hash('admin@123', 10);
-    if (!existing) {
-      const superAdmin = new User({
-        tenantId: 'demo',
-        name: 'Super Admin',
-        email: superAdminEmail,
-        password: hashedPassword,
-        role: 'ADMIN',
-        isActive: true
-      });
-      await superAdmin.save();
-      console.log('--- Super Admin created ---');
-    } else {
-      // Update password/status but keep the ID
-      existing.password = hashedPassword;
-      existing.role = 'ADMIN';
-      existing.isActive = true;
-      existing.tenantId = 'demo';
-      await existing.save();
-      console.log('--- Super Admin synced (ID preserved) ---');
-    }
-    console.log('Email:', superAdminEmail);
+    await dbConnect();
+    dbConnected = true;
   } catch (err) {
-    console.error('Failed to sync super admin:', err);
+    console.error('❌ CRITICAL ERROR: Could NOT connect to MongoDB. Server starting in limited mode.', err);
+    // In many apps we might want to process.exit(1) here, 
+    // but in a dev environment we might want the server to stay up to show the error page.
+  }
+
+  // Seed Super Admin if not exists - ONLY if DB is connected
+  if (dbConnected) {
+    try {
+      const superAdminEmail = 'admin@sganpos.vn';
+      
+      // Verify connection is truly ready
+      if (mongoose.connection.readyState !== 1) {
+        throw new Error(`Mongoose not ready. State: ${mongoose.connection.readyState}`);
+      }
+
+      const existing = await User.findOne({ email: superAdminEmail });
+      
+      const hashedPassword = await bcrypt.hash('admin@123', 10);
+      if (!existing) {
+        const superAdmin = new User({
+          tenantId: 'demo',
+          name: 'Super Admin',
+          email: superAdminEmail,
+          password: hashedPassword,
+          role: 'ADMIN',
+          isActive: true
+        });
+        await superAdmin.save();
+        console.log('--- Super Admin created ---');
+      } else {
+        // Update password/status but keep the ID
+        existing.password = hashedPassword;
+        existing.role = 'ADMIN';
+        existing.isActive = true;
+        existing.tenantId = 'demo';
+        await existing.save();
+        console.log('--- Super Admin synced (ID preserved) ---');
+      }
+    } catch (err) {
+      console.error('Failed to sync super admin:', err);
+    }
+  } else {
+    console.warn('⚠️ Skipping Super Admin sync: Database not connected.');
   }
 
   // Vite integration

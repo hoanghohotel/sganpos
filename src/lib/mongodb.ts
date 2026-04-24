@@ -19,17 +19,24 @@ async function dbConnect() {
 
   if (!cached.promise) {
     const opts = {
-      bufferCommands: true,
+      bufferCommands: true, // Re-enable buffering to prevent "Cannot call findOne before connection" errors
+      serverSelectionTimeoutMS: 10000, // Timeout after 10s
     };
 
+    console.log('[MongoDB] 🔗 Initiating connection...');
     cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
-      console.log('✅ Connected to MongoDB');
+      console.log('✅ MongoDB Ready (State: Connected)');
       return mongoose;
+    }).catch(err => {
+      console.error('❌ MongoDB Connection Failure:', err.message);
+      cached.promise = null;
+      throw err;
     });
   }
 
   try {
     cached.conn = await cached.promise;
+    console.log('[MongoDB] Current State:', mongoose.connection.readyState);
   } catch (e) {
     cached.promise = null;
     throw e;
