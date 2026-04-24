@@ -20,7 +20,7 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
     }
 
     const decoded: any = jwt.verify(token, JWT_SECRET);
-    const user = await User.findOne({ _id: decoded.id, tenantId }).select('-password');
+    const user = await User.findOne({ _id: decoded.id, tenantId: decoded.tenantId }).select('-password');
 
     if (!user) {
       console.warn(`Auth Middleware: User not found for ID ${decoded.id} in tenant ${tenantId}`);

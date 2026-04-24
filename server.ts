@@ -29,6 +29,9 @@ app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
     const duration = Date.now() - start;
+    if (res.statusCode === 401) {
+      console.warn(`[401 ERROR] ${req.method} ${req.path} - Headers:`, JSON.stringify(req.headers));
+    }
     if (!req.path.startsWith('/api/dev')) {
       systemLogs.push({
         timestamp: new Date(),
@@ -100,8 +103,13 @@ app.use('/api/tables', tableRoutes);
 app.use('/api/settings', settingsRoutes);
 
 // --- Development & Admin APIs ---
-app.get('/api/dev/logs', (req, res) => res.json(systemLogs.slice().reverse()));
+app.get('/api/dev/logs', (req, res) => {
+  console.log('[Dev] Fetching logs...');
+  res.json(systemLogs.slice().reverse());
+});
+
 app.get('/api/dev/db-status', async (req, res) => {
+  console.log('[Dev] Checking DB status...');
   const state = mongoose.connection.readyState;
   const states = ['Disconnected', 'Connected', 'Connecting', 'Disconnecting'];
   res.json({ 
@@ -111,10 +119,12 @@ app.get('/api/dev/db-status', async (req, res) => {
 });
 
 app.get('/api/admin/users', async (req, res) => {
+  console.log('[Admin] Fetching all users...');
   try {
     const users = await User.find({}, '-password');
     res.json(users);
   } catch (err) {
+    console.error('[Admin] User fetch failed:', err);
     res.status(500).json({ error: 'Failed to fetch users' });
   }
 });
@@ -195,25 +205,24 @@ async function startServer() {
   // Connect to Database
   await dbConnect().catch(err => console.error('Failed to connect to MongoDB:', err));
 
-  // Seed Super Admin if not exists
+  // Reset/Seed Super Admin
   try {
     const superAdminEmail = 'admin@sganpos.vn';
-    const existing = await User.findOne({ email: superAdminEmail });
-    if (!existing) {
-      const hashedPassword = await bcrypt.hash('admin@123', 10);
-      const superAdmin = new User({
-        tenantId: 'demo',
-        name: 'Super Admin',
-        email: superAdminEmail,
-        password: hashedPassword,
-        role: 'ADMIN',
-        isActive: true
-      });
-      await superAdmin.save();
-      console.log('--- Super Admin seeded to database ---');
-    }
+    await User.deleteOne({ email: superAdminEmail });
+    
+    const hashedPassword = await bcrypt.hash('admin@123', 10);
+    const superAdmin = new User({
+      tenantId: 'demo',
+      name: 'Super Admin',
+      email: superAdminEmail,
+      password: hashedPassword,
+      role: 'ADMIN',
+      isActive: true
+    });
+    await superAdmin.save();
+    console.log('--- Super Admin synced to database (admin@sganpos.vn / admin@123) ---');
   } catch (err) {
-    console.error('Failed to seed super admin:', err);
+    console.error('Failed to sync super admin:', err);
   }
 
   // Vite integration

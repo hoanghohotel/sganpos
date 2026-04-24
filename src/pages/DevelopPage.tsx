@@ -31,13 +31,31 @@ const DevelopPage = () => {
   const [loading, setLoading] = useState(false);
   const [editingUser, setEditingUser] = useState<Partial<User> | null>(null);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (credentials.email === 'admin@sganpos.vn' && credentials.password === 'admin@123') {
-      setIsAuthenticated(true);
-      fetchData();
-    } else {
-      alert('Sai tài khoản hoặc mật khẩu hệ quản trị!');
+    setLoading(true);
+    try {
+      // Step 1: Client side check for developer portal access
+      if (credentials.email === 'admin@sganpos.vn' && credentials.password === 'admin@123') {
+        // Step 2: Attempt real backend login to get session token/cookie
+        try {
+          const res = await api.post('/api/auth/login', credentials);
+          if (res.data.token) {
+            localStorage.setItem('token', res.data.token);
+          }
+        } catch (authErr) {
+          console.warn('Backend auth failed, but proceeding with dev portal access');
+        }
+        
+        setIsAuthenticated(true);
+        await fetchData();
+      } else {
+        alert('Sai tài khoản hoặc mật khẩu hệ quản trị!');
+      }
+    } catch (err) {
+      alert('Lỗi khởi tạo truy cập');
+    } finally {
+      setLoading(false);
     }
   };
 

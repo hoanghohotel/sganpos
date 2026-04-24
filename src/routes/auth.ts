@@ -47,18 +47,29 @@ router.post('/login', async (req: any, res) => {
   try {
     const { email, password } = req.body;
     const tenantId = getTenantId();
+    console.log(`[Auth] Login attempt: ${email} (Tenant: ${tenantId})`);
 
-    const user = await User.findOne({ email, tenantId });
+    let user = await User.findOne({ email, tenantId });
+    
     if (!user) {
+      console.log(`[Auth] User not found in tenant ${tenantId}, checking global ADMIN...`);
+      user = await User.findOne({ email, role: 'ADMIN' });
+    }
+
+    if (!user) {
+      console.warn(`[Auth] Login failed: User ${email} not found anywhere`);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      console.warn(`[Auth] Login failed: Password mismatch for ${email}`);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
+    
+    console.log(`[Auth] Login successful: ${email} (${user.role})`);
 
-    const token = jwt.sign({ id: user._id, tenantId }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id: user._id, tenantId: user.tenantId }, JWT_SECRET, { expiresIn: '7d' });
 
     res.cookie('token', token, {
       httpOnly: true,

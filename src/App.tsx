@@ -106,11 +106,11 @@ const MainLayout = () => {
                 <Route path="/kitchen" element={<KitchenPage />} />
                 <Route path="/menu" element={<MenuPage />} />
                 <Route path="/tables" element={<TablesPage />} />
-                <Route path="/develop" element={<DevelopPage />} />
                 <Route path="/qr" element={<QRManagerPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/admin" element={<AdminPage />} />
               </Route>
+              <Route path="/develop" element={<DevelopPage />} />
               <Route path="/order" element={<CustomerOrderPage />} />
             </Routes>
           </motion.div>
