@@ -1,13 +1,13 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
-import dbConnect from '../src/lib/mongodb';
-import { tenantMiddleware } from '../src/middleware/tenant';
-import productRoutes from '../src/routes/products';
-import orderRoutes from '../src/routes/orders';
-import tableRoutes from '../src/routes/tables';
-import settingsRoutes from '../src/routes/settings';
-import authRoutes from '../src/routes/auth';
-import shiftRoutes from '../src/routes/shifts';
+import dbConnect from '../src/lib/mongodb.ts';
+import { tenantMiddleware } from '../src/middleware/tenant.ts';
+import productRoutes from '../src/routes/products.ts';
+import orderRoutes from '../src/routes/orders.ts';
+import tableRoutes from '../src/routes/tables.ts';
+import settingsRoutes from '../src/routes/settings.ts';
+import authRoutes from '../src/routes/auth.ts';
+import shiftRoutes from '../src/routes/shifts.ts';
 
 const app = express();
 
@@ -18,11 +18,15 @@ app.use(cookieParser());
 // Database connection middleware
 app.use(async (req, res, next) => {
   try {
+    if (!process.env.MONGODB_URI) {
+      console.error('MONGODB_URI is not defined');
+      return res.status(500).json({ error: 'Database configuration missing' });
+    }
     await dbConnect();
     next();
-  } catch (error) {
+  } catch (error: any) {
     console.error('Database connection error:', error);
-    res.status(500).json({ error: 'Database connection failed' });
+    res.status(500).json({ error: 'Database connection failed', details: error.message });
   }
 });
 
@@ -30,7 +34,13 @@ app.use(tenantMiddleware);
 
 // API Routes
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', database: 'connected' });
+  res.json({ 
+    status: 'ok', 
+    database: 'connected',
+    tenant: (req as any).headers['x-tenant-id'] || 'unknown',
+    url: req.url,
+    originalUrl: req.originalUrl
+  });
 });
 
 const apiRouter = express.Router();
@@ -41,9 +51,11 @@ apiRouter.use('/orders', orderRoutes);
 apiRouter.use('/tables', tableRoutes);
 apiRouter.use('/settings', settingsRoutes);
 
-// Mount under both to be safe
+// Mounting configuration for Vercel
+// On Vercel, when routed via /api/(.*), the original path /api/auth/register
+// might be passed as /api/auth/register or just /auth/register depending on rewrite config.
 app.use('/api', apiRouter);
-app.use(apiRouter); // Fallback
+app.use(apiRouter); // Fallback for when the /api prefix is stripped by Vercel
 
 // Export the app for Vercel
 export default app;

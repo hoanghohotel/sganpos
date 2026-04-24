@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { tenantStorage } from '../lib/tenant';
+import { tenantStorage } from '../lib/tenant.ts';
 
 /**
  * Middleware to detect the tenant from the subdomain.

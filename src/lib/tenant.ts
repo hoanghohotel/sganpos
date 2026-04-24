@@ -13,9 +13,9 @@ export function getTenantId(): string {
   const store = tenantStorage.getStore();
   if (store?.tenantId) return store.tenantId;
 
-  // Fallback: If AsyncLocalStorage is lost (e.g. on serverless sometimes)
-  // we might have it on req.headers if we follow that pattern, 
-  // but getTenantId is often called without req object.
+  // Fallback: This is not ideal but can help if context is lost
+  // However, getTenantId is often called from services without access to req.
+  // In our app, we usually call it within a route handler.
   
   return 'demo';
 }

@@ -18,8 +18,16 @@ const RegisterPage = () => {
       await register(name, email, password);
       navigate('/login');
     } catch (err: any) {
-      const msg = err.response?.data?.error;
-      setError(typeof msg === 'string' ? msg : 'Đăng ký thất bại');
+      console.error('Register error:', err);
+      if (err.response) {
+        const msg = err.response.data?.error;
+        const details = err.response.data?.details;
+        setError(typeof msg === 'string' ? (details ? `${msg}: ${details}` : msg) : 'Đăng ký thất bại');
+      } else if (err.request) {
+        setError('Không thể kết nối tới máy chủ. Vui lòng kiểm tra mạng.');
+      } else {
+        setError(`Lỗi: ${err.message}`);
+      }
     }
   };
 

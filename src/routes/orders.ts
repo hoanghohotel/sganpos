@@ -1,8 +1,8 @@
 import express from 'express';
-import Order from '../models/Order';
-import { getTenantId } from '../lib/tenant';
-import { emitToTenant } from '../lib/socketService';
-import { authenticate } from '../middleware/auth';
+import Order from '../models/Order.ts';
+import { getTenantId } from '../lib/tenant.ts';
+import { emitToTenant } from '../lib/socketService.ts';
+import { authenticate } from '../middleware/auth.ts';
 
 const router = express.Router();
 

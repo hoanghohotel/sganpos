@@ -1,9 +1,9 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import User from '../models/User';
-import { authenticate, AuthRequest } from '../middleware/auth';
-import { getTenantId } from '../lib/tenant';
+import User from '../models/User.ts';
+import { authenticate, AuthRequest } from '../middleware/auth.ts';
+import { getTenantId } from '../lib/tenant.ts';
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'default_secret';
@@ -33,8 +33,12 @@ router.post('/register', async (req: any, res) => {
 
     await user.save();
     res.status(201).json({ message: 'User created successfully' });
-  } catch (error) {
-    res.status(500).json({ error: 'Registration failed' });
+  } catch (error: any) {
+    console.error('Registration Error:', error);
+    res.status(500).json({ 
+      error: 'Registration failed', 
+      details: error.message || String(error)
+    });
   }
 });
 
@@ -59,6 +63,7 @@ router.post('/login', async (req: any, res) => {
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
+      sameSite: 'none',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
 
@@ -71,8 +76,12 @@ router.post('/login', async (req: any, res) => {
       },
       token
     });
-  } catch (error) {
-    res.status(500).json({ error: 'Login failed' });
+  } catch (error: any) {
+    console.error('Login Error:', error);
+    res.status(500).json({ 
+      error: 'Login failed',
+      details: error.message || String(error)
+    });
   }
 });
 

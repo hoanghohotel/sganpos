@@ -1,7 +1,7 @@
 import express from 'express';
-import Product from '../models/Product';
-import { getTenantId } from '../lib/tenant';
-import { authenticate } from '../middleware/auth';
+import Product from '../models/Product.ts';
+import { getTenantId } from '../lib/tenant.ts';
+import { authenticate } from '../middleware/auth.ts';
 
 const router = express.Router();
 

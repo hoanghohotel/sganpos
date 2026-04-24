@@ -17,8 +17,16 @@ const LoginPage = () => {
       await login(email, password);
       navigate('/');
     } catch (err: any) {
-      const msg = err.response?.data?.error;
-      setError(typeof msg === 'string' ? msg : 'Đăng nhập thất bại');
+      console.error('Login error:', err);
+      if (err.response) {
+        const msg = err.response.data?.error;
+        const details = err.response.data?.details;
+        setError(typeof msg === 'string' ? (details ? `${msg}: ${details}` : msg) : 'Đăng nhập thất bại');
+      } else if (err.request) {
+        setError('Không thể kết nối tới máy chủ. Vui lòng kiểm tra mạng.');
+      } else {
+        setError(`Lỗi: ${err.message}`);
+      }
     }
   };
 
