@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
-import User from '../models/User';
-import { getTenantId } from '../lib/tenant';
+import User from '../models/User.ts';
+import { getTenantId } from '../lib/tenant.ts';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default_secret';
 
@@ -18,7 +18,7 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
     }
 
     const token = req.cookies?.token || req.headers.authorization?.split(' ')[1];
-    const tenantId = getTenantId();
+    const currentTenantId = getTenantId();
 
     if (!token) {
       return res.status(401).json({ error: 'Authentication required' });
@@ -28,15 +28,15 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
 
     // Security: Token tenant must match current request tenant
     // Exception for 'demo' tenant (system admin context)
-    if (decoded.tenantId !== tenantId && decoded.tenantId !== 'demo') {
-       console.warn(`Auth Middleware: Tenant mismatch. Token: ${decoded.tenantId}, Request: ${tenantId}`);
+    if (decoded.tenantId !== currentTenantId && decoded.tenantId !== 'demo') {
+       console.warn(`Auth Middleware: Tenant mismatch. Token: ${decoded.tenantId}, Request: ${currentTenantId}`);
        return res.status(403).json({ error: 'Tenant access mismatch' });
     }
 
     const user = await User.findOne({ _id: decoded.id, tenantId: decoded.tenantId }).select('-password');
 
     if (!user) {
-      console.warn(`Auth Middleware: User not found for ID ${decoded.id} in tenant ${decoded.tenantId} (Request tenant: ${tenantId})`);
+      console.warn(`Auth Middleware: User not found for ID ${decoded.id} in tenant ${decoded.tenantId} (Request tenant: ${currentTenantId})`);
       return res.status(401).json({ error: 'User not found or mismatch tenant' });
     }
 
