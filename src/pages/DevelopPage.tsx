@@ -34,6 +34,7 @@ const DevelopPage = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    localStorage.removeItem('token'); // Clear any stale token
     try {
       // Step 1: Client side check for developer portal access
       if (credentials.email === 'admin@sganpos.vn' && credentials.password === 'admin@123') {
@@ -42,9 +43,12 @@ const DevelopPage = () => {
           const res = await api.post('/api/auth/login', credentials);
           if (res.data.token) {
             localStorage.setItem('token', res.data.token);
+            console.log('Login success: Backend token stored');
           }
-        } catch (authErr) {
-          console.warn('Backend auth failed, but proceeding with dev portal access');
+        } catch (authErr: any) {
+          const msg = authErr.response?.data?.error || authErr.message;
+          console.error('Backend auth failed:', msg);
+          alert(`Backend Auth Error: ${msg}. Terminal will still open but admin APIs may fail.`);
         }
         
         setIsAuthenticated(true);
@@ -99,8 +103,9 @@ const DevelopPage = () => {
       }
       setEditingUser(null);
       fetchData();
-    } catch (err) {
-      alert('Lỗi khi lưu người dùng');
+    } catch (err: any) {
+      const msg = err.response?.data?.error || err.message;
+      alert(`Lỗi khi lưu người dùng: ${msg}`);
     }
   };
 
@@ -247,7 +252,7 @@ const DevelopPage = () => {
                 </div>
               </div>
               <button 
-                onClick={() => setEditingUser({ name: '', email: '', role: 'user', tenantId: 'demo' })}
+                onClick={() => setEditingUser({ name: '', email: '', role: 'STAFF', tenantId: 'demo' })}
                 className="h-12 px-6 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg shadow-emerald-900/20"
               >
                 <Plus size={18} />

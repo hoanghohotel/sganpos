@@ -52,22 +52,27 @@ router.post('/login', async (req: any, res) => {
     let user = await User.findOne({ email, tenantId });
     
     if (!user) {
-      console.log(`[Auth] User not found in tenant ${tenantId}, checking global ADMIN...`);
-      user = await User.findOne({ email, role: 'ADMIN' });
+      console.log(`[Auth] User not found in tenant ${tenantId}, checking global...`);
+      user = await User.findOne({ email }); // Just search by email
+    }
+    
+    if (user) {
+      console.log(`[Auth] Found user: ${user.email} in tenant ${user.tenantId} with role ${user.role}`);
+    } else {
+      console.warn(`[Auth] No user found for email: ${email}`);
     }
 
     if (!user) {
-      console.warn(`[Auth] Login failed: User ${email} not found anywhere`);
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: 'Invalid credentials - user not found' });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      console.warn(`[Auth] Login failed: Password mismatch for ${email}`);
-      return res.status(401).json({ error: 'Invalid credentials' });
+      console.warn(`[Auth] Password mismatch for ${email}. Supplied password length: ${password.length}`);
+      return res.status(401).json({ error: 'Invalid credentials - password mismatch' });
     }
     
-    console.log(`[Auth] Login successful: ${email} (${user.role})`);
+    console.log(`[Auth] Login successful: ${email} (${user.role}) mapping to ID: ${user._id}`);
 
     const token = jwt.sign({ id: user._id, tenantId: user.tenantId }, JWT_SECRET, { expiresIn: '7d' });
 

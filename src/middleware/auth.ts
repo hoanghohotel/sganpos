@@ -23,7 +23,7 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
     const user = await User.findOne({ _id: decoded.id, tenantId: decoded.tenantId }).select('-password');
 
     if (!user) {
-      console.warn(`Auth Middleware: User not found for ID ${decoded.id} in tenant ${tenantId}`);
+      console.warn(`Auth Middleware: User not found for ID ${decoded.id} in tenant ${decoded.tenantId} (Request tenant: ${tenantId})`);
       return res.status(401).json({ error: 'User not found or mismatch tenant' });
     }
 

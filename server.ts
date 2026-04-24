@@ -220,7 +220,11 @@ async function startServer() {
       isActive: true
     });
     await superAdmin.save();
-    console.log('--- Super Admin synced to database (admin@sganpos.vn / admin@123) ---');
+    console.log('--- Super Admin synced to database ---');
+    console.log('Email:', superAdminEmail);
+    console.log('Role:', superAdmin.role);
+    console.log('Tenant:', superAdmin.tenantId);
+    console.log('---------------------------------------');
   } catch (err) {
     console.error('Failed to sync super admin:', err);
   }
