@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from '../lib/api';
 import { ShoppingCart, Plus, Minus, Trash2, Coffee, CheckCircle2, Banknote, CreditCard, X, ChevronRight, LogOut, CircleDollarSign } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuthStore } from '../store/authStore';

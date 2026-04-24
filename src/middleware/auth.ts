@@ -15,6 +15,7 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
     const tenantId = getTenantId();
 
     if (!token) {
+      console.warn('Auth Middleware: No token found in cookies or headers');
       return res.status(401).json({ error: 'Authentication required' });
     }
 
@@ -22,6 +23,7 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
     const user = await User.findOne({ _id: decoded.id, tenantId }).select('-password');
 
     if (!user) {
+      console.warn(`Auth Middleware: User not found for ID ${decoded.id} in tenant ${tenantId}`);
       return res.status(401).json({ error: 'User not found or mismatch tenant' });
     }
 

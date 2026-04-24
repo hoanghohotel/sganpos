@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from '../lib/api';
 import { QRCodeCanvas } from 'qrcode.react';
 import { Download, Printer, Filter } from 'lucide-react';
 import { motion } from 'motion/react';

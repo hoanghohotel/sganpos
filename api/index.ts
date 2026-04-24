@@ -11,8 +11,11 @@ import shiftRoutes from '../src/routes/shifts.ts';
 
 const app = express();
 
+// Trust proxy for secure cookies
+app.set('trust proxy', 1);
+
 // Middleware
-app.use(express.json());
+ app.use(express.json());
 app.use(cookieParser());
 
 // Database connection middleware

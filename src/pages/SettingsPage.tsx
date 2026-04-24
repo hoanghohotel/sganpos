@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from '../lib/api';
 import { Save, Building2, CreditCard, Upload, CheckCircle2, AlertCircle, ChevronDown, Search, Globe, Link as LinkIcon, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
@@ -57,7 +57,7 @@ const SettingsPage = () => {
         axios.get('https://api.vietqr.io/v2/banks')
       ]);
       
-      setSettings(settingsRes.data);
+      setSettings(prev => ({ ...prev, ...settingsRes.data }));
       if (banksRes.data && banksRes.data.data) {
         setBanks(banksRes.data.data);
       }
@@ -188,7 +188,7 @@ const SettingsPage = () => {
                   <input
                     type="text"
                     name="storeName"
-                    value={settings.storeName}
+                    value={settings.storeName || ''}
                     onChange={handleChange}
                     placeholder="VD: Antigravity Coffee"
                     className="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-slate-300"
@@ -199,7 +199,7 @@ const SettingsPage = () => {
                   <input
                     type="text"
                     name="hotline"
-                    value={settings.hotline}
+                    value={settings.hotline || ''}
                     onChange={handleChange}
                     placeholder="Số điện thoại liên hệ"
                     className="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-slate-300"
@@ -213,7 +213,7 @@ const SettingsPage = () => {
                   <input
                     type="text"
                     name="logoUrl"
-                    value={settings.logoUrl}
+                    value={settings.logoUrl || ''}
                     onChange={handleChange}
                     placeholder="https://example.com/logo.png"
                     className="flex-1 bg-slate-50 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-slate-300"
@@ -232,7 +232,7 @@ const SettingsPage = () => {
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Địa chỉ quán</label>
                 <textarea
                   name="address"
-                  value={settings.address}
+                  value={settings.address || ''}
                   onChange={handleChange}
                   placeholder="Địa chỉ chi tiết của quán"
                   rows={3}
@@ -326,7 +326,7 @@ const SettingsPage = () => {
                   <input
                     type="text"
                     name="bankAccount"
-                    value={settings.bankAccount}
+                    value={settings.bankAccount || ''}
                     onChange={handleChange}
                     placeholder="Nhập số tài khoản ngân hàng"
                     className="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-slate-300 font-mono"
@@ -337,7 +337,7 @@ const SettingsPage = () => {
                   <input
                     type="text"
                     name="bankAccountHolder"
-                    value={settings.bankAccountHolder}
+                    value={settings.bankAccountHolder || ''}
                     onChange={handleChange}
                     placeholder="VD: NGUYEN VAN A"
                     className="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-slate-300 uppercase"
@@ -385,7 +385,7 @@ const SettingsPage = () => {
                     <input
                       type="text"
                       name="subdomain"
-                      value={settings.subdomain}
+                      value={settings.subdomain || ''}
                       onChange={handleChange}
                       placeholder="VD: antigravity"
                       className="w-full bg-slate-50 border-none rounded-2xl pr-32 pl-5 py-4 text-sm font-bold focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-slate-300"
@@ -403,7 +403,7 @@ const SettingsPage = () => {
                     <input
                       type="text"
                       name="customPath"
-                      value={settings.customPath}
+                      value={settings.customPath || ''}
                       onChange={handleChange}
                       placeholder="VD: coffee-house"
                       className="w-full bg-slate-50 border-none rounded-2xl pl-32 pr-5 py-4 text-sm font-bold focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-slate-300"
