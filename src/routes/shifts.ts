@@ -27,6 +27,14 @@ router.post('/open', authenticate, async (req: AuthRequest, res) => {
     const { openingBalance } = req.body;
     const tenantId = getTenantId();
     const userId = req.user._id;
+    const generateShiftCode = () => {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let code = '';
+      for (let i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return code;
+    };
 
     // Check if there's already an open shift for this user
     const existingShift = await Shift.findOne({ tenantId, userId, status: 'OPEN' });
@@ -39,12 +47,21 @@ router.post('/open', authenticate, async (req: AuthRequest, res) => {
       userId,
       userName: req.user.name,
       openingBalance: openingBalance || 0,
+      code: generateShiftCode(),
       status: 'OPEN'
     });
 
     await shift.save();
+
+    // Carry over active orders (not COMPLETED) from previous shifts to this new one
+    await Order.updateMany(
+      { tenantId, status: { $ne: 'COMPLETED' } },
+      { $set: { shiftId: shift._id } }
+    );
+
     res.status(201).json(shift);
   } catch (error) {
+    console.error('Open Shift Error:', error);
     res.status(500).json({ error: 'Failed to open shift' });
   }
 });
@@ -61,14 +78,24 @@ router.post('/close', authenticate, async (req: AuthRequest, res) => {
       return res.status(404).json({ error: 'No open shift found' });
     }
 
-    // Calculate total sales from orders during this shift
+    // Calculate total sales from orders linked to this shift
     const orders = await Order.find({
       tenantId,
-      createdAt: { $gte: shift.startTime },
+      shiftId: shift._id,
       status: 'COMPLETED' // Only count completed orders
     });
     
     const totalSales = orders.reduce((sum, order) => sum + order.total, 0);
+    
+    // Generate code if missing (legacy shifts)
+    if (!shift.code) {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let code = '';
+      for (let i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      shift.code = code;
+    }
 
     shift.status = 'CLOSED';
     shift.endTime = new Date();

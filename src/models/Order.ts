@@ -25,10 +25,12 @@ export interface IOrder extends Document {
   status: 'PENDING' | 'PREPARING' | 'READY' | 'COMPLETED';
   paymentStatus: 'UNPAID' | 'PAID';
   total: number;
+  shiftId: mongoose.Types.ObjectId;
 }
 
 const OrderSchema: Schema = new Schema({
   tenantId: { type: String, required: true, index: true },
+  shiftId: { type: Schema.Types.ObjectId, ref: 'Shift', required: true },
   orderType: { 
     type: String, 
     enum: ['DINE_IN', 'TAKEAWAY', 'DELIVERY'], 

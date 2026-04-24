@@ -1,5 +1,6 @@
 import express from 'express';
 import Order from '../models/Order';
+import Shift from '../models/Shift';
 import { getTenantId } from '../lib/tenant';
 import { emitToTenant } from '../lib/socketService';
 import { authenticate } from '../middleware/auth';
@@ -23,7 +24,20 @@ router.post('/', async (req, res) => {
     const tenantId = getTenantId();
     const orderNumber = req.body.orderNumber || `ORD-${Date.now().toString().slice(-6)}`;
     
-    const orderData = { ...req.body, orderNumber, tenantId, status: 'PENDING', paymentStatus: 'UNPAID' };
+    // Find current open shift for this tenant
+    let shiftId = req.body.shiftId;
+    if (!shiftId) {
+      const currentShift = await Shift.findOne({ tenantId, status: 'OPEN' });
+      if (currentShift) {
+        shiftId = currentShift._id;
+      }
+    }
+
+    if (!shiftId) {
+       return res.status(400).json({ error: 'Không có ca làm việc nào đang mở. Vui lòng mở ca để tiếp nhận đơn hàng.' });
+    }
+
+    const orderData = { ...req.body, orderNumber, tenantId, shiftId, status: 'PENDING', paymentStatus: 'UNPAID' };
     const order = new Order(orderData);
     await order.save();
     

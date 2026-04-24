@@ -31,6 +31,27 @@ interface Table {
   status: 'EMPTY' | 'OCCUPIED';
 }
 
+const ProductCard: React.FC<{ product: Product, onAdd: () => void }> = ({ product, onAdd }) => (
+  <motion.button
+    whileHover={{ scale: 1.02 }}
+    whileTap={{ scale: 0.98 }}
+    onClick={onAdd}
+    className="group bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:border-emerald-200 hover:shadow-emerald-100/20 transition-all text-left flex flex-col justify-between h-44"
+  >
+    <div>
+      <div className="w-full h-20 bg-slate-50 rounded-xl mb-3 flex items-center justify-center group-hover:bg-emerald-50 transition-colors">
+        <Coffee className="text-slate-300 group-hover:text-emerald-300 transition-colors" />
+      </div>
+      <h3 className="font-bold text-slate-900 leading-tight group-hover:text-emerald-600 transition-colors line-clamp-1 text-sm uppercase tracking-tighter font-sans">{product.name}</h3>
+    </div>
+    <div className="flex justify-between items-end mt-2">
+      <span className="text-emerald-600 font-extrabold text-sm font-mono">
+        {product.basePrice.toLocaleString('vi-VN')}đ
+      </span>
+    </div>
+  </motion.button>
+);
+
 const POSPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
@@ -273,6 +294,7 @@ const POSPage = () => {
             <body>
               <div class="header">
                 <h2>BÁO CÁO KẾT THÚC CA</h2>
+                <h3 style="color: #666; margin-top: -10px;">MÃ CA: ${reportData.code}</h3>
                 <p>${new Date().toLocaleString('vi-VN')}</p>
               </div>
               <div class="row"><span>Nhân viên:</span> <b>${reportData.userName}</b></div>
@@ -325,16 +347,20 @@ const POSPage = () => {
               className="h-full flex flex-col justify-center max-w-4xl mx-auto"
             >
               <h2 className="text-4xl font-black text-slate-900 mb-12 text-center tracking-tighter">Bắt đầu đơn hàng mới</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                 {[
-                  { id: 'DINE_IN', label: 'Tại chỗ', icon: '🏠', color: 'bg-emerald-600' },
-                  { id: 'TAKEAWAY', label: 'Mang về', icon: '🥡', color: 'bg-slate-900' },
-                  { id: 'DELIVERY', label: 'Ship đi', icon: '🛵', color: 'bg-emerald-400' }
+                  { id: 'DINE_IN', label: 'Tại chỗ', icon: '🏠', color: 'bg-emerald-600', action: () => handleTypeSelect('DINE_IN') },
+                  { id: 'TAKEAWAY', label: 'Mang về', icon: '🥡', color: 'bg-slate-900', action: () => handleTypeSelect('TAKEAWAY') },
+                  { id: 'DELIVERY', label: 'Ship đi', icon: '🛵', color: 'bg-emerald-400', action: () => handleTypeSelect('DELIVERY') },
+                  { id: 'SHIFT', label: 'Chốt ca', icon: '💰', color: 'bg-rose-500', action: handleCloseShiftInitiate }
                 ].map((t, idx) => (
                   <button
                     key={`type-${t.id}-${idx}`}
-                    onClick={() => handleTypeSelect(t.id as any)}
-                    className="group bg-white p-10 rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/50 hover:border-emerald-500 hover:scale-[1.05] transition-all flex flex-col items-center gap-6"
+                    onClick={t.action}
+                    className={cn(
+                      "group bg-white p-10 rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/50 hover:border-emerald-500 hover:scale-[1.05] transition-all flex flex-col items-center gap-6",
+                      t.id === 'SHIFT' && "hover:border-rose-500"
+                    )}
                   >
                     <span className="text-6xl group-hover:scale-125 transition-transform">{t.icon}</span>
                     <span className="text-2xl font-black text-slate-900 uppercase tracking-tighter">{t.label}</span>
@@ -415,7 +441,11 @@ const POSPage = () => {
                       </button>
                       <div>
                         <h1 className="text-2xl font-black text-slate-900 tracking-tighter uppercase">{selectedTable?.name}</h1>
-                        <p className="text-emerald-600 text-[10px] font-black uppercase tracking-widest">{orderType?.replace('_', ' ')}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-emerald-600 text-[10px] font-black uppercase tracking-widest">{orderType?.replace('_', ' ')}</p>
+                          <span className="text-slate-300">|</span>
+                          <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Ca: {shift?.code}</p>
+                        </div>
                       </div>
                     </div>
                     <div className="relative">
@@ -428,13 +458,6 @@ const POSPage = () => {
                       />
                       <ShoppingCart className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                     </div>
-                    <button 
-                      onClick={handleCloseShiftInitiate}
-                      className="p-3 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition-colors flex items-center gap-2 font-black text-[10px] uppercase tracking-widest"
-                    >
-                      <LogOut size={16} />
-                      Chốt ca
-                    </button>
                   </div>
                   
                   {/* Category Filter */}
@@ -457,28 +480,29 @@ const POSPage = () => {
                 </div>
               </header>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 overflow-auto pb-8">
-                {filteredProducts.map((product, idx) => (
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    key={`prod-${product._id}-${idx}`}
-                    onClick={() => addToCart(product)}
-                    className="group bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:border-emerald-200 hover:shadow-emerald-100/20 transition-all text-left flex flex-col justify-between h-44"
-                  >
-                    <div>
-                      <div className="w-full h-20 bg-slate-50 rounded-xl mb-3 flex items-center justify-center group-hover:bg-emerald-50 transition-colors">
-                        <Coffee className="text-slate-300 group-hover:text-emerald-300 transition-colors" />
+              <div className="flex-1 overflow-auto pb-8 scrollbar-hide">
+                {selectedCategory === 'Tất cả' && !searchQuery ? (
+                  categories.filter(c => c !== 'Tất cả').map((cat) => {
+                    const catProducts = products.filter(p => p.category === cat);
+                    if (catProducts.length === 0) return null;
+                    return (
+                      <div key={`cat-group-${cat}`} className="mb-8">
+                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4 border-b border-slate-100 pb-2">{cat}</h3>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                          {catProducts.map((product, idx) => (
+                            <ProductCard key={`${cat}-${product._id}-${idx}`} product={product} onAdd={() => addToCart(product)} />
+                          ))}
+                        </div>
                       </div>
-                      <h3 className="font-bold text-slate-900 leading-tight group-hover:text-emerald-600 transition-colors line-clamp-1 text-sm uppercase tracking-tighter font-sans">{product.name}</h3>
-                    </div>
-                    <div className="flex justify-between items-end mt-2">
-                      <span className="text-emerald-600 font-extrabold text-sm font-mono">
-                        {product.basePrice.toLocaleString('vi-VN')}đ
-                      </span>
-                    </div>
-                  </motion.button>
-                ))}
+                    );
+                  })
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    {filteredProducts.map((product, idx) => (
+                      <ProductCard key={`filtered-${product._id}-${idx}`} product={product} onAdd={() => addToCart(product)} />
+                    ))}
+                  </div>
+                )}
               </div>
             </motion.div>
           )}

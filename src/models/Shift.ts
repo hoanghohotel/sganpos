@@ -10,12 +10,14 @@ export interface IShift extends Document {
   closingBalance?: number;
   totalSales: number;
   status: 'OPEN' | 'CLOSED';
+  code: string;
 }
 
 const ShiftSchema: Schema = new Schema({
   tenantId: { type: String, required: true, index: true },
   userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   userName: { type: String, required: true },
+  code: { type: String },
   startTime: { type: Date, default: Date.now },
   endTime: { type: Date },
   openingBalance: { type: Number, default: 0 },

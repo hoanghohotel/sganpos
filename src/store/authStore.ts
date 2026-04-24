@@ -14,6 +14,7 @@ interface Shift {
   startTime: string;
   openingBalance: number;
   status: 'OPEN' | 'CLOSED';
+  code: string;
 }
 
 interface AuthState {
@@ -73,8 +74,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const res = await api.get('/api/auth/me');
       set({ user: res.data, isLoading: false });
       if (res.data) await get().checkShift();
-    } catch (err) {
-      console.error('CheckAuth error:', err);
+    } catch (err: any) {
+      // Only log errors that are not 401 (unauthorized)
+      if (err.response?.status !== 401) {
+        console.error('CheckAuth error:', err);
+      }
       localStorage.removeItem('token');
       set({ user: null, isLoading: false });
     }
