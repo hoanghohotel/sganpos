@@ -25,7 +25,6 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
     }
 
     const decoded: any = jwt.verify(token, JWT_SECRET);
-    const tenantId = getTenantId();
 
     // Security: Token tenant must match current request tenant
     // Exception for 'demo' tenant (system admin context)

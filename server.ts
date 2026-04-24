@@ -92,15 +92,24 @@ app.use(cookieParser());
 app.use(tenantMiddleware);
 
 // DB Connection Check Middleware
-app.use('/api', (req, res, next) => {
+app.use('/api', async (req, res, next) => {
   const state = mongoose.connection.readyState;
+  
+  // If disconnected or connecting, try to ensure connection
   if (state !== 1 && !req.path.startsWith('/health') && !req.path.startsWith('/dev/db-status')) {
-    const states = ['Disconnected', 'Connected', 'Connecting', 'Disconnecting'];
-    return res.status(503).json({ 
-      error: 'Database is currently unavailable', 
-      status: states[state],
-      details: 'Please check the MongoDB connection string in the environment terminal or settings.'
-    });
+    try {
+      console.log(`[DB Middleware] State is ${state}. Attempting connection for ${req.path}`);
+      await dbConnect();
+      return next();
+    } catch (err: any) {
+      const states = ['Disconnected', 'Connected', 'Connecting', 'Disconnecting'];
+      return res.status(503).json({ 
+        error: 'Database is currently unavailable', 
+        status: states[state] || 'Unknown',
+        message: err.message,
+        details: 'Please check the MongoDB connection string in the environment terminal or settings.'
+      });
+    }
   }
   next();
 });
