@@ -29,8 +29,8 @@ app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
     const duration = Date.now() - start;
-    if (res.statusCode === 401 && req.path !== '/api/auth/me') {
-      console.warn(`[401 ERROR] ${req.method} ${req.path}`);
+    if (res.statusCode === 401 && !req.originalUrl.includes('/api/auth/me')) {
+      console.warn(`[401 ERROR] ${req.method} ${req.originalUrl}`);
     }
     if (!req.path.startsWith('/api/dev')) {
       systemLogs.push({

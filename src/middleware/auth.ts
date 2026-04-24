@@ -15,7 +15,6 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
     const tenantId = getTenantId();
 
     if (!token) {
-      console.warn('Auth Middleware: No token found in cookies or headers');
       return res.status(401).json({ error: 'Authentication required' });
     }
 
