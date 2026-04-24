@@ -13,6 +13,7 @@ import User from './src/models/User';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { tenantMiddleware } from './src/middleware/tenant';
+import { runMigration } from './src/lib/migration';
 import { initSocket } from './src/lib/socketService'; // Add this
 import productRoutes from './src/routes/products';
 import orderRoutes from './src/routes/orders';
@@ -248,44 +249,11 @@ async function startServer() {
     // but in a dev environment we might want the server to stay up to show the error page.
   }
 
-  // Seed Super Admin if not exists - ONLY if DB is connected
+  // Run Database Migration/Seed
   if (dbConnected) {
-    try {
-      const superAdminEmail = 'admin@sganpos.vn';
-      
-      // Verify connection is truly ready
-      if (mongoose.connection.readyState !== 1) {
-        throw new Error(`Mongoose not ready. State: ${mongoose.connection.readyState}`);
-      }
-
-      const existing = await User.findOne({ email: superAdminEmail });
-      
-      const hashedPassword = await bcrypt.hash('admin@123', 10);
-      if (!existing) {
-        const superAdmin = new User({
-          tenantId: 'demo',
-          name: 'Super Admin',
-          email: superAdminEmail,
-          password: hashedPassword,
-          role: 'ADMIN',
-          isActive: true
-        });
-        await superAdmin.save();
-        console.log('--- Super Admin created ---');
-      } else {
-        // Update password/status but keep the ID
-        existing.password = hashedPassword;
-        existing.role = 'ADMIN';
-        existing.isActive = true;
-        existing.tenantId = 'demo';
-        await existing.save();
-        console.log('--- Super Admin synced (ID preserved) ---');
-      }
-    } catch (err) {
-      console.error('Failed to sync super admin:', err);
-    }
+    await runMigration();
   } else {
-    console.warn('⚠️ Skipping Super Admin sync: Database not connected.');
+    console.warn('⚠️ Skipping Migration/Sync: Database not connected.');
   }
 
   // Vite integration
