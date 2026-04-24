@@ -20,6 +20,8 @@ interface Product {
 
 const MenuPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('Tất cả');
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null);
@@ -29,12 +31,20 @@ const MenuPage = () => {
 
   useEffect(() => {
     fetchProducts();
+    
+    window.addEventListener('focus', fetchProducts);
+    return () => window.removeEventListener('focus', fetchProducts);
   }, []);
 
   const fetchProducts = async () => {
     try {
       const res = await api.get('/api/products');
-      setProducts(res.data);
+      const productsData = Array.isArray(res.data) ? res.data : [];
+      setProducts(productsData);
+      
+      const rawCategories = productsData.map((p: Product) => p.category).filter(Boolean);
+      const uniqueCats = Array.from(new Set(rawCategories as string[]));
+      setCategories(['Tất cả', ...uniqueCats.filter(c => c !== 'Tất cả')]);
     } catch (err) {
       console.error('Failed to fetch products:', err);
     } finally {
@@ -126,10 +136,11 @@ const MenuPage = () => {
     reader.readAsDataURL(file);
   };
 
-  const filteredProducts = products.filter(p => 
-    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredProducts = products.filter(p => {
+    const matchesCategory = selectedCategory === 'Tất cả' || p.category === selectedCategory;
+    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <div className="p-8 h-full flex flex-col gap-6">
@@ -167,15 +178,34 @@ const MenuPage = () => {
         </div>
       </header>
 
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-        <input 
-          type="text"
-          placeholder="Tìm kiếm sản phẩm hoặc danh mục..."
-          className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-lg font-medium"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+      <div className="flex flex-col gap-4">
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+          <input 
+            type="text"
+            placeholder="Tìm kiếm sản phẩm..."
+            className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-lg font-medium"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+
+        <div className="flex gap-2 overflow-auto pb-2 -mx-1 px-1 no-scrollbar">
+          {categories.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={cn(
+                "px-5 py-2.5 rounded-xl font-bold uppercase tracking-widest text-[10px] border transition-all whitespace-nowrap",
+                selectedCategory === cat 
+                  ? "bg-slate-900 border-slate-900 text-white shadow-lg shadow-slate-200" 
+                  : "bg-white border-slate-100 text-slate-400 hover:border-slate-200 hover:text-slate-600"
+              )}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="flex-1 overflow-auto bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">

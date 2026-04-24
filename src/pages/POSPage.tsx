@@ -106,10 +106,6 @@ const POSPage = () => {
     return code;
   };
 
-  useEffect(() => {
-    fetchInitialData();
-  }, []);
-
   const fetchInitialData = async () => {
     try {
       const [prodRes, tableRes, setRes] = await Promise.all([
@@ -132,6 +128,14 @@ const POSPage = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchInitialData();
+    
+    // Refresh data when window regains focus to keep sync with Menu changes
+    window.addEventListener('focus', fetchInitialData);
+    return () => window.removeEventListener('focus', fetchInitialData);
+  }, []);
 
   const filteredProducts = products.filter(p => {
     const matchesCategory = selectedCategory === 'Tất cả' || p.category === selectedCategory;

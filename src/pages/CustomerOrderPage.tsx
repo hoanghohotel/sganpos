@@ -55,6 +55,9 @@ const CustomerOrderPage = () => {
       return;
     }
     fetchData();
+
+    window.addEventListener('focus', fetchData);
+    return () => window.removeEventListener('focus', fetchData);
   }, [tableId]);
 
   const fetchData = async () => {
