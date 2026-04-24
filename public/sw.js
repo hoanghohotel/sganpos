@@ -30,11 +30,20 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Chiến lược Fetch: Cache First, then Network
+// Chiến lược Fetch: Network First, falling back to cache
 self.addEventListener('fetch', (event) => {
+  // Chỉ xử lý các request GET
+  if (event.request.method !== 'GET') return;
+
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
-    })
+    fetch(event.request)
+      .then((response) => {
+        // Nếu thành công, có thể cập nhật cache ở đây nếu muốn
+        return response;
+      })
+      .catch(() => {
+        // Nếu offline hoặc lỗi mạng, mới tìm trong cache
+        return caches.match(event.request);
+      })
   );
 });
