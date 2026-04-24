@@ -26,10 +26,12 @@ const MainLayout = () => {
     return (
       <main className="flex-1 overflow-hidden">
         <AnimatePresence mode="wait">
-          <Routes location={location} key={location.pathname}>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-          </Routes>
+          <motion.div key={location.pathname} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
+            <Routes location={location}>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+            </Routes>
+          </motion.div>
         </AnimatePresence>
       </main>
     );
@@ -72,21 +74,23 @@ const MainLayout = () => {
 
       <main className="flex-1 overflow-hidden">
         <AnimatePresence mode="wait">
-          <Routes location={location} key={location.pathname}>
-            <Route element={<ProtectedRoute />}>
-              <Route path="/" element={<Home />} />
-              <Route path="/pos" element={
-                <ShiftGuard>
-                  <POSPage />
-                </ShiftGuard>
-              } />
-              <Route path="/kitchen" element={<KitchenPage />} />
-              <Route path="/qr" element={<QRManagerPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/admin" element={<AdminPage />} />
-            </Route>
-            <Route path="/order" element={<CustomerOrderPage />} />
-          </Routes>
+          <motion.div key={location.pathname} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
+            <Routes location={location}>
+              <Route element={<ProtectedRoute />}>
+                <Route path="/" element={<Home />} />
+                <Route path="/pos" element={
+                  <ShiftGuard>
+                    <POSPage />
+                  </ShiftGuard>
+                } />
+                <Route path="/kitchen" element={<KitchenPage />} />
+                <Route path="/qr" element={<QRManagerPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/admin" element={<AdminPage />} />
+              </Route>
+              <Route path="/order" element={<CustomerOrderPage />} />
+            </Routes>
+          </motion.div>
         </AnimatePresence>
       </main>
     </div>

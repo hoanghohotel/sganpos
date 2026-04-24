@@ -11,6 +11,8 @@ export interface ISettings extends Document {
   bankCode?: string;
   bankLogoUrl?: string;
   bankAccountHolder?: string;
+  subdomain?: string;
+  customPath?: string;
 }
 
 const SettingsSchema: Schema = new Schema({
@@ -24,6 +26,8 @@ const SettingsSchema: Schema = new Schema({
   bankCode: { type: String, default: 'ICB' },
   bankLogoUrl: { type: String, default: 'https://api.vietqr.io/img/ICB.png' },
   bankAccountHolder: { type: String, default: 'HO KINH DOANH SAI GON AN COFFEE' },
+  subdomain: { type: String },
+  customPath: { type: String },
 }, { timestamps: true });
 
 export default mongoose.models.Settings || mongoose.model<ISettings>('Settings', SettingsSchema);

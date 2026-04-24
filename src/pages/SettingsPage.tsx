@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Save, Building2, CreditCard, Upload, CheckCircle2, AlertCircle, ChevronDown, Search } from 'lucide-react';
+import { Save, Building2, CreditCard, Upload, CheckCircle2, AlertCircle, ChevronDown, Search, Globe, Link as LinkIcon, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { useAuthStore } from '../store/authStore';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -21,7 +22,8 @@ interface Bank {
 }
 
 const SettingsPage = () => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'payment'>('overview');
+  const { user } = useAuthStore();
+  const [activeTab, setActiveTab] = useState<'overview' | 'payment' | 'subdomain'>('overview');
   const [banks, setBanks] = useState<Bank[]>([]);
   const [showBankList, setShowBankList] = useState(false);
   const [bankSearch, setBankSearch] = useState('');
@@ -36,6 +38,8 @@ const SettingsPage = () => {
     bankCode: '',
     bankLogoUrl: '',
     bankAccountHolder: '',
+    subdomain: '',
+    customPath: ''
   });
 
   const [loading, setLoading] = useState(true);
@@ -101,6 +105,24 @@ const SettingsPage = () => {
     bank.code.toLowerCase().includes(bankSearch.toLowerCase())
   );
 
+  const fillWithUsername = () => {
+    if (user?.name) {
+      const slug = user.name.toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[đĐ]/g, 'd')
+        .replace(/[^a-z0-9]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+      
+      setSettings(prev => ({ 
+        ...prev, 
+        subdomain: prev.subdomain || slug,
+        customPath: prev.customPath || slug 
+      }));
+    }
+  };
+
   if (loading) {
     return (
       <div className="p-10 flex items-center justify-center h-full">
@@ -137,6 +159,16 @@ const SettingsPage = () => {
         >
           <CreditCard size={16} />
           Thanh toán
+        </button>
+        <button
+          onClick={() => setActiveTab('subdomain')}
+          className={cn(
+            "flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
+            activeTab === 'subdomain' ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
+          )}
+        >
+          <Globe size={16} />
+          Subdomain
         </button>
       </div>
 
@@ -208,7 +240,7 @@ const SettingsPage = () => {
                 />
               </div>
             </motion.div>
-          ) : (
+          ) : activeTab === 'payment' ? (
             <motion.div
               key="payment-tab"
               initial={{ opacity: 0, x: 10 }}
@@ -320,6 +352,87 @@ const SettingsPage = () => {
                       <p className="text-xs font-bold text-slate-700 mb-1">Thông báo thanh toán</p>
                       <p className="text-[10px] text-slate-500 leading-relaxed">Thông tin này sẽ được sử dụng để hiển thị mã QR chuyển khoản cho khách hàng khi thanh toán tại quầy hoặc tại bàn.</p>
                    </div>
+                </div>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="subdomain-tab"
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              className="space-y-8"
+            >
+              <div className="bg-gradient-to-br from-emerald-50 to-teal-50 p-6 rounded-3xl border border-emerald-100">
+                <div className="flex gap-4">
+                  <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm text-emerald-600">
+                    <Globe size={24} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight mb-1">Cấu hình định danh</h3>
+                    <p className="text-xs text-slate-500 leading-relaxed">Cấp quyền và quản lý đường dẫn truy cập riêng cho cửa hàng của bạn.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Subdomain riêng</label>
+                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[8px] font-black rounded-full uppercase">Đề xuất</span>
+                  </div>
+                  <div className="relative group">
+                    <input
+                      type="text"
+                      name="subdomain"
+                      value={settings.subdomain}
+                      onChange={handleChange}
+                      placeholder="VD: antigravity"
+                      className="w-full bg-slate-50 border-none rounded-2xl pr-32 pl-5 py-4 text-sm font-bold focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-slate-300"
+                    />
+                    <div className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-black uppercase tracking-tight">
+                      .pos.com
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-slate-400 italic ml-1">Người dùng có thể truy cập qua: <span className="text-emerald-600 font-bold">{settings.subdomain || 'yourshop'}.pos.com</span></p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Đường dẫn tùy chỉnh (Slug)</label>
+                  <div className="relative group">
+                    <input
+                      type="text"
+                      name="customPath"
+                      value={settings.customPath}
+                      onChange={handleChange}
+                      placeholder="VD: coffee-house"
+                      className="w-full bg-slate-50 border-none rounded-2xl pl-32 pr-5 py-4 text-sm font-bold focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-slate-300"
+                    />
+                    <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-black uppercase tracking-tight">
+                      pos.com/
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-slate-400 italic ml-1">Hoặc qua đường dẫn: <span className="text-emerald-600 font-bold">pos.com/{settings.customPath || 'yourshop'}</span></p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                  <div 
+                    onClick={fillWithUsername}
+                    className="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow cursor-pointer group"
+                  >
+                    <div className="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center text-slate-400 mb-3 group-hover:text-emerald-500 group-hover:bg-emerald-50 transition-colors">
+                      <User size={16} />
+                    </div>
+                    <h4 className="text-[10px] font-black text-slate-900 uppercase mb-1">Theo tên người dùng</h4>
+                    <p className="text-[9px] text-slate-400 leading-relaxed">Tự động sử dụng định danh dựa trên username của người quản trị cửa hàng.</p>
+                  </div>
+                  <div className="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                    <div className="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center text-slate-400 mb-3 group-hover:text-emerald-500">
+                      <LinkIcon size={16} />
+                    </div>
+                    <h4 className="text-[10px] font-black text-slate-900 uppercase mb-1">Liên kết vĩnh viễn</h4>
+                    <p className="text-[9px] text-slate-400 leading-relaxed">Đường dẫn sẽ được bảo lưu và không thay đổi trừ khi có yêu cầu từ hệ thống.</p>
+                  </div>
                 </div>
               </div>
             </motion.div>
