@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Coffee, CookingPot, Settings, LayoutDashboard, QrCode, LogOut, UtensilsCrossed } from 'lucide-react';
+import { Coffee, CookingPot, Settings, LayoutDashboard, QrCode, LogOut, UtensilsCrossed, History } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useEffect } from 'react';
 import { cn } from './lib/utils';
@@ -14,6 +14,7 @@ import DevelopPage from './pages/DevelopPage';
 import CustomerOrderPage from './pages/CustomerOrderPage';
 import QRManagerPage from './pages/QRManagerPage';
 import SettingsPage from './pages/SettingsPage';
+import ShiftListPage from './pages/ShiftListPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 
@@ -44,6 +45,7 @@ const MainLayout = () => {
   const navItems = [
     { to: '/', icon: LayoutDashboard, label: 'Thống kê' },
     { to: '/pos', icon: Coffee, label: 'Bán hàng' },
+    { to: '/shifts', icon: History, label: 'Lịch sử ca' },
     { to: '/kitchen', icon: CookingPot, label: 'Bếp' },
     { to: '/menu', icon: UtensilsCrossed, label: 'Thực đơn' },
     { to: '/tables', icon: UtensilsCrossed, label: 'Bàn' },
@@ -59,28 +61,22 @@ const MainLayout = () => {
             <img src="/logo.svg" alt="Logo" className="w-8 h-8" />
           </Link>
           
-          <nav className="flex-1 flex flex-col gap-6">
-            <Link to="/" className={cn("p-3 transition-colors rounded-xl hover:bg-slate-50 group", location.pathname === '/' ? "text-emerald-600 bg-emerald-50" : "text-slate-400 hover:text-emerald-600")}>
-              <LayoutDashboard className="w-6 h-6 group-hover:scale-110 transition-transform" />
-            </Link>
-            <Link to="/pos" className={cn("p-3 transition-colors rounded-xl hover:bg-slate-50 group", location.pathname === '/pos' ? "text-emerald-600 bg-emerald-50" : "text-slate-400 hover:text-emerald-600")}>
-              <Coffee className="w-6 h-6 group-hover:scale-110 transition-transform" />
-            </Link>
-            <Link to="/kitchen" className={cn("p-3 transition-colors rounded-xl hover:bg-slate-50 group", location.pathname === '/kitchen' ? "text-emerald-600 bg-emerald-50" : "text-slate-400 hover:text-emerald-600")}>
-              <CookingPot className="w-6 h-6 group-hover:scale-110 transition-transform" />
-            </Link>
-            <Link to="/menu" className={cn("p-3 transition-colors rounded-xl hover:bg-slate-50 group", location.pathname === '/menu' ? "text-emerald-600 bg-emerald-50" : "text-slate-400 hover:text-emerald-600")}>
-              <UtensilsCrossed className="w-6 h-6 group-hover:scale-110 transition-transform" />
-            </Link>
-            <Link to="/tables" className={cn("p-3 transition-colors rounded-xl hover:bg-slate-50 group", location.pathname === '/tables' ? "text-emerald-600 bg-emerald-50" : "text-slate-400 hover:text-emerald-600")}>
-              <UtensilsCrossed className="w-6 h-6 group-hover:scale-110 transition-transform" />
-            </Link>
-            <Link to="/qr" className={cn("p-3 transition-colors rounded-xl hover:bg-slate-50 group", location.pathname === '/qr' ? "text-emerald-600 bg-emerald-50" : "text-slate-400 hover:text-emerald-600")}>
-              <QrCode className="w-6 h-6 group-hover:scale-110 transition-transform" />
-            </Link>
-            <Link to="/settings" className={cn("p-3 transition-colors rounded-xl hover:bg-slate-50 group", location.pathname === '/settings' ? "text-emerald-600 bg-emerald-50" : "text-slate-400 hover:text-emerald-600")}>
-              <Settings className="w-6 h-6 group-hover:scale-110 transition-transform" />
-            </Link>
+          <nav className="flex-1 flex flex-col gap-6 overflow-y-auto no-scrollbar">
+            {navItems.map((item) => (
+              <Link 
+                key={item.to}
+                to={item.to} 
+                className={cn(
+                  "p-3 transition-colors rounded-xl hover:bg-slate-50 group relative", 
+                  location.pathname === item.to ? "text-emerald-600 bg-emerald-50" : "text-slate-400 hover:text-emerald-600"
+                )}
+              >
+                <item.icon className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                <span className="absolute left-full ml-4 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                  {item.label}
+                </span>
+              </Link>
+            ))}
           </nav>
 
           <button 
@@ -103,6 +99,7 @@ const MainLayout = () => {
                     <POSPage />
                   </ShiftGuard>
                 } />
+                <Route path="/shifts" element={<ShiftListPage />} />
                 <Route path="/kitchen" element={<KitchenPage />} />
                 <Route path="/menu" element={<MenuPage />} />
                 <Route path="/tables" element={<TablesPage />} />

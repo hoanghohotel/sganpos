@@ -9,7 +9,7 @@ const router = express.Router();
 // Get current open shift
 router.get('/current', authenticate, async (req: AuthRequest, res) => {
   try {
-    const tenantId = getTenantId();
+    const tenantId = req.user.tenantId; // Use user's own tenantId record for security
     const shift = await Shift.findOne({ 
       tenantId, 
       userId: req.user._id, 
@@ -26,7 +26,7 @@ router.get('/current', authenticate, async (req: AuthRequest, res) => {
 router.post('/open', authenticate, async (req: AuthRequest, res) => {
   try {
     const { openingBalance } = req.body;
-    const tenantId = getTenantId();
+    const tenantId = req.user.tenantId; // Use user's own tenantId record for security
     const userId = req.user._id;
     const generateShiftCode = () => {
       const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -70,7 +70,7 @@ router.post('/open', authenticate, async (req: AuthRequest, res) => {
 // Get summary of current shift (for pre-closing display)
 router.get('/summary', authenticate, async (req: AuthRequest, res) => {
   try {
-    const tenantId = getTenantId();
+    const tenantId = req.user.tenantId; // Use user's own tenantId record for security
     const userId = req.user._id;
 
     const shift = await Shift.findOne({ tenantId, userId, status: 'OPEN' });
@@ -135,7 +135,7 @@ router.get('/summary', authenticate, async (req: AuthRequest, res) => {
 router.post('/close', authenticate, async (req: AuthRequest, res) => {
   try {
     const { closingBalance } = req.body;
-    const tenantId = getTenantId();
+    const tenantId = req.user.tenantId; // Use user's own tenantId record for security
     const userId = req.user._id;
 
     const shift = await Shift.findOne({ tenantId, userId, status: 'OPEN' });
@@ -207,6 +207,94 @@ router.post('/close', authenticate, async (req: AuthRequest, res) => {
   } catch (error) {
     console.error('Close Shift Error:', error);
     res.status(500).json({ error: 'Failed to close shift' });
+  }
+});
+
+// Get all shifts (history)
+router.get('/', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { status, limit = 50, offset = 0, tenantId: targetTenantId } = req.query;
+    
+    // Security: Only allow system admins (demo tenant admins) to see all or specific tenants
+    const isSystemAdmin = req.user.tenantId === 'demo' && req.user.role === 'ADMIN';
+    
+    const query: any = {};
+    if (isSystemAdmin) {
+      if (targetTenantId) query.tenantId = targetTenantId;
+    } else {
+      query.tenantId = req.user.tenantId;
+    }
+
+    if (status) query.status = status;
+
+    const shifts = await Shift.find(query)
+      .sort({ startTime: -1 })
+      .limit(Number(limit))
+      .skip(Number(offset));
+      
+    const total = await Shift.countDocuments(query);
+
+    res.json({
+      shifts,
+      total,
+      limit,
+      offset
+    });
+  } catch (error) {
+    console.error('List Shifts Error:', error);
+    res.status(500).json({ error: 'Failed to list shifts' });
+  }
+});
+
+// Get specific shift by ID
+router.get('/:id', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const isSystemAdmin = req.user.tenantId === 'demo' && req.user.role === 'ADMIN';
+    const query: any = { _id: req.params.id };
+    
+    if (!isSystemAdmin) {
+      query.tenantId = req.user.tenantId;
+    }
+
+    const shift = await Shift.findOne(query);
+    
+    if (!shift) {
+      return res.status(404).json({ error: 'Shift not found' });
+    }
+    
+    res.json(shift);
+  } catch (error) {
+    console.error('Get Shift Detail Error:', error);
+    res.status(500).json({ error: 'Failed to fetch shift details' });
+  }
+});
+
+// Get orders for a specific shift
+router.get('/:id/orders', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const isSystemAdmin = req.user.tenantId === 'demo' && req.user.role === 'ADMIN';
+    const shiftId = req.params.id;
+
+    // First check if shift belongs to user OR user is system admin
+    const shiftQuery: any = { _id: shiftId };
+    if (!isSystemAdmin) {
+      shiftQuery.tenantId = req.user.tenantId;
+    }
+    
+    const shift = await Shift.findOne(shiftQuery);
+    if (!shift) {
+      return res.status(404).json({ error: 'Shift not found or access denied' });
+    }
+
+    const orders = await Order.find({
+      tenantId: shift.tenantId,
+      shiftId
+    }).sort({ createdAt: -1 });
+
+    res.json(orders);
+  } catch (error) {
+    console.error('Get Shift Orders Error:', error);
+    res.status(500).json({ error: 'Failed to fetch shift orders' });
   }
 });
 

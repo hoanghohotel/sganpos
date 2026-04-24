@@ -25,6 +25,15 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
     }
 
     const decoded: any = jwt.verify(token, JWT_SECRET);
+    const tenantId = getTenantId();
+
+    // Security: Token tenant must match current request tenant
+    // Exception for 'demo' tenant (system admin context)
+    if (decoded.tenantId !== tenantId && decoded.tenantId !== 'demo') {
+       console.warn(`Auth Middleware: Tenant mismatch. Token: ${decoded.tenantId}, Request: ${tenantId}`);
+       return res.status(403).json({ error: 'Tenant access mismatch' });
+    }
+
     const user = await User.findOne({ _id: decoded.id, tenantId: decoded.tenantId }).select('-password');
 
     if (!user) {
