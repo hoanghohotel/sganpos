@@ -48,7 +48,12 @@ const DevelopPage = () => {
           }
         } catch (authErr: any) {
           console.error('Backend auth failed:', authErr);
-          const errorMsg = authErr.response?.data?.error || authErr.message || 'Unknown error';
+          let errorMsg = 'Unknown error';
+          if (authErr.response?.data) {
+            errorMsg = authErr.response.data.error || authErr.response.data.message || JSON.stringify(authErr.response.data);
+          } else {
+            errorMsg = authErr.message;
+          }
           alert(`Backend Auth Error: ${errorMsg}. Terminal will still open but admin APIs may fail.`);
         }
         
@@ -147,8 +152,10 @@ const DevelopPage = () => {
     try {
       await api.post('/api/dev/seed', { tenantId: 'demo' });
       alert('Seeding complete!');
-    } catch (err) {
-      alert('Seeding failed');
+    } catch (err: any) {
+      console.error('Seeding failed:', err);
+      const msg = err.response?.data?.error || err.message || 'Unknown error';
+      alert(`Seeding failed: ${msg}`);
     } finally {
       setLoading(false);
     }

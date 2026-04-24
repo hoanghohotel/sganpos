@@ -14,15 +14,19 @@ router.post('/register', async (req: any, res) => {
     const { name, email, phone, password, tenantId: bodyTenantId } = req.body;
     const tenantId = bodyTenantId || getTenantId();
 
+    console.log(`[Auth] Registration attempt for Name: ${name}, Email: ${email}, Phone: ${phone}, Tenant: ${tenantId}`);
+
     if (!name || (!email && !phone) || !password) {
-      return res.status(400).json({ error: 'Name, password and at least one identifier (email or phone) are required' });
+      console.warn('[Auth] Registration failed: Missing required fields');
+      return res.status(400).json({ error: 'Tên, mật khẩu và ít nhất một định danh (Email hoặc Số điện thoại) là bắt buộc' });
     }
 
     // Check existing email
     if (email) {
       const existingEmail = await User.findOne({ email, tenantId });
       if (existingEmail) {
-        return res.status(400).json({ error: 'Email already exists in this store' });
+        console.warn(`[Auth] Registration failed: Email ${email} already exists in tenant ${tenantId}`);
+        return res.status(400).json({ error: 'Email đã tồn tại trong cửa hàng này' });
       }
     }
 
@@ -30,7 +34,8 @@ router.post('/register', async (req: any, res) => {
     if (phone) {
       const existingPhone = await User.findOne({ phone, tenantId });
       if (existingPhone) {
-        return res.status(400).json({ error: 'Phone number already exists in this store' });
+        console.warn(`[Auth] Registration failed: Phone ${phone} already exists in tenant ${tenantId}`);
+        return res.status(400).json({ error: 'Số điện thoại đã tồn tại trong cửa hàng này' });
       }
     }
 
@@ -38,27 +43,29 @@ router.post('/register', async (req: any, res) => {
     const user = new User({
       tenantId,
       name,
-      email: email || undefined,
-      phone: phone || undefined,
+      email: email ? email.trim() : undefined,
+      phone: phone ? phone.trim() : undefined,
       password: hashedPassword
     });
 
     try {
       await user.save();
+      console.log(`[Auth] Registration successful: ${user.email || user.phone}`);
       res.status(201).json({ message: 'User created successfully' });
     } catch (saveError: any) {
+      console.error('[Auth] Mongoose Save Error:', saveError);
       if (saveError.code === 11000) {
         const field = Object.keys(saveError.keyPattern)[0];
         return res.status(400).json({ 
-          error: `Trùng thông tin đăng ký: ${field === 'email' ? 'Email' : 'Số điện thoại'} đã được sử dụng.` 
+          error: `Trùng lặp: ${field === 'email' ? 'Email' : 'Số điện thoại'} đã được sử dụng.` 
         });
       }
       throw saveError;
     }
   } catch (error: any) {
-    console.error('Registration Error:', error);
+    console.error('Registration Exception:', error);
     res.status(500).json({ 
-      error: 'Registration failed', 
+      error: 'Đăng ký thất bại hệ thống', 
       details: error.message || String(error)
     });
   }

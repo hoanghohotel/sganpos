@@ -24,15 +24,28 @@ const RegisterPage = () => {
       navigate('/login');
     } catch (err: any) {
       console.error('Register error:', err);
+      let errorMessage = 'Đăng ký thất bại';
+      
       if (err.response) {
-        const msg = err.response.data?.error;
+        // The server responded with a status code outside the 2xx range
+        const serverError = err.response.data?.error || err.response.data?.message;
         const details = err.response.data?.details;
-        setError(typeof msg === 'string' ? (details ? `${msg}: ${details}` : msg) : 'Đăng ký thất bại');
+        
+        if (serverError) {
+          errorMessage = typeof serverError === 'string' ? serverError : JSON.stringify(serverError);
+          if (details) errorMessage += `: ${details}`;
+        } else {
+          errorMessage = `Lỗi từ máy chủ (Mã: ${err.response.status})`;
+        }
       } else if (err.request) {
-        setError('Không thể kết nối tới máy chủ. Vui lòng kiểm tra mạng.');
+        // The request was made but no response was received
+        errorMessage = 'Không thể kết nối tới máy chủ. Vui lòng kiểm tra kết nối mạng của bạn.';
       } else {
-        setError(`Lỗi: ${err.message}`);
+        // Something happened in setting up the request that triggered an Error
+        errorMessage = `Lỗi hệ thống: ${err.message}`;
       }
+      
+      setError(errorMessage);
     }
   };
 
