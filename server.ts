@@ -11,6 +11,7 @@ const __dirname = path.dirname(__filename);
 import dbConnect from './src/lib/mongodb';
 import User from './src/models/User';
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 import { tenantMiddleware } from './src/middleware/tenant';
 import { initSocket } from './src/lib/socketService'; // Add this
 import productRoutes from './src/routes/products';
@@ -120,19 +121,26 @@ app.get('/api/admin/users', async (req, res) => {
 
 app.post('/api/admin/users', async (req, res) => {
   try {
-    const user = new User({ ...req.body, password: 'password@123' }); // Default password for new users
+    const hashedPassword = await bcrypt.hash(req.body.password || 'password@123', 10);
+    const user = new User({ ...req.body, password: hashedPassword });
     await user.save();
     res.json(user);
   } catch (err) {
+    console.error('Failed to create user:', err);
     res.status(500).json({ error: 'Failed to create user' });
   }
 });
 
 app.put('/api/admin/users/:id', async (req, res) => {
   try {
-    const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const updateData = { ...req.body };
+    if (updateData.password) {
+      updateData.password = await bcrypt.hash(updateData.password, 10);
+    }
+    const user = await User.findByIdAndUpdate(req.params.id, updateData, { new: true });
     res.json(user);
   } catch (err) {
+    console.error('Failed to update user:', err);
     res.status(500).json({ error: 'Failed to update user' });
   }
 });
@@ -185,7 +193,28 @@ app.post('/api/dev/seed', async (req, res) => {
 
 async function startServer() {
   // Connect to Database
-  dbConnect().catch(err => console.error('Failed to connect to MongoDB:', err));
+  await dbConnect().catch(err => console.error('Failed to connect to MongoDB:', err));
+
+  // Seed Super Admin if not exists
+  try {
+    const superAdminEmail = 'admin@sganpos.vn';
+    const existing = await User.findOne({ email: superAdminEmail });
+    if (!existing) {
+      const hashedPassword = await bcrypt.hash('admin@123', 10);
+      const superAdmin = new User({
+        tenantId: 'demo',
+        name: 'Super Admin',
+        email: superAdminEmail,
+        password: hashedPassword,
+        role: 'ADMIN',
+        isActive: true
+      });
+      await superAdmin.save();
+      console.log('--- Super Admin seeded to database ---');
+    }
+  } catch (err) {
+    console.error('Failed to seed super admin:', err);
+  }
 
   // Vite integration
   if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {

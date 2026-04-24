@@ -258,7 +258,7 @@ const DevelopPage = () => {
                       <td className="p-6">
                         <span className={cn(
                           "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter",
-                          user.role === 'admin' ? "bg-purple-500/10 text-purple-400 border border-purple-500/20" : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                          user.role === 'ADMIN' ? "bg-purple-500/10 text-purple-400 border border-purple-500/20" : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
                         )}>
                           {user.role}
                         </span>
@@ -332,11 +332,11 @@ const DevelopPage = () => {
                           <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Role</label>
                           <select 
                             className="w-full h-12 bg-slate-800 border border-slate-700 rounded-xl px-4 text-white focus:border-emerald-500 transition-all font-bold"
-                            value={editingUser.role || 'user'}
-                            onChange={e => setEditingUser({ ...editingUser, role: e.target.value })}
+                            value={editingUser.role || 'STAFF'}
+                            onChange={e => setEditingUser({ ...editingUser, role: e.target.value as any })}
                           >
-                            <option value="user">USER</option>
-                            <option value="admin">ADMIN</option>
+                            <option value="STAFF">STAFF</option>
+                            <option value="ADMIN">ADMIN</option>
                           </select>
                         </div>
                         <div className="space-y-1">
