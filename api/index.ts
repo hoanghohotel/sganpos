@@ -2,6 +2,7 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import dbConnect from '../src/lib/mongodb';
 import { tenantMiddleware } from '../src/middleware/tenant';
+import { getTenantId } from '../src/lib/tenant';
 import productRoutes from '../src/routes/products';
 import orderRoutes from '../src/routes/orders';
 import tableRoutes from '../src/routes/tables';
@@ -37,10 +38,13 @@ app.use(tenantMiddleware);
 
 // API Routes
 app.get('/api/health', (req, res) => {
+  const tenantId = getTenantId();
   res.json({ 
     status: 'ok', 
     database: 'connected',
-    tenant: (req as any).headers['x-tenant-id'] || 'unknown',
+    tenantId: tenantId,
+    host: req.headers.host,
+    forwardedHost: req.headers['x-forwarded-host'],
     url: req.url,
     originalUrl: req.originalUrl
   });
