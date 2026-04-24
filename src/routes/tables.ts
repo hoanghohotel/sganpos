@@ -1,6 +1,7 @@
 import express from 'express';
 import Table from '../models/Table.ts';
 import { getTenantId } from '../lib/tenant.ts';
+import { authenticate } from '../middleware/auth.ts';
 
 const router = express.Router();
 
@@ -27,8 +28,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/tables - Helper to setup tables
-router.post('/', async (req, res) => {
+// POST /api/tables - Helper to setup tables (Auth required)
+router.post('/', authenticate, async (req, res) => {
   try {
     const tenantId = getTenantId();
     const table = new Table({ ...req.body, tenantId });
@@ -39,8 +40,8 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PATCH /api/tables/:id - Update table status
-router.patch('/:id', async (req, res) => {
+// PATCH /api/tables/:id - Update table status (Auth required)
+router.patch('/:id', authenticate, async (req, res) => {
   try {
     const tenantId = getTenantId();
     const { status, currentOrderId } = req.body;

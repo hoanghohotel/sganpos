@@ -2,11 +2,12 @@ import express from 'express';
 import Order from '../models/Order.ts';
 import { getTenantId } from '../lib/tenant.ts';
 import { emitToTenant } from '../lib/socketService.ts';
+import { authenticate } from '../middleware/auth.ts';
 
 const router = express.Router();
 
-// GET /api/orders - List orders for the tenant
-router.get('/', async (req, res) => {
+// GET /api/orders - List orders for the tenant (Auth required)
+router.get('/', authenticate, async (req, res) => {
   try {
     const tenantId = getTenantId();
     const orders = await Order.find({ tenantId }).sort({ createdAt: -1 });
@@ -35,8 +36,8 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PATCH /api/orders/:id - Update order status
-router.patch('/:id', async (req, res) => {
+// PATCH /api/orders/:id - Update order status (Auth required)
+router.patch('/:id', authenticate, async (req, res) => {
   try {
     const tenantId = getTenantId();
     const { status, paymentStatus } = req.body;

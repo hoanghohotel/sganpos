@@ -62,11 +62,12 @@ const CustomerOrderPage = () => {
         axios.get(`/api/tables/${tableId}`),
         axios.get('/api/settings')
       ]);
-      setProducts(prodRes.data);
+      const productsData = Array.isArray(prodRes.data) ? prodRes.data : [];
+      setProducts(productsData);
       setTable(tableRes.data);
       setSettings(setRes.data);
       
-      const rawCategories = prodRes.data.map((p: any) => p.category).filter(Boolean);
+      const rawCategories = productsData.map((p: any) => p.category).filter(Boolean);
       const uniqueCats = Array.from(new Set(rawCategories as string[]));
       const cats: string[] = ['Tất cả', ...uniqueCats.filter(c => c !== 'Tất cả')];
       setCategories(cats);

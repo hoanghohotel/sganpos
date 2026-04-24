@@ -1,0 +1,33 @@
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface IShift extends Document {
+  tenantId: string;
+  userId: mongoose.Types.ObjectId;
+  userName: string;
+  startTime: Date;
+  endTime?: Date;
+  openingBalance: number;
+  closingBalance?: number;
+  totalSales: number;
+  status: 'OPEN' | 'CLOSED';
+}
+
+const ShiftSchema: Schema = new Schema({
+  tenantId: { type: String, required: true, index: true },
+  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  userName: { type: String, required: true },
+  startTime: { type: Date, default: Date.now },
+  endTime: { type: Date },
+  openingBalance: { type: Number, default: 0 },
+  closingBalance: { type: Number },
+  totalSales: { type: Number, default: 0 },
+  status: { 
+    type: String, 
+    enum: ['OPEN', 'CLOSED'], 
+    default: 'OPEN' 
+  }
+}, { timestamps: true });
+
+ShiftSchema.index({ tenantId: 1, userId: 1, status: 1 });
+
+export default mongoose.models.Shift || mongoose.model<IShift>('Shift', ShiftSchema);

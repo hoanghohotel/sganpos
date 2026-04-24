@@ -4,6 +4,7 @@ import { Server } from 'socket.io';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import cookieParser from 'cookie-parser';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,6 +15,8 @@ import productRoutes from './src/routes/products.ts';
 import orderRoutes from './src/routes/orders.ts';
 import tableRoutes from './src/routes/tables.ts';
 import settingsRoutes from './src/routes/settings.ts';
+import authRoutes from './src/routes/auth.ts';
+import shiftRoutes from './src/routes/shifts.ts';
 
 const app = express();
 const httpServer = createHttpServer(app);
@@ -48,6 +51,7 @@ io.on('connection', (socket) => {
 
 // Middleware
 app.use(express.json());
+app.use(cookieParser());
 app.use(tenantMiddleware);
 
 // API Routes
@@ -55,6 +59,8 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', database: 'connected' });
 });
 
+app.use('/api/auth', authRoutes);
+app.use('/api/shifts', shiftRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/tables', tableRoutes);

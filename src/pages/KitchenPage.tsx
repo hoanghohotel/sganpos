@@ -36,7 +36,8 @@ const KitchenPage = () => {
   const fetchOrders = async () => {
     try {
       const response = await axios.get('/api/orders');
-      const activeOrders = response.data.filter((o: Order) => o.status !== 'COMPLETED');
+      const data = Array.isArray(response.data) ? response.data : [];
+      const activeOrders = data.filter((o: Order) => o.status !== 'COMPLETED');
       setOrders(activeOrders);
       setLastRefreshed(new Date());
     } catch (error) {

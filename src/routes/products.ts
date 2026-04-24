@@ -1,6 +1,7 @@
 import express from 'express';
 import Product from '../models/Product.ts';
 import { getTenantId } from '../lib/tenant.ts';
+import { authenticate } from '../middleware/auth.ts';
 
 const router = express.Router();
 
@@ -15,8 +16,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST /api/products - Create a new product
-router.post('/', async (req, res) => {
+// POST /api/products - Create a new product (Auth required)
+router.post('/', authenticate, async (req, res) => {
   try {
     const tenantId = getTenantId();
     const productData = { 

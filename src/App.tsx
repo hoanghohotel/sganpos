@@ -1,16 +1,39 @@
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Coffee, CookingPot, Settings, LayoutDashboard, QrCode } from 'lucide-react';
+import { Coffee, CookingPot, Settings, LayoutDashboard, QrCode, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useEffect } from 'react';
+import { useAuthStore } from './store/authStore.ts';
+import ProtectedRoute from './components/ProtectedRoute.tsx';
+import ShiftGuard from './components/ShiftGuard.tsx';
 import POSPage from './pages/POSPage.tsx';
 import KitchenPage from './pages/KitchenPage.tsx';
 import CustomerOrderPage from './pages/CustomerOrderPage.tsx';
 import QRManagerPage from './pages/QRManagerPage.tsx';
 import SettingsPage from './pages/SettingsPage.tsx';
+import LoginPage from './pages/LoginPage.tsx';
+import RegisterPage from './pages/RegisterPage.tsx';
 
 // Separate Layout to use location hook
 const MainLayout = () => {
   const location = useLocation();
+  const logout = useAuthStore((state) => state.logout);
+  const user = useAuthStore((state) => state.user);
+  
   const isCustomerPage = location.pathname === '/order';
+  const isAuthPage = ['/login', '/register'].includes(location.pathname);
+
+  if (isAuthPage) {
+    return (
+      <main className="flex-1 overflow-hidden">
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+          </Routes>
+        </AnimatePresence>
+      </main>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-[#F8FAFC] text-slate-800">
@@ -20,7 +43,7 @@ const MainLayout = () => {
             <img src="/logo.svg" alt="Logo" className="w-8 h-8" />
           </Link>
           
-          <nav className="flex flex-col gap-6">
+          <nav className="flex-1 flex flex-col gap-6">
             <Link to="/" className="p-3 text-slate-400 hover:text-emerald-600 transition-colors rounded-xl hover:bg-slate-50 group">
               <LayoutDashboard className="w-6 h-6 group-hover:scale-110 transition-transform" />
             </Link>
@@ -37,19 +60,32 @@ const MainLayout = () => {
               <Settings className="w-6 h-6 group-hover:scale-110 transition-transform" />
             </Link>
           </nav>
+
+          <button 
+            onClick={() => logout()}
+            className="p-3 text-slate-400 hover:text-rose-600 transition-colors rounded-xl hover:bg-rose-50"
+          >
+            <LogOut className="w-6 h-6" />
+          </button>
         </aside>
       )}
 
       <main className="flex-1 overflow-hidden">
         <AnimatePresence mode="wait">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/pos" element={<POSPage />} />
-            <Route path="/kitchen" element={<KitchenPage />} />
+          <Routes location={location} key={location.pathname}>
+            <Route element={<ProtectedRoute />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/pos" element={
+                <ShiftGuard>
+                  <POSPage />
+                </ShiftGuard>
+              } />
+              <Route path="/kitchen" element={<KitchenPage />} />
+              <Route path="/qr" element={<QRManagerPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/admin" element={<AdminPage />} />
+            </Route>
             <Route path="/order" element={<CustomerOrderPage />} />
-            <Route path="/qr" element={<QRManagerPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/admin" element={<AdminPage />} />
           </Routes>
         </AnimatePresence>
       </main>
@@ -82,6 +118,12 @@ const AdminPage = () => {
 };
 
 export default function App() {
+  const checkAuth = useAuthStore((state) => state.checkAuth);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
   return (
     <Router>
       <MainLayout />

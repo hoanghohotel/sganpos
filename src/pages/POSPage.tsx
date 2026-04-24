@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { ShoppingCart, Plus, Minus, Trash2, Coffee, CheckCircle2, Banknote, CreditCard, X, ChevronRight } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Trash2, Coffee, CheckCircle2, Banknote, CreditCard, X, ChevronRight, LogOut, CircleDollarSign } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useAuthStore } from '../store/authStore';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -61,12 +62,19 @@ const POSPage = () => {
   const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'TRANSFER' | null>(null);
   const [paymentStep, setPaymentStep] = useState<'SELECT' | 'QR'>('SELECT');
   const [orderCode, setOrderCode] = useState('');
+  
+  // Shift states
+  const { shift, closeShift } = useAuthStore();
+  const [showCloseShiftModal, setShowCloseShiftModal] = useState(false);
+  const [showShiftWarning, setShowShiftWarning] = useState(false);
+  const [closingBalance, setClosingBalance] = useState<number>(0);
+  const [closing, setClosing] = useState(false);
 
   const generateOrderCode = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let code = '';
     for (let i = 0; i < 6; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
+       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return code;
   };
@@ -82,12 +90,12 @@ const POSPage = () => {
         axios.get('/api/tables'),
         axios.get('/api/settings')
       ]);
-      setProducts(prodRes.data);
-      setTables(tableRes.data);
+      const productsData = Array.isArray(prodRes.data) ? prodRes.data : [];
+      setProducts(productsData);
+      setTables(Array.isArray(tableRes.data) ? tableRes.data : []);
       setSettings(setRes.data);
       
-      // Extract unique categories, filter out null/undefined/empty and keep unique
-      const rawCategories = prodRes.data.map((p: Product) => p.category).filter(Boolean);
+      const rawCategories = productsData.map((p: Product) => p.category).filter(Boolean);
       const uniqueCats = Array.from(new Set(rawCategories as string[]));
       const cats: string[] = ['Tất cả', ...uniqueCats.filter(c => c !== 'Tất cả')];
       setCategories(cats);
@@ -227,6 +235,72 @@ const POSPage = () => {
     }
   };
 
+  const getActiveTables = () => {
+    return tables.filter(t => (tableCarts[t._id]?.length || 0) > 0);
+  };
+
+  const handleCloseShiftInitiate = () => {
+    const active = getActiveTables();
+    if (active.length > 0) {
+      setShowShiftWarning(true);
+    } else {
+      setShowCloseShiftModal(true);
+    }
+  };
+
+  const handleCloseShift = async () => {
+    setClosing(true);
+    try {
+      const activeTables = getActiveTables();
+      const reportData = await closeShift(closingBalance, activeTables.length);
+      
+      // Print report
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Báo Cáo Chốt Ca</title>
+              <style>
+                body { font-family: sans-serif; padding: 20px; line-height: 1.6; }
+                .header { text-align: center; margin-bottom: 20px; }
+                .row { display: flex; justify-content: space-between; margin: 10px 0; border-bottom: 1px dashed #eee; }
+                .footer { margin-top: 30px; text-align: center; font-size: 12px; }
+                h2 { border-bottom: 2px solid #000; padding-bottom: 10px; }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <h2>BÁO CÁO KẾT THÚC CA</h2>
+                <p>${new Date().toLocaleString('vi-VN')}</p>
+              </div>
+              <div class="row"><span>Nhân viên:</span> <b>${reportData.userName}</b></div>
+              <div class="row"><span>Bắt đầu:</span> <span>${new Date(reportData.startTime).toLocaleString('vi-VN')}</span></div>
+              <div class="row"><span>Kết thúc:</span> <span>${new Date(reportData.endTime).toLocaleString('vi-VN')}</span></div>
+              <div class="row"><span>Tiền đầu ca:</span> <b>${reportData.openingBalance.toLocaleString('vi-VN')}đ</b></div>
+              <div class="row"><span>Doanh thu ca:</span> <b>${reportData.totalSales.toLocaleString('vi-VN')}đ</b></div>
+              <div class="row"><span>Tiền mặt cuối ca:</span> <b>${reportData.closingBalance.toLocaleString('vi-VN')}đ</b></div>
+              <div class="row"><span>Bàn giao bàn đang phục vụ:</span> <b>${activeTables.length} bàn</b></div>
+              <div class="footer">
+                <p>Hệ thống quản lý PosApp</p>
+                <p>Cảm ơn quý khách!</p>
+              </div>
+              <script>window.print(); setTimeout(() => window.close(), 1000);</script>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+      }
+
+      setShowCloseShiftModal(false);
+      setShowShiftWarning(false);
+    } catch (error) {
+      alert('Lỗi khi chốt ca');
+    } finally {
+      setClosing(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center bg-[#F8FAFC]">
@@ -353,6 +427,13 @@ const POSPage = () => {
                       />
                       <ShoppingCart className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                     </div>
+                    <button 
+                      onClick={handleCloseShiftInitiate}
+                      className="p-3 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-100 transition-colors flex items-center gap-2 font-black text-[10px] uppercase tracking-widest"
+                    >
+                      <LogOut size={16} />
+                      Chốt ca
+                    </button>
                   </div>
                   
                   {/* Category Filter */}
@@ -621,6 +702,126 @@ const POSPage = () => {
                     <p className="mt-4 text-[10px] text-slate-400 font-bold uppercase tracking-widest">Kiểm tra tài khoản trước khi nhấn xác nhận</p>
                  </div>
                )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Shift Closing Warning Modal */}
+      <AnimatePresence>
+        {showShiftWarning && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-950/90 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="relative w-full max-w-sm bg-white rounded-[48px] p-12 text-center shadow-2xl"
+            >
+               <div className="w-20 h-20 bg-amber-100 rounded-3xl flex items-center justify-center mx-auto mb-8">
+                  <CircleDollarSign className="text-amber-600 w-10 h-10" />
+               </div>
+               <h3 className="text-2xl font-black text-slate-900 mb-4 tracking-tighter uppercase italic">Cảnh báo bàn đang phục vụ</h3>
+               <p className="text-slate-500 font-medium mb-10 leading-relaxed text-sm">
+                  Hiện vẫn còn <span className="text-rose-600 font-black">{getActiveTables().length} bàn</span> đang có khách hoặc chưa thanh toán. Nhân viên ca sau sẽ tiếp quản các bàn này. Bạn vẫn muốn chốt ca?
+               </p>
+               <div className="space-y-4">
+                  <button 
+                    onClick={() => {
+                      setShowShiftWarning(false);
+                      setShowCloseShiftModal(true);
+                    }}
+                    className="w-full h-16 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-600 transition-all active:scale-95"
+                  >
+                    Tiếp tục chốt ca
+                  </button>
+                  <button 
+                    onClick={() => setShowShiftWarning(false)}
+                    className="w-full h-16 bg-slate-50 text-slate-400 rounded-2xl font-black uppercase tracking-widest hover:text-slate-900 transition-all"
+                  >
+                    Quay lại kiểm tra
+                  </button>
+               </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Close Shift Modal */}
+      <AnimatePresence>
+        {showCloseShiftModal && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => !closing && setShowCloseShiftModal(false)}
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-md bg-white rounded-[40px] p-10 shadow-2xl"
+            >
+               <div className="flex items-center gap-4 mb-8">
+                  <div className="w-12 h-12 bg-rose-100 rounded-2xl flex items-center justify-center">
+                     <CircleDollarSign className="text-rose-600 w-6 h-6" />
+                  </div>
+                  <div>
+                     <h3 className="text-xl font-black text-slate-900 leading-none">Chốt ca bán hàng</h3>
+                     <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Tổng kết tiền mặt cuối ca</p>
+                  </div>
+               </div>
+
+               <div className="space-y-6">
+                  <div className="bg-slate-50 p-6 rounded-3xl space-y-4">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Tiền đầu ca</span>
+                      <span className="font-black text-slate-900">{shift?.openingBalance.toLocaleString('vi-VN')}đ</span>
+                    </div>
+                    <div className="h-px bg-slate-100" />
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Tiền mặt cuối ca (Thực tế)</label>
+                       <div className="relative">
+                          <input 
+                            type="number"
+                            value={closingBalance}
+                            onChange={(e) => setClosingBalance(Number(e.target.value))}
+                            className="w-full h-16 bg-white rounded-2xl border-none text-2xl font-black text-slate-900 text-center focus:ring-4 focus:ring-rose-500/20 shadow-inner"
+                            placeholder="0"
+                          />
+                          <span className="absolute top-1/2 -translate-y-1/2 left-4 text-slate-300 font-black">đ</span>
+                       </div>
+                    </div>
+                  </div>
+
+                  <button 
+                    onClick={handleCloseShift}
+                    disabled={closing}
+                    className="w-full h-16 bg-rose-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-rose-700 transition-all shadow-xl shadow-rose-100 flex items-center justify-center gap-3 active:scale-95"
+                  >
+                    {closing ? (
+                      <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <LogOut size={20} />
+                        Xác nhận chốt ca
+                      </>
+                    )}
+                  </button>
+                  <button 
+                    onClick={() => setShowCloseShiftModal(false)}
+                    className="w-full text-slate-400 font-black uppercase tracking-widest text-[10px] hover:text-slate-600 transition-colors"
+                  >
+                    Huỷ bỏ
+                  </button>
+               </div>
             </motion.div>
           </div>
         )}

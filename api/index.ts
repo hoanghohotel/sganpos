@@ -3,6 +3,7 @@ import { createServer as createHttpServer } from 'http';
 import { Server } from 'socket.io';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import cookieParser from 'cookie-parser';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,6 +15,8 @@ import productRoutes from '../src/routes/products.ts';
 import orderRoutes from '../src/routes/orders.ts';
 import tableRoutes from '../src/routes/tables.ts';
 import settingsRoutes from '../src/routes/settings.ts';
+import authRoutes from '../src/routes/auth.ts';
+import shiftRoutes from '../src/routes/shifts.ts';
 
 const app = express();
 const httpServer = createHttpServer(app);
@@ -40,6 +43,16 @@ io.on('connection', (socket) => {
 
 // Middleware
 app.use(express.json());
+app.use(cookieParser());
+app.use(async (req, res, next) => {
+  try {
+    await dbConnect();
+    next();
+  } catch (error) {
+    console.error('Database connection error:', error);
+    res.status(500).json({ error: 'Database connection failed' });
+  }
+});
 app.use(tenantMiddleware);
 
 // API Routes
@@ -47,6 +60,8 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', database: 'connected' });
 });
 
+app.use('/api/auth', authRoutes);
+app.use('/api/shifts', shiftRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/tables', tableRoutes);
@@ -55,7 +70,7 @@ app.use('/api/settings', settingsRoutes);
 // We don't need startServer or Vite middleware here because Vercel handles static 
 // and calls this as a serverless function.
 // But we still need to connect to DB.
-dbConnect().catch(err => console.error('Failed to connect to MongoDB:', err));
+// (handled by middleware above)
 
 // For production on Vercel, we serve static files via vercel.json rewrites, 
 // so we don't strictly need to handle static files here, 

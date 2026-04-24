@@ -1,6 +1,7 @@
 import express from 'express';
 import Settings from '../models/Settings.ts';
 import { getTenantId } from '../lib/tenant.ts';
+import { authenticate } from '../middleware/auth.ts';
 
 const router = express.Router();
 
@@ -22,8 +23,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// PUT /api/settings - Update settings
-router.put('/', async (req, res) => {
+// PUT /api/settings - Update settings (Auth required)
+router.put('/', authenticate, async (req, res) => {
   try {
     const tenantId = getTenantId();
     const updateData = req.body;
