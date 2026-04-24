@@ -27,7 +27,7 @@ interface AuthState {
   checkAuth: () => Promise<void>;
   checkShift: () => Promise<void>;
   openShift: (openingBalance: number) => Promise<void>;
-  closeShift: (closingBalance: number, activeTablesCount?: number) => Promise<any>;
+  closeShift: (closingBalance: number, notes?: string, activeTablesCount?: number) => Promise<any>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -104,9 +104,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  closeShift: async (closingBalance: number, activeTablesCount?: number) => {
+  closeShift: async (closingBalance: number, notes?: string, activeTablesCount?: number) => {
     try {
-      const res = await api.post('/api/shifts/close', { closingBalance, activeTablesCount });
+      const res = await api.post('/api/shifts/close', { closingBalance, notes, activeTablesCount });
       set({ shift: null });
       return res.data;
     } catch (err) {

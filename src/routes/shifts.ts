@@ -66,6 +66,69 @@ router.post('/open', authenticate, async (req: AuthRequest, res) => {
   }
 });
 
+// Get summary of current shift (for pre-closing display)
+router.get('/summary', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const tenantId = getTenantId();
+    const userId = req.user._id;
+
+    const shift = await Shift.findOne({ tenantId, userId, status: 'OPEN' });
+    if (!shift) {
+      return res.status(404).json({ error: 'No open shift found' });
+    }
+
+    const orders = await Order.find({
+      tenantId,
+      shiftId: shift._id,
+      status: 'COMPLETED'
+    });
+
+    let totalSales = 0;
+    let cashSales = 0;
+    let transferSales = 0;
+    const productMap = new Map<string, { quantity: number; amount: number }>();
+
+    orders.forEach(order => {
+      totalSales += order.total;
+      if (order.paymentMethod === 'CASH') {
+        cashSales += order.total;
+      } else if (order.paymentMethod === 'TRANSFER') {
+        transferSales += order.total;
+      }
+
+      order.items.forEach((item: any) => {
+        const existing = productMap.get(item.name);
+        if (existing) {
+          existing.quantity += item.quantity;
+          existing.amount += item.price * item.quantity;
+        } else {
+          productMap.set(item.name, {
+            quantity: item.quantity,
+            amount: item.price * item.quantity
+          });
+        }
+      });
+    });
+
+    const productSales = Array.from(productMap.entries()).map(([name, data]) => ({
+      name,
+      quantity: data.quantity,
+      amount: data.amount
+    }));
+
+    res.json({
+      openingBalance: shift.openingBalance,
+      totalSales,
+      cashSales,
+      transferSales,
+      expectedBalance: shift.openingBalance + cashSales,
+      productSales
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get shift summary' });
+  }
+});
+
 // Close shift
 router.post('/close', authenticate, async (req: AuthRequest, res) => {
   try {
@@ -85,7 +148,38 @@ router.post('/close', authenticate, async (req: AuthRequest, res) => {
       status: 'COMPLETED' // Only count completed orders
     });
     
-    const totalSales = orders.reduce((sum, order) => sum + order.total, 0);
+    let totalSales = 0;
+    let cashSales = 0;
+    let transferSales = 0;
+    const productMap = new Map<string, { quantity: number; amount: number }>();
+
+    orders.forEach(order => {
+      totalSales += order.total;
+      if (order.paymentMethod === 'CASH') {
+        cashSales += order.total;
+      } else if (order.paymentMethod === 'TRANSFER') {
+        transferSales += order.total;
+      }
+
+      order.items.forEach((item: any) => {
+        const existing = productMap.get(item.name);
+        if (existing) {
+          existing.quantity += item.quantity;
+          existing.amount += item.price * item.quantity;
+        } else {
+          productMap.set(item.name, {
+            quantity: item.quantity,
+            amount: item.price * item.quantity
+          });
+        }
+      });
+    });
+
+    const productSales = Array.from(productMap.entries()).map(([name, data]) => ({
+      name,
+      quantity: data.quantity,
+      amount: data.amount
+    }));
     
     // Generate code if missing (legacy shifts)
     if (!shift.code) {
@@ -101,6 +195,10 @@ router.post('/close', authenticate, async (req: AuthRequest, res) => {
     shift.endTime = new Date();
     shift.closingBalance = closingBalance;
     shift.totalSales = totalSales;
+    shift.cashSales = cashSales;
+    shift.transferSales = transferSales;
+    shift.productSales = productSales;
+    shift.notes = req.body.notes || '';
     
     await shift.save();
     res.json(shift);

@@ -95,7 +95,20 @@ const POSPage = () => {
   const [showCloseShiftModal, setShowCloseShiftModal] = useState(false);
   const [showShiftWarning, setShowShiftWarning] = useState(false);
   const [closingBalance, setClosingBalance] = useState<number>(0);
+  const [shiftNotes, setShiftNotes] = useState('');
+  const [shiftSummary, setShiftSummary] = useState<any>(null);
   const [closing, setClosing] = useState(false);
+
+  const fetchShiftSummary = async () => {
+    try {
+      const res = await api.get('/api/shifts/summary');
+      setShiftSummary(res.data);
+      // Auto-fill closing balance with expected to help user
+      setClosingBalance(res.data.expectedBalance || 0);
+    } catch (err) {
+      console.error('Failed to fetch shift summary:', err);
+    }
+  };
 
   const generateOrderCode = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -270,11 +283,12 @@ const POSPage = () => {
     return tables.filter(t => (tableCarts[t._id]?.length || 0) > 0);
   };
 
-  const handleCloseShiftInitiate = () => {
+  const handleCloseShiftInitiate = async () => {
     const active = getActiveTables();
     if (active.length > 0) {
       setShowShiftWarning(true);
     } else {
+      await fetchShiftSummary();
       setShowCloseShiftModal(true);
     }
   };
@@ -283,36 +297,65 @@ const POSPage = () => {
     setClosing(true);
     try {
       const activeTables = getActiveTables();
-      const reportData = await closeShift(closingBalance, activeTables.length);
+      const reportData = await closeShift(closingBalance, shiftNotes, activeTables.length);
       
       // Print report
       const printWindow = window.open('', '_blank');
       if (printWindow) {
+        const productRows = reportData.productSales?.map((p: any) => `
+          <div class="row">
+            <span>${p.name} (x${p.quantity})</span>
+            <b>${p.amount.toLocaleString('vi-VN')}đ</b>
+          </div>
+        `).join('') || '';
+
         printWindow.document.write(`
           <html>
             <head>
               <title>Báo Cáo Chốt Ca</title>
               <style>
-                body { font-family: sans-serif; padding: 20px; line-height: 1.6; }
-                .header { text-align: center; margin-bottom: 20px; }
-                .row { display: flex; justify-content: space-between; margin: 10px 0; border-bottom: 1px dashed #eee; }
-                .footer { margin-top: 30px; text-align: center; font-size: 12px; }
-                h2 { border-bottom: 2px solid #000; padding-bottom: 10px; }
+                body { font-family: sans-serif; padding: 20px; line-height: 1.4; font-size: 14px; }
+                .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+                .section-title { font-weight: bold; text-transform: uppercase; margin-top: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px; font-size: 12px; color: #666; }
+                .row { display: flex; justify-content: space-between; margin: 5px 0; border-bottom: 1px dashed #eee; }
+                .footer { margin-top: 30px; text-align: center; font-size: 11px; color: #999; }
+                h2 { margin: 0; }
+                .highlight { background: #f9f9f9; padding: 10px; border-radius: 5px; margin: 10px 0; }
+                .notes { font-style: italic; color: #666; margin-top: 10px; padding: 10px; background: #fff8e1; border-left: 4px solid #ffc107; }
               </style>
             </head>
             <body>
               <div class="header">
                 <h2>BÁO CÁO KẾT THÚC CA</h2>
-                <h3 style="color: #666; margin-top: -10px;">MÃ CA: ${reportData.code}</h3>
-                <p>${new Date().toLocaleString('vi-VN')}</p>
+                <div style="font-weight: bold; margin-top: 5px;">MÃ CA: ${reportData.code}</div>
+                <div>${new Date().toLocaleString('vi-VN')}</div>
               </div>
               <div class="row"><span>Nhân viên:</span> <b>${reportData.userName}</b></div>
-              <div class="row"><span>Bắt đầu:</span> <span>${new Date(reportData.startTime).toLocaleString('vi-VN')}</span></div>
-              <div class="row"><span>Kết thúc:</span> <span>${new Date(reportData.endTime).toLocaleString('vi-VN')}</span></div>
-              <div class="row"><span>Tiền đầu ca:</span> <b>${reportData.openingBalance.toLocaleString('vi-VN')}đ</b></div>
-              <div class="row"><span>Doanh thu ca:</span> <b>${reportData.totalSales.toLocaleString('vi-VN')}đ</b></div>
-              <div class="row"><span>Tiền mặt cuối ca:</span> <b>${reportData.closingBalance.toLocaleString('vi-VN')}đ</b></div>
-              <div class="row"><span>Bàn giao bàn đang phục vụ:</span> <b>${activeTables.length} bàn</b></div>
+              <div class="row"><span>Thời gian:</span> <span>${new Date(reportData.startTime).toLocaleTimeString('vi-VN')} - ${new Date(reportData.endTime).toLocaleTimeString('vi-VN')}</span></div>
+              
+              <div class="section-title">Tổng hợp doanh thu</div>
+              <div class="row"><span>Tiền đầu ca:</span> <span>${reportData.openingBalance.toLocaleString('vi-VN')}đ</span></div>
+              <div class="row"><span>Doanh thu Tiền mặt:</span> <span>${reportData.cashSales?.toLocaleString('vi-VN') || 0}đ</span></div>
+              <div class="row"><span>Doanh thu Chuyển khoản:</span> <span>${reportData.transferSales?.toLocaleString('vi-VN') || 0}đ</span></div>
+              <div class="row" style="font-weight: bold;"><span>TỔNG DOANH THU:</span> <span>${reportData.totalSales.toLocaleString('vi-VN')}đ</span></div>
+              
+              <div class="section-title">Kiểm kê tiền mặt</div>
+              <div class="row"><span>Tiền mặt theo hệ thống:</span> <b>${(reportData.openingBalance + (reportData.cashSales || 0)).toLocaleString('vi-VN')}đ</b></div>
+              <div class="row"><span>Tiền mặt thực tế:</span> <b>${reportData.closingBalance.toLocaleString('vi-VN')}đ</b></div>
+              <div class="row" style="color: ${reportData.closingBalance - (reportData.openingBalance + (reportData.cashSales || 0)) === 0 ? 'black' : 'red'};">
+                <span>Chênh lệch:</span> 
+                <b>${(reportData.closingBalance - (reportData.openingBalance + (reportData.cashSales || 0))).toLocaleString('vi-VN')}đ</b>
+              </div>
+
+              ${reportData.notes ? `<div class="notes"><b>Ghi chú:</b> ${reportData.notes}</div>` : ''}
+
+              <div class="section-title">Chi tiết sản phẩm bán ra</div>
+              ${productRows}
+
+              <div class="highlight">
+                <div class="row"><span>Bàn giao bàn đang phục vụ:</span> <b>${activeTables.length} bàn</b></div>
+              </div>
+
               <div class="footer">
                 <p>Hệ thống quản lý PosApp</p>
                 <p>Cảm ơn quý khách!</p>
@@ -326,6 +369,7 @@ const POSPage = () => {
 
       setShowCloseShiftModal(false);
       setShowShiftWarning(false);
+      setShiftNotes('');
     } catch (error) {
       alert('Lỗi khi chốt ca');
     } finally {
@@ -766,8 +810,9 @@ const POSPage = () => {
                </p>
                <div className="space-y-4">
                   <button 
-                    onClick={() => {
+                    onClick={async () => {
                       setShowShiftWarning(false);
+                      await fetchShiftSummary();
                       setShowCloseShiftModal(true);
                     }}
                     className="w-full h-16 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-600 transition-all active:scale-95"
@@ -806,22 +851,39 @@ const POSPage = () => {
                <div className="flex items-center gap-4 mb-8">
                   <div className="w-12 h-12 bg-rose-100 rounded-2xl flex items-center justify-center">
                      <CircleDollarSign className="text-rose-600 w-6 h-6" />
-                  </div>
-                  <div>
-                     <h3 className="text-xl font-black text-slate-900 leading-none">Chốt ca bán hàng</h3>
-                     <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Tổng kết tiền mặt cuối ca</p>
-                  </div>
-               </div>
+                   </div>
+                   <div>
+                      <h3 className="text-xl font-black text-slate-900 leading-none">Chốt ca bán hàng</h3>
+                      <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Tổng kết doanh thu và tiền mặt</p>
+                   </div>
+                </div>
 
-               <div className="space-y-6">
+                <div className="space-y-6">
                   <div className="bg-slate-50 p-6 rounded-3xl space-y-4">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Tiền đầu ca</span>
-                      <span className="font-black text-slate-900">{shift?.openingBalance.toLocaleString('vi-VN')}đ</span>
-                    </div>
-                    <div className="h-px bg-slate-100" />
+                    {shiftSummary && (
+                      <div className="space-y-2 mb-4">
+                        <div className="flex justify-between items-center text-[10px]">
+                          <span className="text-slate-400 font-bold uppercase tracking-widest">Tiền đầu ca</span>
+                          <span className="font-bold text-slate-700">{shiftSummary.openingBalance.toLocaleString('vi-VN')}đ</span>
+                        </div>
+                        <div className="flex justify-between items-center text-[10px]">
+                          <span className="text-slate-400 font-bold uppercase tracking-widest">Doanh thu Tiền mặt</span>
+                          <span className="font-bold text-emerald-600">+{shiftSummary.cashSales.toLocaleString('vi-VN')}đ</span>
+                        </div>
+                        <div className="flex justify-between items-center text-[10px]">
+                          <span className="text-slate-400 font-bold uppercase tracking-widest">Doanh thu Chuyển khoản</span>
+                          <span className="font-bold text-blue-600">+{shiftSummary.transferSales.toLocaleString('vi-VN')}đ</span>
+                        </div>
+                        <div className="h-px bg-slate-100" />
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-slate-900 font-black uppercase tracking-tight">Tiền mặt hệ thống</span>
+                          <span className="font-black text-slate-900">{shiftSummary.expectedBalance.toLocaleString('vi-VN')}đ</span>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="space-y-2">
-                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Tiền mặt cuối ca (Thực tế)</label>
+                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Tiền mặt thực thực tế</label>
                        <div className="relative">
                           <input 
                             type="number"
@@ -833,12 +895,37 @@ const POSPage = () => {
                           <span className="absolute top-1/2 -translate-y-1/2 left-4 text-slate-300 font-black">đ</span>
                        </div>
                     </div>
+
+                    {shiftSummary && closingBalance !== shiftSummary.expectedBalance && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="space-y-3"
+                      >
+                        <div className="flex justify-between items-center p-3 bg-rose-50 rounded-xl border border-rose-100 italic">
+                          <span className="text-[10px] font-bold text-rose-600 uppercase tracking-widest">Chênh lệch:</span>
+                          <span className="text-sm font-black text-rose-600 font-mono">
+                            {(closingBalance - shiftSummary.expectedBalance).toLocaleString('vi-VN')}đ
+                          </span>
+                        </div>
+                        
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black text-rose-600 uppercase tracking-widest px-1">Ghi chú giải trình (Bắt buộc)</label>
+                          <textarea 
+                            value={shiftNotes}
+                            onChange={(e) => setShiftNotes(e.target.value)}
+                            placeholder="Nhập lý do chênh lệch tiền mặt..."
+                            className="w-full p-4 bg-white rounded-2xl border border-rose-100 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-rose-500 text-slate-900 min-h-[80px]"
+                          />
+                        </div>
+                      </motion.div>
+                    )}
                   </div>
 
                   <button 
                     onClick={handleCloseShift}
-                    disabled={closing}
-                    className="w-full h-16 bg-rose-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-rose-700 transition-all shadow-xl shadow-rose-100 flex items-center justify-center gap-3 active:scale-95"
+                    disabled={closing || (shiftSummary && closingBalance !== shiftSummary.expectedBalance && !shiftNotes.trim())}
+                    className="w-full h-16 bg-rose-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-rose-700 transition-all shadow-xl shadow-rose-100 flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed"
                   >
                     {closing ? (
                       <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />

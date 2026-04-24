@@ -9,6 +9,10 @@ export interface IShift extends Document {
   openingBalance: number;
   closingBalance?: number;
   totalSales: number;
+  cashSales: number;
+  transferSales: number;
+  productSales: { name: string; quantity: number; amount: number }[];
+  notes?: string;
   status: 'OPEN' | 'CLOSED';
   code: string;
 }
@@ -23,6 +27,16 @@ const ShiftSchema: Schema = new Schema({
   openingBalance: { type: Number, default: 0 },
   closingBalance: { type: Number },
   totalSales: { type: Number, default: 0 },
+  cashSales: { type: Number, default: 0 },
+  transferSales: { type: Number, default: 0 },
+  productSales: [
+    {
+      name: { type: String },
+      quantity: { type: Number },
+      amount: { type: Number }
+    }
+  ],
+  notes: { type: String },
   status: { 
     type: String, 
     enum: ['OPEN', 'CLOSED'], 
