@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import axios from '../lib/api';
+import api from '../lib/api';
+import axios from 'axios';
 import { ShoppingCart, Plus, Minus, Coffee, CheckCircle2, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
@@ -58,9 +59,9 @@ const CustomerOrderPage = () => {
   const fetchData = async () => {
     try {
       const [prodRes, tableRes, setRes] = await Promise.all([
-        axios.get('/api/products'),
-        axios.get(`/api/tables/${tableId}`),
-        axios.get('/api/settings')
+        api.get('/api/products'),
+        api.get(`/api/tables/${tableId}`),
+        api.get('/api/settings')
       ]);
       const productsData = Array.isArray(prodRes.data) ? prodRes.data : [];
       setProducts(productsData);
@@ -119,7 +120,7 @@ const CustomerOrderPage = () => {
         total: total,
       };
 
-      await axios.post('/api/orders', orderData);
+      await api.post('/api/orders', orderData);
       setCart([]);
       setOrderSuccess(true);
       setTimeout(() => setOrderSuccess(false), 5000);

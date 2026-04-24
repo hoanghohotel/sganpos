@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import axios from '../lib/api';
+import api from '../lib/api';
 
 interface User {
   id: string;
@@ -35,47 +35,79 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isLoading: true,
 
   login: async (email, password) => {
-    const res = await axios.post('/api/auth/login', { email, password });
-    set({ user: res.data.user });
-    await get().checkShift();
+    try {
+      const res = await api.post('/api/auth/login', { email, password });
+      if (res.data.token) {
+        localStorage.setItem('token', res.data.token);
+      }
+      set({ user: res.data.user });
+      await get().checkShift();
+    } catch (err) {
+      console.error('Login error:', err);
+      throw err;
+    }
   },
 
   register: async (name, email, password) => {
-    await axios.post('/api/auth/register', { name, email, password });
+    try {
+      await api.post('/api/auth/register', { name, email, password });
+    } catch (err) {
+      console.error('Register error:', err);
+      throw err;
+    }
   },
 
   logout: async () => {
-    await axios.post('/api/auth/logout');
-    set({ user: null, shift: null });
+    try {
+      await api.post('/api/auth/logout');
+    } catch (err) {
+      console.error('Logout error:', err);
+    } finally {
+      localStorage.removeItem('token');
+      set({ user: null, shift: null });
+    }
   },
 
   checkAuth: async () => {
     try {
-      const res = await axios.get('/api/auth/me');
+      const res = await api.get('/api/auth/me');
       set({ user: res.data, isLoading: false });
       if (res.data) await get().checkShift();
     } catch (err) {
+      console.error('CheckAuth error:', err);
+      localStorage.removeItem('token');
       set({ user: null, isLoading: false });
     }
   },
 
   checkShift: async () => {
     try {
-      const res = await axios.get('/api/shifts/current');
+      const res = await api.get('/api/shifts/current');
       set({ shift: res.data });
     } catch (err) {
+      console.error('CheckShift error:', err);
       set({ shift: null });
     }
   },
 
   openShift: async (openingBalance) => {
-    const res = await axios.post('/api/shifts/open', { openingBalance });
-    set({ shift: res.data });
+    try {
+      const res = await api.post('/api/shifts/open', { openingBalance });
+      set({ shift: res.data });
+    } catch (err) {
+      console.error('OpenShift error:', err);
+      throw err;
+    }
   },
 
   closeShift: async (closingBalance: number, activeTablesCount?: number) => {
-    const res = await axios.post('/api/shifts/close', { closingBalance, activeTablesCount });
-    set({ shift: null });
-    return res.data;
+    try {
+      const res = await api.post('/api/shifts/close', { closingBalance, activeTablesCount });
+      set({ shift: null });
+      return res.data;
+    } catch (err) {
+      console.error('CloseShift error:', err);
+      throw err;
+    }
   }
 }));

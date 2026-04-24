@@ -1,13 +1,13 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
-import dbConnect from '../src/lib/mongodb.ts';
-import { tenantMiddleware } from '../src/middleware/tenant.ts';
-import productRoutes from '../src/routes/products.ts';
-import orderRoutes from '../src/routes/orders.ts';
-import tableRoutes from '../src/routes/tables.ts';
-import settingsRoutes from '../src/routes/settings.ts';
-import authRoutes from '../src/routes/auth.ts';
-import shiftRoutes from '../src/routes/shifts.ts';
+import dbConnect from '../src/lib/mongodb';
+import { tenantMiddleware } from '../src/middleware/tenant';
+import productRoutes from '../src/routes/products';
+import orderRoutes from '../src/routes/orders';
+import tableRoutes from '../src/routes/tables';
+import settingsRoutes from '../src/routes/settings';
+import authRoutes from '../src/routes/auth';
+import shiftRoutes from '../src/routes/shifts';
 
 const app = express();
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from '../lib/api';
+import api from '../lib/api';
+import axios from 'axios';
 import { ShoppingCart, Plus, Minus, Trash2, Coffee, CheckCircle2, Banknote, CreditCard, X, ChevronRight, LogOut, CircleDollarSign } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuthStore } from '../store/authStore';
@@ -86,9 +87,9 @@ const POSPage = () => {
   const fetchInitialData = async () => {
     try {
       const [prodRes, tableRes, setRes] = await Promise.all([
-        axios.get('/api/products'),
-        axios.get('/api/tables'),
-        axios.get('/api/settings')
+        api.get('/api/products'),
+        api.get('/api/tables'),
+        api.get('/api/settings')
       ]);
       const productsData = Array.isArray(prodRes.data) ? prodRes.data : [];
       setProducts(productsData);
@@ -219,7 +220,7 @@ const POSPage = () => {
         status: 'PENDING'
       };
 
-      await axios.post('/api/orders', orderData);
+      await api.post('/api/orders', orderData);
       setOrderSuccess(true);
       setShowPaymentModal(false);
       

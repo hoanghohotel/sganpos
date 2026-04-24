@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from '../lib/api';
+import api from '../lib/api';
+import axios from 'axios';
 import { Save, Building2, CreditCard, Upload, CheckCircle2, AlertCircle, ChevronDown, Search, Globe, Link as LinkIcon, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
@@ -52,14 +53,17 @@ const SettingsPage = () => {
 
   const fetchInitialData = async () => {
     try {
-      const [settingsRes, banksRes] = await Promise.all([
-        axios.get('/api/settings'),
-        axios.get('https://api.vietqr.io/v2/banks')
-      ]);
-      
-      setSettings(prev => ({ ...prev, ...settingsRes.data }));
-      if (banksRes.data && banksRes.data.data) {
-        setBanks(banksRes.data.data);
+      // Fetch banks first as it's public
+      axios.get('https://api.vietqr.io/v2/banks').then(res => {
+         if (res.data?.data) setBanks(res.data.data);
+      }).catch(err => console.error('Lỗi khi lấy danh sách ngân hàng:', err));
+
+      // Fetch settings via authenticated API
+      try {
+        const settingsRes = await api.get('/api/settings');
+        setSettings(prev => ({ ...prev, ...settingsRes.data }));
+      } catch (err) {
+        console.error('Lỗi khi lấy cài đặt:', err);
       }
     } catch (err) {
       console.error('Lỗi khi tải dữ liệu:', err);
@@ -89,7 +93,7 @@ const SettingsPage = () => {
     setSaving(true);
     setMessage(null);
     try {
-      await axios.put('/api/settings', settings);
+      await api.put('/api/settings', settings);
       setMessage({ type: 'success', text: 'Đã lưu cài đặt thành công!' });
       setTimeout(() => setMessage(null), 3000);
     } catch (err) {

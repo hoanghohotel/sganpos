@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from '../lib/api';
+import api from '../lib/api';
 import { QRCodeCanvas } from 'qrcode.react';
 import { Download, Printer, Filter } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -20,7 +20,7 @@ const QRManagerPage = () => {
 
   const fetchTables = async () => {
     try {
-      const response = await axios.get('/api/tables');
+      const response = await api.get('/api/tables');
       setTables(response.data);
     } catch (error) {
       console.error('Lỗi khi lấy danh sách bàn:', error);

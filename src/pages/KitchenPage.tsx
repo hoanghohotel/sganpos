@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from '../lib/api';
+import api from '../lib/api';
 import { CookingPot, CheckCircle, Clock, ChefHat, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
@@ -35,7 +35,7 @@ const KitchenPage = () => {
 
   const fetchOrders = async () => {
     try {
-      const response = await axios.get('/api/orders');
+      const response = await api.get('/api/orders');
       const data = Array.isArray(response.data) ? response.data : [];
       const activeOrders = data.filter((o: Order) => o.status !== 'COMPLETED');
       setOrders(activeOrders);
@@ -69,7 +69,7 @@ const KitchenPage = () => {
 
   const updateStatus = async (orderId: string, newStatus: string) => {
     try {
-      await axios.patch(`/api/orders/${orderId}`, { status: newStatus });
+      await api.patch(`/api/orders/${orderId}`, { status: newStatus });
       fetchOrders();
     } catch (error) {
       console.error('Lỗi khi cập nhật trạng thái:', error);

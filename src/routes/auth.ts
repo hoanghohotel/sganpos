@@ -1,9 +1,9 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import User from '../models/User.ts';
-import { authenticate, AuthRequest } from '../middleware/auth.ts';
-import { getTenantId } from '../lib/tenant.ts';
+import User from '../models/User';
+import { authenticate, AuthRequest } from '../middleware/auth';
+import { getTenantId } from '../lib/tenant';
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'default_secret';

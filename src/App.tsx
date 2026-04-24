@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react
 import { Coffee, CookingPot, Settings, LayoutDashboard, QrCode, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useEffect } from 'react';
-import { useAuthStore } from './store/authStore.ts';
+import { useAuthStore } from './store/authStore';
 import ProtectedRoute from './components/ProtectedRoute';
 import ShiftGuard from './components/ShiftGuard';
 import POSPage from './pages/POSPage';
