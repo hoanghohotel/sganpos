@@ -2,6 +2,7 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import cors from 'cors';
 import dbConnect from '../src/lib/mongodb.js';
 import User from '../src/models/User.js';
 import { tenantMiddleware } from '../src/middleware/tenant.js';
@@ -19,9 +20,21 @@ const app = express();
 // Trust proxy for secure cookies
 app.set('trust proxy', 1);
 
+// Basic configuration
+app.disable('x-powered-by');
+
 // Middleware
+app.use((req, res, next) => {
+  res.setHeader('X-Processed-By', 'SG-AN-POS-API');
+  next();
+});
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
 app.use(express.json());
 app.use(cookieParser());
+app.disable('x-powered-by');
 
 // Global system logs (limited persistence on serverless)
 const systemLogs: any[] = [];
@@ -82,6 +95,24 @@ apiRouter.use('/products', productRoutes);
 apiRouter.use('/orders', orderRoutes);
 apiRouter.use('/tables', tableRoutes);
 apiRouter.use('/settings', settingsRoutes);
+
+// Debug route
+apiRouter.get('/debug-settings', async (req, res) => {
+  try {
+    const tenantId = getTenantId();
+    const Settings = (await import('../src/models/Settings.js')).default;
+    const settings = await Settings.findOne({ tenantId });
+    res.json({ 
+      success: true, 
+      tenantId, 
+      settings,
+      headers: req.headers,
+      env: { hasMongo: !!process.env.MONGODB_URI }
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // --- Admin & Dev APIs ---
 apiRouter.get('/dev/logs', (req, res) => {
@@ -161,6 +192,16 @@ apiRouter.delete('/admin/users/:id', async (req, res) => {
 // might be passed as /api/auth/register or just /auth/register depending on rewrite config.
 app.use('/api', apiRouter);
 app.use(apiRouter); // Fallback for when the /api prefix is stripped by Vercel
+
+// 404 Handler
+app.use((req, res) => {
+  res.status(404).json({ 
+    error: 'Route not found on SG-AN-POS API', 
+    path: req.path,
+    method: req.method,
+    tenantId: (req as any).tenantId
+  });
+});
 
 // Export the app for Vercel
 export default app;
