@@ -76,17 +76,29 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   checkAuth: async () => {
+    // If we're already loading, don't start another check
+    const { user, isLoading } = get();
+    console.log(`[AuthStore] checkAuth started. Current state: user=${!!user}, isLoading=${isLoading}`);
+    
     try {
       const res = await api.get('/api/auth/me');
+      console.log('[AuthStore] checkAuth success:', res.data?.name || 'Unknown User');
       set({ user: res.data, isLoading: false });
       if (res.data) await get().checkShift();
     } catch (err: any) {
-      // Only log errors that are not 401 (unauthorized)
-      if (err.response?.status !== 401) {
-        console.error('CheckAuth error:', err);
+      const status = err.response?.status;
+      console.warn(`[AuthStore] checkAuth failed with status ${status}:`, err.message);
+      
+      // ONLY clear session on explicit 401/403/400 (Client errors)
+      // Do NOT clear on 500+ (Server errors, Database unstable, etc.)
+      if (status === 401 || status === 403 || status === 400 || (err.message && err.message.includes('Network Error'))) {
+        console.log('[AuthStore] Clearing session due to auth error');
+        localStorage.removeItem('token');
+        set({ user: null, isLoading: false });
+      } else {
+        console.log('[AuthStore] Keeping session, might be temporary server error');
+        set({ isLoading: false });
       }
-      localStorage.removeItem('token');
-      set({ user: null, isLoading: false });
     }
   },
 

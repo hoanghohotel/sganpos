@@ -14,6 +14,11 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
   try {
     // Check DB state first to avoid 500 on timeout
     if (mongoose.connection.readyState !== 1) {
+      const dbConnect = (await import('../lib/mongodb.js')).default;
+      await dbConnect();
+    }
+
+    if (mongoose.connection.readyState !== 1) {
       return res.status(503).json({ error: 'Database unstable', status: mongoose.connection.readyState });
     }
 

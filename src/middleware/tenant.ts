@@ -22,22 +22,28 @@ export const tenantMiddleware = (req: Request, res: Response, next: NextFunction
     if (pathParts[1] && !systemRoutes.includes(pathParts[1])) {
       tenantId = pathParts[1];
     } else {
-      // 3. Fallback: Check Referer
+      // 3. Fallback: Check Referer (Very important for F5 and API calls from SPA)
       const referer = req.headers.referer;
       if (referer) {
         try {
           const url = new URL(referer);
           const refererParts = url.pathname.split('/');
+          
+          // Case: domain.com/TenantId/something
           if (refererParts[1] && !systemRoutes.includes(refererParts[1])) {
             tenantId = refererParts[1];
           } else {
+            // Case: TenantId.domain.com
             const refHost = url.hostname;
-            if (!refHost.includes('localhost') && !refHost.includes('0.0.0.0')) {
-              const refParts = refHost.split('.');
-              if (refParts.length >= 3) tenantId = refParts[0];
+            const refParts = refHost.split('.');
+            if (refParts.length >= 3) {
+              // Only pick subdomain if it's not 'www' or local dev
+              if (refParts[0] !== 'www') {
+                tenantId = refParts[0];
+              }
             }
           }
-        } catch (e) { /* ignore */ }
+        } catch (e) { /* ignore URL parse error */ }
       }
 
       // 4. Default: Subdomain detection from Host if still demo

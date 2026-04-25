@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
@@ -11,9 +11,15 @@ const RegisterPage = () => {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const register = useAuthStore((state) => state.register);
+  const { register, user } = useAuthStore();
   const navigate = useNavigate();
   const tenantPrefix = getTenantPrefix();
+
+  useEffect(() => {
+    if (user) {
+      navigate(`${tenantPrefix}/`);
+    }
+  }, [user, navigate, tenantPrefix]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -7,6 +7,11 @@ import Settings from '../models/Settings.js';
 
 export async function runMigration() {
   console.log('[Migration] Starting database migration check...');
+  
+  // Ensure connection
+  const dbConnect = (await import('./mongodb.js')).default;
+  await dbConnect();
+
   const state = mongoose.connection.readyState;
   if (state !== 1) {
     console.warn('[Migration] Skipping migration: Database not connected.');
