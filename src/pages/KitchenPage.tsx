@@ -4,7 +4,7 @@ import { CookingPot, CheckCircle, Clock, ChefHat, AlertCircle } from 'lucide-rea
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { useSocket } from '../hooks/useSocket.ts';
+import { useSocket } from '../hooks/useSocket';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

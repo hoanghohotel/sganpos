@@ -9,19 +9,19 @@ import cookieParser from 'cookie-parser';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-import dbConnect from './src/lib/mongodb.ts';
-import User from './src/models/User.ts';
+import dbConnect from './src/lib/mongodb';
+import User from './src/models/User';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
-import { tenantMiddleware } from './src/middleware/tenant.ts';
-import { runMigration } from './src/lib/migration.ts';
-import { initSocket } from './src/lib/socketService.ts'; // Add this
-import productRoutes from './src/routes/products.ts';
-import orderRoutes from './src/routes/orders.ts';
-import tableRoutes from './src/routes/tables.ts';
-import settingsRoutes from './src/routes/settings.ts';
-import authRoutes from './src/routes/auth.ts';
-import shiftRoutes from './src/routes/shifts.ts';
+import { tenantMiddleware } from './src/middleware/tenant';
+import { runMigration } from './src/lib/migration';
+import { initSocket } from './src/lib/socketService'; // Add this
+import productRoutes from './src/routes/products';
+import orderRoutes from './src/routes/orders';
+import tableRoutes from './src/routes/tables';
+import settingsRoutes from './src/routes/settings';
+import authRoutes from './src/routes/auth';
+import shiftRoutes from './src/routes/shifts';
 
 const app = express();
 

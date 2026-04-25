@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
-import User from '../models/User.ts';
-import { getTenantId } from '../lib/tenant.ts';
+import User from '../models/User';
+import { getTenantId } from '../lib/tenant';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default_secret';
 
