@@ -3,6 +3,7 @@ import { Shield, Users, Activity, Terminal, Lock, Trash2, Edit2, Plus, Database,
 import api from '../lib/api';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
+import { useAuthStore } from '../store/authStore';
 
 interface LogEntry {
   timestamp: string;
@@ -23,7 +24,10 @@ interface User {
 }
 
 const DevelopPage = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('dev_portal_auth') === 'true';
+  });
+  const { user: authUser, checkAuth } = useAuthStore();
   const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [activeTab, setActiveTab] = useState<'users' | 'logs' | 'db'>('users');
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -32,10 +36,24 @@ const DevelopPage = () => {
   const [loading, setLoading] = useState(false);
   const [editingUser, setEditingUser] = useState<Partial<User> & { password?: string } | null>(null);
 
+  // Auto-auth if already logged in as system admin
+  useEffect(() => {
+    if (authUser?.email === 'admin@sganpos.vn') {
+      setIsAuthenticated(true);
+      localStorage.setItem('dev_portal_auth', 'true');
+    }
+  }, [authUser]);
+
+  // Periodic data fetch if authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchData();
+    }
+  }, [isAuthenticated]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    localStorage.removeItem('token'); // Clear any stale token
     try {
       // Step 1: Client side check for developer portal access
       if (credentials.email === 'admin@sganpos.vn' && credentials.password === 'admin@123') {
@@ -45,6 +63,8 @@ const DevelopPage = () => {
           if (res.data.token) {
             localStorage.setItem('token', res.data.token);
             console.log('Login success: Backend token stored');
+            // Refresh auth store to sync global user state
+            await checkAuth();
           }
         } catch (authErr: any) {
           console.error('Backend auth failed:', authErr);
@@ -58,7 +78,7 @@ const DevelopPage = () => {
         }
         
         setIsAuthenticated(true);
-        await fetchData();
+        localStorage.setItem('dev_portal_auth', 'true');
       } else {
         alert('Sai tài khoản hoặc mật khẩu hệ quản trị!');
       }
@@ -90,8 +110,11 @@ const DevelopPage = () => {
       if (failures.length > 0) {
         console.warn('Some dev data failed to fetch', failures);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch dev data');
+      if (err.response?.status === 401) {
+        handleTerminate();
+      }
     } finally {
       setLoading(false);
     }
@@ -111,6 +134,11 @@ const DevelopPage = () => {
       return () => clearInterval(interval);
     }
   }, [isAuthenticated, activeTab]);
+
+  const handleTerminate = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('dev_portal_auth');
+  };
 
   const handleSaveUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -256,7 +284,7 @@ const DevelopPage = () => {
 
         <div className="mt-auto pt-6 border-t border-slate-900">
           <button 
-            onClick={() => setIsAuthenticated(false)}
+            onClick={handleTerminate}
             className="flex items-center gap-3 p-3 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all w-full font-bold uppercase tracking-widest text-xs"
           >
             <Lock size={16} />
