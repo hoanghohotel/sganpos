@@ -1,14 +1,18 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
-import dbConnect from '../src/lib/mongodb';
-import { tenantMiddleware } from '../src/middleware/tenant';
-import { getTenantId } from '../src/lib/tenant';
-import productRoutes from '../src/routes/products';
-import orderRoutes from '../src/routes/orders';
-import tableRoutes from '../src/routes/tables';
-import settingsRoutes from '../src/routes/settings';
-import authRoutes from '../src/routes/auth';
-import shiftRoutes from '../src/routes/shifts';
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
+import dbConnect from '../src/lib/mongodb.js';
+import User from '../src/models/User.js';
+import { tenantMiddleware } from '../src/middleware/tenant.js';
+import { getTenantId } from '../src/lib/tenant.js';
+import { runMigration } from '../src/lib/migration.js';
+import productRoutes from '../src/routes/products.js';
+import orderRoutes from '../src/routes/orders.js';
+import tableRoutes from '../src/routes/tables.js';
+import settingsRoutes from '../src/routes/settings.js';
+import authRoutes from '../src/routes/auth.js';
+import shiftRoutes from '../src/routes/shifts.js';
 
 const app = express();
 
@@ -16,8 +20,29 @@ const app = express();
 app.set('trust proxy', 1);
 
 // Middleware
- app.use(express.json());
+app.use(express.json());
 app.use(cookieParser());
+
+// Global system logs (limited persistence on serverless)
+const systemLogs: any[] = [];
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    if (!req.path.startsWith('/api/dev')) {
+      systemLogs.push({
+        timestamp: new Date(),
+        method: req.method,
+        path: req.path,
+        status: res.statusCode,
+        duration: `${duration}ms`,
+        ip: req.ip
+      });
+      if (systemLogs.length > 50) systemLogs.shift();
+    }
+  });
+  next();
+});
 
 // Database connection middleware
 app.use(async (req, res, next) => {
@@ -57,6 +82,79 @@ apiRouter.use('/products', productRoutes);
 apiRouter.use('/orders', orderRoutes);
 apiRouter.use('/tables', tableRoutes);
 apiRouter.use('/settings', settingsRoutes);
+
+// --- Admin & Dev APIs ---
+apiRouter.get('/dev/logs', (req, res) => {
+  res.json(systemLogs.slice().reverse());
+});
+
+apiRouter.get('/dev/db-status', async (req, res) => {
+  try {
+    const state = mongoose.connection.readyState;
+    const states = ['Disconnected', 'Connected', 'Connecting', 'Disconnecting'];
+    res.json({ 
+      status: states[state], 
+      atlas: (process.env.MONGODB_URI || '').includes('mongodb+srv'),
+      dbName: mongoose.connection.name
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+apiRouter.post('/dev/migrate', async (req, res) => {
+  try {
+    await runMigration();
+    res.json({ success: true, message: 'Migration/Seed completed successfully' });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+apiRouter.get('/admin/users', async (req, res) => {
+  try {
+    const users = await User.find({}, '-password');
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+apiRouter.post('/admin/users', async (req, res) => {
+  try {
+    const hashedPassword = await bcrypt.hash(req.body.password || 'password@123', 10);
+    const user = new User({ ...req.body, password: hashedPassword });
+    await user.save();
+    res.json(user);
+  } catch (err: any) {
+    if (err.code === 11000) {
+      return res.status(400).json({ error: 'User mapping already exists' });
+    }
+    res.status(500).json({ error: 'Failed' });
+  }
+});
+
+apiRouter.put('/admin/users/:id', async (req, res) => {
+  try {
+    const updateData = { ...req.body };
+    if (updateData.password) {
+      updateData.password = await bcrypt.hash(updateData.password, 10);
+    }
+    const user = await User.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed' });
+  }
+});
+
+apiRouter.delete('/admin/users/:id', async (req, res) => {
+  try {
+    await User.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed' });
+  }
+});
 
 // Mounting configuration for Vercel
 // On Vercel, when routed via /api/(.*), the original path /api/auth/register

@@ -9,19 +9,19 @@ import cookieParser from 'cookie-parser';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-import dbConnect from './src/lib/mongodb';
-import User from './src/models/User';
+import dbConnect from './src/lib/mongodb.js';
+import User from './src/models/User.js';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
-import { tenantMiddleware } from './src/middleware/tenant';
-import { runMigration } from './src/lib/migration';
-import { initSocket } from './src/lib/socketService'; // Add this
-import productRoutes from './src/routes/products';
-import orderRoutes from './src/routes/orders';
-import tableRoutes from './src/routes/tables';
-import settingsRoutes from './src/routes/settings';
-import authRoutes from './src/routes/auth';
-import shiftRoutes from './src/routes/shifts';
+import { tenantMiddleware } from './src/middleware/tenant.js';
+import { runMigration } from './src/lib/migration.js';
+import { initSocket } from './src/lib/socketService.js'; // Add this
+import productRoutes from './src/routes/products.js';
+import orderRoutes from './src/routes/orders.js';
+import tableRoutes from './src/routes/tables.js';
+import settingsRoutes from './src/routes/settings.js';
+import authRoutes from './src/routes/auth.js';
+import shiftRoutes from './src/routes/shifts.js';
 
 const app = express();
 
@@ -237,7 +237,7 @@ app.post('/api/dev/seed', async (req, res) => {
     if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
 
     // Seed Tables if empty
-    const Table = (await import('./src/models/Table')).default;
+    const Table = (await import('./src/models/Table.js')).default;
     const existingTables = await Table.find({ tenantId });
     if (existingTables.length === 0) {
       const demoTables = [];
@@ -248,7 +248,7 @@ app.post('/api/dev/seed', async (req, res) => {
     }
 
     // Seed Products if empty
-    const Product = (await import('./src/models/Product')).default;
+    const Product = (await import('./src/models/Product.js')).default;
     const existingProducts = await Product.find({ tenantId });
     if (existingProducts.length === 0) {
       const demoProducts = [

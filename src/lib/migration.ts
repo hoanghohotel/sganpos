@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
-import User from '../models/User';
-import Product from '../models/Product';
-import Table from '../models/Table';
-import Settings from '../models/Settings';
+import User from '../models/User.js';
+import Product from '../models/Product.js';
+import Table from '../models/Table.js';
+import Settings from '../models/Settings.js';
 
 export async function runMigration() {
   console.log('[Migration] Starting database migration check...');

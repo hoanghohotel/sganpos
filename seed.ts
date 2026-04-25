@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import dbConnect from './src/lib/mongodb';
-import { runMigration } from './src/lib/migration';
+import dbConnect from './src/lib/mongodb.js';
+import { runMigration } from './src/lib/migration.js';
 
 dotenv.config();
 

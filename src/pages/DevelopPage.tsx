@@ -27,7 +27,7 @@ const DevelopPage = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return localStorage.getItem('dev_portal_auth') === 'true';
   });
-  const { user: authUser, checkAuth } = useAuthStore();
+  const { user: authUser, checkAuth, isLoading } = useAuthStore();
   const [credentials, setCredentials] = useState({ email: '', password: '' });
   const [activeTab, setActiveTab] = useState<'users' | 'logs' | 'db'>('users');
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -38,18 +38,18 @@ const DevelopPage = () => {
 
   // Auto-auth if already logged in as system admin
   useEffect(() => {
-    if (authUser?.email === 'admin@sganpos.vn') {
+    if (!isLoading && authUser?.email === 'admin@sganpos.vn') {
       setIsAuthenticated(true);
       localStorage.setItem('dev_portal_auth', 'true');
     }
-  }, [authUser]);
+  }, [authUser, isLoading]);
 
   // Periodic data fetch if authenticated
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !isLoading) {
       fetchData();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isLoading]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,7 +112,8 @@ const DevelopPage = () => {
       }
     } catch (err: any) {
       console.error('Failed to fetch dev data');
-      if (err.response?.status === 401) {
+      // Only terminate if we're not in the middle of a global auth check
+      if (err.response?.status === 401 && !isLoading) {
         handleTerminate();
       }
     } finally {

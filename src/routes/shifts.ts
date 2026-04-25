@@ -1,8 +1,8 @@
 import express from 'express';
-import Shift from '../models/Shift';
-import Order from '../models/Order';
-import { authenticate, AuthRequest } from '../middleware/auth';
-import { getTenantId } from '../lib/tenant';
+import Shift from '../models/Shift.js';
+import Order from '../models/Order.js';
+import { authenticate, AuthRequest } from '../middleware/auth.js';
+import { getTenantId } from '../lib/tenant.js';
 
 const router = express.Router();
 
