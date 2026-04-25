@@ -24,7 +24,7 @@ interface Bank {
 
 const SettingsPage = () => {
   const { user } = useAuthStore();
-  const [activeTab, setActiveTab] = useState<'overview' | 'payment' | 'subdomain'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'payment' | 'subdomain' | 'templates'>('overview');
   const [banks, setBanks] = useState<Bank[]>([]);
   const [showBankList, setShowBankList] = useState(false);
   const [bankSearch, setBankSearch] = useState('');
@@ -40,8 +40,18 @@ const SettingsPage = () => {
     bankLogoUrl: '',
     bankAccountHolder: '',
     subdomain: '',
-    customPath: ''
+    customPath: '',
+    taxRate: 0,
+    defaultPrintTemplate: 'classic'
   });
+
+  const printTemplates = [
+    { id: 'classic', name: 'Cổ điển', description: 'Giao diện truyền thống, dễ đọc.' },
+    { id: 'modern', name: 'Hiện đại', description: 'Thiết kế tinh tế, font chữ hiện đại.' },
+    { id: 'minimal', name: 'Tối giản', description: 'Tập trung vào thông tin quan trọng nhất.' },
+    { id: 'retro', name: 'Phóng khoáng', description: 'Phong cách máy in nhiệt cũ, cá tính.' },
+    { id: 'elegant', name: 'Sang trọng', description: 'Bố cục cân đối, phù hợp nhà hàng cao cấp.' }
+  ];
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -175,6 +185,16 @@ const SettingsPage = () => {
           <Globe size={16} />
           Subdomain
         </button>
+        <button
+          onClick={() => setActiveTab('templates')}
+          className={cn(
+            "flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
+            activeTab === 'templates' ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
+          )}
+        >
+          <CreditCard size={16} />
+          Mẫu in
+        </button>
       </div>
 
       <form onSubmit={handleSave} className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-2xl shadow-slate-200/40">
@@ -207,6 +227,20 @@ const SettingsPage = () => {
                     value={settings.hotline || ''}
                     onChange={handleChange}
                     placeholder="Số điện thoại liên hệ"
+                    className="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-slate-300"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Thuế (%)</label>
+                  <input
+                    type="number"
+                    name="taxRate"
+                    value={settings.taxRate || 0}
+                    onChange={(e) => setSettings(prev => ({ ...prev, taxRate: Number(e.target.value) }))}
+                    placeholder="VD: 10"
                     className="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-slate-300"
                   />
                 </div>
@@ -357,6 +391,70 @@ const SettingsPage = () => {
                       <p className="text-xs font-bold text-slate-700 mb-1">Thông báo thanh toán</p>
                       <p className="text-[10px] text-slate-500 leading-relaxed">Thông tin này sẽ được sử dụng để hiển thị mã QR chuyển khoản cho khách hàng khi thanh toán tại quầy hoặc tại bàn.</p>
                    </div>
+                </div>
+              </div>
+            </motion.div>
+          ) : activeTab === 'templates' ? (
+            <motion.div
+              key="templates-tab"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="space-y-8"
+            >
+              <div className="bg-slate-900 text-white p-6 rounded-3xl shadow-xl">
+                 <h3 className="text-sm font-black uppercase tracking-widest mb-2 italic">Quản lý mẫu in hóa đơn</h3>
+                 <p className="text-[10px] text-slate-400 font-medium tracking-tight leading-relaxed">Chọn một trong các mẫu thiết kế sẵn bên dưới để hiển thị trên hóa đơn và phiếu tạm tính của cửa hàng.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {printTemplates.map((template) => (
+                  <div 
+                    key={template.id}
+                    onClick={() => setSettings(prev => ({ ...prev, defaultPrintTemplate: template.id }))}
+                    className={cn(
+                      "p-6 rounded-[24px] border-2 transition-all cursor-pointer group flex flex-col gap-3",
+                      settings.defaultPrintTemplate === template.id 
+                        ? "bg-emerald-50 border-emerald-500 shadow-xl shadow-emerald-200/20" 
+                        : "bg-white border-slate-100 hover:border-emerald-200"
+                    )}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 group-hover:text-emerald-500 transition-colors">
+                        <CreditCard size={20} />
+                      </div>
+                      {settings.defaultPrintTemplate === template.id && (
+                        <div className="bg-emerald-500 text-white p-1 rounded-full">
+                          <CheckCircle2 size={14} />
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-1">{template.name}</h4>
+                      <p className="text-[10px] text-slate-500 font-medium leading-relaxed">{template.description}</p>
+                    </div>
+                  </div>
+                ))}
+
+                <div 
+                  className="p-6 rounded-[24px] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-3 bg-slate-50/50 hover:bg-slate-50 transition-all cursor-not-allowed grayscale opacity-60"
+                >
+                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-300">
+                    <Plus size={20} />
+                  </div>
+                  <div className="text-center">
+                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Tự thiết kế</h4>
+                    <p className="text-[9px] text-slate-300 font-bold uppercase">Sắp ra mắt</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 mt-6">
+                <div className="flex gap-3 items-center">
+                  <div className="w-8 h-8 bg-white border border-slate-100 rounded-lg flex items-center justify-center text-emerald-600">
+                    <CheckCircle2 size={16} />
+                  </div>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Mẫu đã chọn sẽ được áp dụng cho toàn bộ các lần in tiếp theo.</p>
                 </div>
               </div>
             </motion.div>

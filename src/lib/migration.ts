@@ -44,6 +44,9 @@ export async function runMigration() {
     // 4. Ensure Global Settings
     await ensureSettings(tenantId);
 
+    // 5. Migrate Orders (add orderNumber if missing)
+    await migrateOrders(tenantId);
+
     console.log('[Migration] Database migration check completed successfully.');
   } catch (err) {
     console.error('[Migration] Migration failed:', err);
@@ -222,5 +225,19 @@ async function ensureSettings(tenantId: string) {
     });
     await defaultSettings.save();
     console.log('[Migration] Initialized default shop settings (SAIGON AN COFFEE).');
+  }
+}
+
+async function migrateOrders(tenantId: string) {
+  const Order = (await import('../models/Order.js')).default;
+  const ordersWithoutNumber = await Order.find({ orderNumber: { $exists: false } });
+  
+  if (ordersWithoutNumber.length > 0) {
+    console.log(`[Migration] Migrating ${ordersWithoutNumber.length} orders to add orderNumber...`);
+    for (const order of ordersWithoutNumber) {
+      order.orderNumber = `ORD-${order.createdAt.getTime().toString().slice(-6)}`;
+      await order.save();
+    }
+    console.log('[Migration] Order migration completed.');
   }
 }

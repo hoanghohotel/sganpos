@@ -24,14 +24,22 @@ export interface IOrder extends Document {
   items: IOrderItem[];
   status: 'PENDING' | 'PREPARING' | 'READY' | 'COMPLETED';
   paymentStatus: 'UNPAID' | 'PAID';
+  subtotal: number;
+  taxRate: number;
+  taxAmount: number;
+  discountAmount: number;
+  discountType: 'PERCENTAGE' | 'FIXED';
+  discountValue: number;
   total: number;
   paymentMethod?: 'CASH' | 'TRANSFER';
+  orderNumber: string;
   shiftId: mongoose.Types.ObjectId;
 }
 
 const OrderSchema: Schema = new Schema({
   tenantId: { type: String, required: true, index: true },
   shiftId: { type: Schema.Types.ObjectId, ref: 'Shift', required: true },
+  orderNumber: { type: String, required: true },
   orderType: { 
     type: String, 
     enum: ['DINE_IN', 'TAKEAWAY', 'DELIVERY'], 
@@ -75,6 +83,12 @@ const OrderSchema: Schema = new Schema({
     enum: ['UNPAID', 'PAID'],
     default: 'UNPAID',
   },
+  subtotal: { type: Number, required: true, default: 0 },
+  taxRate: { type: Number, default: 0 },
+  taxAmount: { type: Number, default: 0 },
+  discountAmount: { type: Number, default: 0 },
+  discountType: { type: String, enum: ['PERCENTAGE', 'FIXED'], default: 'FIXED' },
+  discountValue: { type: Number, default: 0 },
   total: { type: Number, required: true },
 }, { timestamps: true });
 

@@ -13,6 +13,8 @@ export interface ISettings extends Document {
   bankAccountHolder?: string;
   subdomain?: string;
   customPath?: string;
+  taxRate?: number;
+  defaultPrintTemplate?: string;
 }
 
 const SettingsSchema: Schema = new Schema({
@@ -28,6 +30,8 @@ const SettingsSchema: Schema = new Schema({
   bankAccountHolder: { type: String, default: 'HO KINH DOANH SAI GON AN COFFEE' },
   subdomain: { type: String },
   customPath: { type: String },
+  taxRate: { type: Number, default: 0 },
+  defaultPrintTemplate: { type: String, default: 'classic' },
 }, { timestamps: true });
 
 export default mongoose.models.Settings || mongoose.model<ISettings>('Settings', SettingsSchema);

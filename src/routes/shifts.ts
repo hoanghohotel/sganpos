@@ -289,7 +289,7 @@ router.get('/:id/orders', authenticate, async (req: AuthRequest, res) => {
     const orders = await Order.find({
       tenantId: shift.tenantId,
       shiftId
-    }).sort({ createdAt: -1 });
+    }).populate('tableId', 'name').sort({ createdAt: -1 });
 
     res.json(orders);
   } catch (error) {

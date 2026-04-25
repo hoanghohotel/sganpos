@@ -25,6 +25,8 @@ interface OrderItem {
   paymentMethod: string;
   createdAt: string;
   status: string;
+  tableId?: { name: string };
+  orderType: string;
 }
 
 const ShiftListPage = () => {
@@ -280,8 +282,9 @@ const ShiftListPage = () => {
                       </div>
                     ) : shiftOrders.length > 0 ? (
                       <div className="space-y-4">
-                        <div className="grid grid-cols-4 px-6 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        <div className="grid grid-cols-5 px-6 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                           <div>Mã đơn</div>
+                          <div>Bàn / Loại</div>
                           <div>Thời gian</div>
                           <div>Thanh toán</div>
                           <div className="text-right">Tổng tiền</div>
@@ -289,9 +292,20 @@ const ShiftListPage = () => {
                         {shiftOrders.map((order) => (
                           <div 
                             key={order._id}
-                            className="grid grid-cols-4 items-center px-6 py-5 bg-slate-50 hover:bg-emerald-50 rounded-2xl transition-colors group cursor-default"
+                            className="grid grid-cols-5 items-center px-6 py-5 bg-slate-50 hover:bg-emerald-50 rounded-2xl transition-colors group cursor-default"
                           >
-                            <div className="font-black text-slate-900 text-sm">#{order.orderNumber}</div>
+                            <div className="flex flex-col">
+                              <span className="font-black text-slate-900 text-sm">#{order.orderNumber}</span>
+                              <span className={cn(
+                                "text-[9px] font-black uppercase tracking-widest w-fit",
+                                order.status === 'COMPLETED' ? "text-emerald-500" : "text-amber-500"
+                              )}>
+                                {order.status === 'COMPLETED' ? 'Hoàn thành' : 'Đang xử lý'}
+                              </span>
+                            </div>
+                            <div className="text-xs font-bold text-slate-600">
+                              {order.tableId?.name || (order.orderType === 'TAKEAWAY' ? 'Mang về' : 'Ship')}
+                            </div>
                             <div className="text-xs font-bold text-slate-500">
                               {format(new Date(order.createdAt), 'HH:mm:ss')}
                             </div>

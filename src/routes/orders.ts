@@ -22,7 +22,7 @@ router.get('/', authenticate, async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const tenantId = getTenantId();
-    const orderNumber = req.body.orderNumber || `ORD-${Date.now().toString().slice(-6)}`;
+    const orderNumber = req.body.orderNumber || req.body.orderCode || `ORD-${Date.now().toString().slice(-6)}`;
     
     // Find current open shift for this tenant
     let shiftId = req.body.shiftId;
