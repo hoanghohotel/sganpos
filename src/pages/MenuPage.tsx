@@ -77,19 +77,27 @@ const MenuPage = () => {
       const ws = wb.Sheets[wsname];
       const data = XLSX.utils.sheet_to_json(ws);
 
-      const formattedData = data.map((item: any) => ({
-        name: item['Tên sản phẩm'] || item['Name'],
-        category: item['Danh mục'] || item['Category'] || 'Khác',
-        basePrice: Number(item['Giá cơ bản'] || item['Price'] || 0)
-      }));
+      const formattedData = data
+        .map((item: any) => ({
+          name: item['Tên sản phẩm'] || item['Name'],
+          category: item['Danh mục'] || item['Category'] || 'Khác',
+          basePrice: Number(item['Giá cơ bản'] || item['Price'] || 0)
+        }))
+        .filter(item => item.name && item.name.trim() !== '');
+
+      if (formattedData.length === 0) {
+        alert('Không tìm thấy dữ liệu hợp lệ trong file. Vui lòng kiểm tra tiêu đề cột (Tên sản phẩm, Danh mục, Giá cơ bản).');
+        return;
+      }
 
       try {
         await api.post('/api/products', formattedData);
         fetchProducts();
-        alert('Import thành công!');
-      } catch (err) {
+        alert(`Import thành công ${formattedData.length} sản phẩm!`);
+      } catch (err: any) {
         console.error('Import failed:', err);
-        alert('Import thất bại. Vui lòng kiểm tra lại định dạng file.');
+        const errorMsg = err.response?.data?.error || err.message || 'Lỗi không xác định';
+        alert(`Import thất bại: ${errorMsg}`);
       }
     };
     reader.readAsBinaryString(file);

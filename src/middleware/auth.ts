@@ -27,8 +27,10 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
     const decoded: any = jwt.verify(token, JWT_SECRET);
 
     // Security: Token tenant must match current request tenant
-    // Exception for 'demo' tenant (system admin context)
-    if (decoded.tenantId !== currentTenantId && decoded.tenantId !== 'demo') {
+    // Exception for 'demo' tenant (system admin context) or if user is global admin
+    const isGlobalAdmin = decoded.tenantId === 'demo';
+    
+    if (decoded.tenantId !== currentTenantId && !isGlobalAdmin) {
        console.warn(`Auth Middleware: Tenant mismatch. Token: ${decoded.tenantId}, Request: ${currentTenantId}`);
        return res.status(403).json({ error: 'Tenant access mismatch' });
     }

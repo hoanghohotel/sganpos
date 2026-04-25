@@ -96,8 +96,9 @@ const SettingsPage = () => {
       await api.put('/api/settings', settings);
       setMessage({ type: 'success', text: 'Đã lưu cài đặt thành công!' });
       setTimeout(() => setMessage(null), 3000);
-    } catch (err) {
-      setMessage({ type: 'error', text: 'Có lỗi xảy ra khi lưu cài đặt.' });
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.error || err.message || 'Lỗi không xác định';
+      setMessage({ type: 'error', text: `Có lỗi xảy ra: ${errorMsg}` });
     } finally {
       setSaving(false);
     }

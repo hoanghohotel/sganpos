@@ -20,11 +20,28 @@ export const tenantMiddleware = (req: Request, res: Response, next: NextFunction
     // Subdomain detection logic:
     // sganpos.vercel.app -> parts: ['sganpos', 'vercel', 'app'] -> tenantId: 'sganpos'
     // coffee.my-app.com -> parts: ['coffee', 'my-app', 'com'] -> tenantId: 'coffee'
-    if (parts.length >= 3) {
-      tenantId = parts[0];
-    } else if (parts.length === 2 && !host.includes('vercel.app')) {
-      // Handle cases like "mytenant.com" if it's a custom domain mapped directly
-      tenantId = parts[0];
+    
+    // List of known public suffixes we use (like vercel.app, applet.run, etc.)
+    const isPublicSuffix = host.includes('vercel.app') || 
+                          host.includes('run.app') || 
+                          host.includes('github.io');
+
+    if (isPublicSuffix) {
+      if (parts.length >= 3) {
+        tenantId = parts[0];
+      }
+    } else {
+      // For custom domains like "tenant.com" or "sub.tenant.com"
+      if (parts.length >= 3) {
+        tenantId = parts[0];
+      } else if (parts.length === 2) {
+        // If it's something like "mypos.vn", we treat "mypos" as the tenant
+        // but only if it's not a common TLD we should ignore.
+        const commonTlds = ['com', 'net', 'org', 'vn', 'biz', 'info'];
+        if (!commonTlds.includes(parts[0])) {
+          tenantId = parts[0];
+        }
+      }
     }
   }
 

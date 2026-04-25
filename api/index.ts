@@ -106,7 +106,11 @@ apiRouter.get('/debug-settings', async (req, res) => {
       success: true, 
       tenantId, 
       settings,
-      headers: req.headers,
+      headers: {
+        host: req.headers.host,
+        forwardedHost: req.headers['x-forwarded-host'],
+        tenantIdHeader: req.headers['x-tenant-id']
+      },
       env: { hasMongo: !!process.env.MONGODB_URI }
     });
   } catch (err: any) {
