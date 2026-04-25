@@ -1,9 +1,10 @@
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { Coffee, CookingPot, Settings, LayoutDashboard, QrCode, LogOut, UtensilsCrossed, History } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useEffect } from 'react';
 import { cn } from './lib/utils';
 import { useAuthStore } from './store/authStore';
+import { getTenantPrefix } from './lib/tenantUtils';
 import ProtectedRoute from './components/ProtectedRoute';
 import ShiftGuard from './components/ShiftGuard';
 import POSPage from './pages/POSPage';
@@ -23,18 +24,20 @@ const MainLayout = () => {
   const location = useLocation();
   const logout = useAuthStore((state) => state.logout);
   const user = useAuthStore((state) => state.user);
-  
-  const isCustomerPage = location.pathname.startsWith('/order');
-  const isAuthPage = ['/login', '/register'].includes(location.pathname.replace(/\/$/, ''));
+  const tenantPrefix = getTenantPrefix();
+
+  const isCustomerPage = location.pathname.startsWith(`${tenantPrefix}/order`);
+  const authPaths = [`${tenantPrefix}/login`, `${tenantPrefix}/register`];
+  const isAuthPage = authPaths.includes(location.pathname.replace(/\/$/, ''));
 
   if (isAuthPage) {
     return (
       <main className="flex-1 overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div key={location.pathname} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
-            <Routes location={location}>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
+            <Routes>
+              <Route path={`${tenantPrefix}/login`} element={<LoginPage />} />
+              <Route path={`${tenantPrefix}/register`} element={<RegisterPage />} />
             </Routes>
           </motion.div>
         </AnimatePresence>
@@ -43,21 +46,21 @@ const MainLayout = () => {
   }
 
   const navItems = [
-    { to: '/', icon: LayoutDashboard, label: 'Thống kê' },
-    { to: '/pos', icon: Coffee, label: 'Bán hàng' },
-    { to: '/shifts', icon: History, label: 'Lịch sử ca' },
-    { to: '/kitchen', icon: CookingPot, label: 'Bếp' },
-    { to: '/menu', icon: UtensilsCrossed, label: 'Thực đơn' },
-    { to: '/tables', icon: UtensilsCrossed, label: 'Bàn' },
-    { to: '/qr', icon: QrCode, label: 'Mã QR' },
-    { to: '/settings', icon: Settings, label: 'Cài đặt' },
+    { to: `${tenantPrefix}/`, icon: LayoutDashboard, label: 'Thống kê' },
+    { to: `${tenantPrefix}/pos`, icon: Coffee, label: 'Bán hàng' },
+    { to: `${tenantPrefix}/shifts`, icon: History, label: 'Lịch sử ca' },
+    { to: `${tenantPrefix}/kitchen`, icon: CookingPot, label: 'Bếp' },
+    { to: `${tenantPrefix}/menu`, icon: UtensilsCrossed, label: 'Thực đơn' },
+    { to: `${tenantPrefix}/tables`, icon: UtensilsCrossed, label: 'Bàn' },
+    { to: `${tenantPrefix}/qr`, icon: QrCode, label: 'Mã QR' },
+    { to: `${tenantPrefix}/settings`, icon: Settings, label: 'Cài đặt' },
   ];
 
   return (
     <div className="flex h-screen bg-[#F8FAFC] text-slate-800">
       {!isCustomerPage && (
         <aside className="w-20 bg-white border-r border-slate-200 flex flex-col items-center py-8 gap-10">
-          <Link to="/" className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200 hover:scale-105 transition-transform">
+          <Link to={`${tenantPrefix}/`} className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200 hover:scale-105 transition-transform">
             <img src="/logo.svg" alt="Logo" className="w-8 h-8" />
           </Link>
           
@@ -68,7 +71,7 @@ const MainLayout = () => {
                 to={item.to} 
                 className={cn(
                   "p-3 transition-colors rounded-xl hover:bg-slate-50 group relative", 
-                  location.pathname === item.to ? "text-emerald-600 bg-emerald-50" : "text-slate-400 hover:text-emerald-600"
+                  (location.pathname === item.to || (item.to === `${tenantPrefix}/` && (location.pathname === tenantPrefix || location.pathname === `${tenantPrefix}/`))) ? "text-emerald-600 bg-emerald-50" : "text-slate-400 hover:text-emerald-600"
                 )}
               >
                 <item.icon className="w-6 h-6 group-hover:scale-110 transition-transform" />
@@ -91,24 +94,45 @@ const MainLayout = () => {
       <main className="flex-1 overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div key={location.pathname} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
-            <Routes location={location}>
-              <Route element={<ProtectedRoute />}>
-                <Route path="/" element={<Home />} />
-                <Route path="/pos" element={
-                  <ShiftGuard>
-                    <POSPage />
-                  </ShiftGuard>
-                } />
-                <Route path="/shifts" element={<ShiftListPage />} />
-                <Route path="/kitchen" element={<KitchenPage />} />
-                <Route path="/menu" element={<MenuPage />} />
-                <Route path="/tables" element={<TablesPage />} />
-                <Route path="/qr" element={<QRManagerPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                <Route path="/admin" element={<AdminPage />} />
+            <Routes>
+              {/* Wrapped in a tenant-aware route prefix group */}
+              <Route path={`${tenantPrefix}`}>
+                <Route element={<ProtectedRoute />}>
+                  <Route index element={<Home />} />
+                  <Route path="pos" element={
+                    <ShiftGuard>
+                      <POSPage />
+                    </ShiftGuard>
+                  } />
+                  <Route path="shifts" element={<ShiftListPage />} />
+                  <Route path="kitchen" element={<KitchenPage />} />
+                  <Route path="menu" element={<MenuPage />} />
+                  <Route path="tables" element={<TablesPage />} />
+                  <Route path="qr" element={<QRManagerPage />} />
+                  <Route path="settings" element={<SettingsPage />} />
+                  <Route path="admin" element={<AdminPage />} />
+                </Route>
+                <Route path="develop" element={<DevelopPage />} />
+                <Route path="order" element={<CustomerOrderPage />} />
               </Route>
-              <Route path="/develop" element={<DevelopPage />} />
-              <Route path="/order" element={<CustomerOrderPage />} />
+              
+              {/* Fallback for deep links without prefix if they match routes */}
+              {tenantPrefix === '' && (
+                <>
+                  <Route element={<ProtectedRoute />}>
+                    <Route path="/pos" element={<ShiftGuard><POSPage /></ShiftGuard>} />
+                    <Route path="/shifts" element={<ShiftListPage />} />
+                    <Route path="/kitchen" element={<KitchenPage />} />
+                    <Route path="/menu" element={<MenuPage />} />
+                    <Route path="/tables" element={<TablesPage />} />
+                    <Route path="/qr" element={<QRManagerPage />} />
+                    <Route path="/settings" element={<SettingsPage />} />
+                    <Route path="/admin" element={<AdminPage />} />
+                  </Route>
+                  <Route path="/develop" element={<DevelopPage />} />
+                  <Route path="/order" element={<CustomerOrderPage />} />
+                </>
+              )}
             </Routes>
           </motion.div>
         </AnimatePresence>

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getTenantIdFromPath } from './tenantUtils';
 
 const api = axios.create({
   withCredentials: true,
@@ -9,6 +10,22 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers['Authorization'] = `Bearer ${token}`;
   }
+  
+  // Extract tenant from path: domain.com/TenantId/...
+  if (typeof window !== 'undefined') {
+    const tenantId = getTenantIdFromPath(window.location.pathname);
+    if (tenantId) {
+      config.headers['x-tenant-id'] = tenantId;
+    } else {
+      // Fallback: search for subdomain if not found in path
+      const host = window.location.hostname;
+      const hostParts = host.split('.');
+      if (hostParts.length >= 3 && !host.includes('localhost') && !host.includes('0.0.0.0')) {
+        config.headers['x-tenant-id'] = hostParts[0];
+      }
+    }
+  }
+  
   return config;
 }, (error) => {
   return Promise.reject(error);

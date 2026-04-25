@@ -3,6 +3,7 @@ import { useAuthStore } from '../store/authStore';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { LogIn, UserPlus, Fingerprint } from 'lucide-react';
+import { getTenantPrefix } from '../lib/tenantUtils';
 
 const LoginPage = () => {
   const [identifier, setIdentifier] = useState('');
@@ -10,12 +11,13 @@ const LoginPage = () => {
   const [error, setError] = useState('');
   const login = useAuthStore((state) => state.login);
   const navigate = useNavigate();
+  const tenantPrefix = getTenantPrefix();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await login(identifier, password);
-      navigate('/');
+      navigate(`${tenantPrefix}/`);
     } catch (err: any) {
       console.error('Login error:', err);
       if (err.response) {
@@ -88,7 +90,7 @@ const LoginPage = () => {
 
         <div className="mt-10 pt-8 border-t border-slate-100 text-center">
           <p className="text-slate-500 text-sm font-medium">Chưa có tài khoản?</p>
-          <Link to="/register" className="text-emerald-600 font-bold hover:underline flex items-center justify-center gap-2 mt-2">
+          <Link to={`${tenantPrefix}/register`} className="text-emerald-600 font-bold hover:underline flex items-center justify-center gap-2 mt-2">
             <UserPlus className="w-4 h-4" />
             Đăng ký cửa hàng mới
           </Link>

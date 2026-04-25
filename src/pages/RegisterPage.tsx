@@ -3,6 +3,7 @@ import { useAuthStore } from '../store/authStore';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { UserPlus, ArrowLeft, Coffee } from 'lucide-react';
+import { getTenantPrefix } from '../lib/tenantUtils';
 
 const RegisterPage = () => {
   const [name, setName] = useState('');
@@ -12,6 +13,7 @@ const RegisterPage = () => {
   const [error, setError] = useState('');
   const register = useAuthStore((state) => state.register);
   const navigate = useNavigate();
+  const tenantPrefix = getTenantPrefix();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,13 +23,12 @@ const RegisterPage = () => {
     }
     try {
       await register(name, { email, phone }, password);
-      navigate('/login');
+      navigate(`${tenantPrefix}/login`);
     } catch (err: any) {
       console.error('Register error:', err);
       let errorMessage = 'Đăng ký thất bại';
       
       if (err.response) {
-        // The server responded with a status code outside the 2xx range
         const serverError = err.response.data?.error || err.response.data?.message;
         const details = err.response.data?.details;
         
@@ -38,10 +39,8 @@ const RegisterPage = () => {
           errorMessage = `Lỗi từ máy chủ (Mã: ${err.response.status})`;
         }
       } else if (err.request) {
-        // The request was made but no response was received
         errorMessage = 'Không thể kết nối tới máy chủ. Vui lòng kiểm tra kết nối mạng của bạn.';
       } else {
-        // Something happened in setting up the request that triggered an Error
         errorMessage = `Lỗi hệ thống: ${err.message}`;
       }
       
@@ -129,7 +128,7 @@ const RegisterPage = () => {
         </form>
 
         <div className="mt-10 pt-8 border-t border-slate-100 text-center">
-          <Link to="/login" className="text-slate-400 font-bold hover:text-slate-900 flex items-center justify-center gap-2 transition-colors">
+          <Link to={`${tenantPrefix}/login`} className="text-slate-400 font-bold hover:text-slate-900 flex items-center justify-center gap-2 transition-colors">
             <ArrowLeft className="w-4 h-4" />
             Quay lại đăng nhập
           </Link>
