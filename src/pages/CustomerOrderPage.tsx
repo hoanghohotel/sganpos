@@ -52,6 +52,26 @@ const CustomerOrderPage = () => {
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // REALTIME: Listen for updates
+  useSocket((event, data) => {
+    if (event === 'order:new' || event === 'order:update') {
+      if (data.tableId === tableId || (data.tableId?._id === tableId)) {
+        fetchData();
+      }
+    }
+    if (event === 'table:update') {
+      if (data._id === tableId) {
+        if (data.status === 'EMPTY') {
+          setCart([]);
+          setActiveOrder(null);
+          setTable(data);
+        } else {
+          fetchData();
+        }
+      }
+    }
+  });
+
   useEffect(() => {
     if (!tableId) {
       setError('Vui lòng quét mã QR tại bàn để gọi món.');
@@ -101,6 +121,11 @@ const CustomerOrderPage = () => {
 
       setTable(targetTable);
 
+      if (targetTable.status === 'EMPTY') {
+        setCart([]);
+        setActiveOrder(null);
+      }
+
       if (targetTable.status === 'OCCUPIED' && targetTable._id) {
         try {
           const orderRes = await api.get(`/api/orders`);
@@ -119,6 +144,9 @@ const CustomerOrderPage = () => {
                       tableOrders.every(o => o.status === 'READY') ? 'READY' : 'DELIVERED'
             };
             setActiveOrder(aggregatedOrder);
+            
+            // If the table was just paid (but status hasn't moved to EMPTY yet or something)
+            // Or if tableOrders actually contains items, ensure we sync or at least show them.
           } else {
             setActiveOrder(null);
           }
@@ -383,30 +411,57 @@ const CustomerOrderPage = () => {
             </div>
 
             <div className="max-h-60 overflow-auto flex flex-col gap-3 mb-8 no-scrollbar">
-               {cart.map(item => (
-                 <div key={item.id} className="flex justify-between items-center p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
-                    <div className="flex flex-col">
-                      <span className="text-xs font-black text-slate-800 uppercase tracking-tight mb-1">{item.name}</span>
-                      <span className="text-[10px] font-bold text-emerald-600 font-mono">{item.price.toLocaleString('vi-VN')}</span>
-                    </div>
-                    <div className="flex items-center gap-4 bg-white p-1.5 rounded-xl border border-slate-100 shadow-sm">
-                       <button onClick={() => updateQuantity(item.id, -1)} className="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-slate-600"><Minus size={14} /></button>
-                       <span className="text-xs font-black w-6 text-center">{item.quantity}</span>
-                       <button onClick={() => updateQuantity(item.id, 1)} className="w-6 h-6 flex items-center justify-center text-emerald-600 hover:text-emerald-700 shadow-sm rounded-lg"><Plus size={14} /></button>
-                    </div>
+               {/* Display Ordered Items (Synchronized with POS) */}
+               {activeOrder && activeOrder.items.length > 0 && (
+                 <div className="space-y-2 mb-4">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2">Đã gọi (Khớp với POS)</p>
+                    {activeOrder.items.map((item: any, idx: number) => (
+                      <div key={`ordered-${idx}`} className="flex justify-between items-center p-4 bg-emerald-50/30 rounded-2xl border border-emerald-100/50">
+                        <div className="flex flex-col">
+                          <span className="text-xs font-black text-slate-800 uppercase tracking-tight mb-1">{item.name}</span>
+                          <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest">Đã đặt món</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                           <span className="text-xs font-black text-slate-400">x{item.quantity}</span>
+                        </div>
+                      </div>
+                    ))}
                  </div>
-               ))}
+               )}
+
+               {/* Local Cart Selection */}
+               {cart.length > 0 && (
+                 <div className="space-y-2">
+                    <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest px-2">Đang chọn thêm</p>
+                    {cart.map(item => (
+                      <div key={item.id} className="flex justify-between items-center p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
+                        <div className="flex flex-col">
+                          <span className="text-xs font-black text-slate-800 uppercase tracking-tight mb-1">{item.name}</span>
+                          <span className="text-[10px] font-bold text-emerald-600 font-mono">{item.price.toLocaleString('vi-VN')}</span>
+                        </div>
+                        <div className="flex items-center gap-4 bg-white p-1.5 rounded-xl border border-slate-100 shadow-sm">
+                           <button onClick={() => updateQuantity(item.id, -1)} className="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-slate-600"><Minus size={14} /></button>
+                           <span className="text-xs font-black w-6 text-center">{item.quantity}</span>
+                           <button onClick={() => updateQuantity(item.id, 1)} className="w-6 h-6 flex items-center justify-center text-emerald-600 hover:text-emerald-700 shadow-sm rounded-lg"><Plus size={14} /></button>
+                        </div>
+                      </div>
+                    ))}
+                 </div>
+               )}
             </div>
 
             <div className="flex flex-col gap-4">
               <div className="flex justify-between items-center px-2">
-                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tổng thanh toán</p>
-                 <h2 className="text-2xl font-black text-slate-900 tracking-tighter italic">{total.toLocaleString('vi-VN')}đ</h2>
+                 <div className="flex flex-col">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tổng cần thanh toán</p>
+                    {activeOrder && <p className="text-[9px] text-emerald-500 font-bold italic">Bao gồm {activeOrder.total.toLocaleString('vi-VN')}đ đã gọi</p>}
+                 </div>
+                 <h2 className="text-2xl font-black text-slate-900 tracking-tighter italic">{(total + (activeOrder?.total || 0)).toLocaleString('vi-VN')}đ</h2>
               </div>
               <motion.button 
                 whileTap={{ scale: 0.95 }}
                 onClick={handleCheckout} 
-                disabled={ordering} 
+                disabled={ordering || cart.length === 0} 
                 className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-2xl shadow-emerald-200 flex items-center justify-center gap-3 disabled:opacity-50"
               >
                 {ordering ? (

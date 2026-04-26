@@ -210,10 +210,20 @@ const ShiftListPage = () => {
 
                   <div className="space-y-6 flex-1">
                     <div>
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Tổng doanh thu</label>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Doanh thu chốt ca</label>
                       <div className="text-3xl font-black text-emerald-600 tracking-tight">
                         {selectedShift.totalSales?.toLocaleString('vi-VN')}đ
                       </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Cộng dồn thực tế</label>
+                      <div className="text-xl font-black text-slate-900 tracking-tight">
+                        {shiftOrders.reduce((sum, o) => sum + o.total, 0).toLocaleString('vi-VN')}đ
+                      </div>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase mt-1 italic">
+                        {shiftOrders.filter(o => o.status === 'COMPLETED').length} hoàn thành / {shiftOrders.length} đơn
+                      </p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">

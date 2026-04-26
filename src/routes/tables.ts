@@ -56,6 +56,13 @@ router.patch('/:id', authenticate, async (req, res) => {
       return res.status(404).json({ error: 'Table not found' });
     }
 
+    // Notify other clients about table update
+    const { getSocketIO } = await import('../lib/socketService.js');
+    const io = getSocketIO();
+    if (io) {
+      io.to(tenantId).emit('table:update', table);
+    }
+
     res.json(table);
   } catch (error) {
     res.status(400).json({ error: 'Failed to update table' });
