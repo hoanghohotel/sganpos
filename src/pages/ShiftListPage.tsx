@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { History, Search, Calendar, ChevronRight, X, DollarSign, Package, Clock, User } from 'lucide-react';
+import { History, Search, Calendar, ChevronRight, X, DollarSign, Package, Clock, User, Coffee as CoffeeIcon } from 'lucide-react';
 import api from '../lib/api';
 import { cn } from '../lib/utils';
 import { format } from 'date-fns';
@@ -283,7 +283,7 @@ const ShiftListPage = () => {
                     ) : shiftOrders.length > 0 ? (
                       <div className="space-y-4">
                         <div className="grid grid-cols-5 px-6 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                          <div>Mã đơn</div>
+                          <div>Đơn / Món</div>
                           <div>Bàn / Loại</div>
                           <div>Thời gian</div>
                           <div>Thanh toán</div>
@@ -292,33 +292,50 @@ const ShiftListPage = () => {
                         {shiftOrders.map((order) => (
                           <div 
                             key={order._id}
-                            className="grid grid-cols-5 items-center px-6 py-5 bg-slate-50 hover:bg-emerald-50 rounded-2xl transition-colors group cursor-default"
+                            className="flex flex-col bg-slate-50 hover:bg-emerald-50 rounded-3xl transition-colors group cursor-default p-6 border border-transparent hover:border-emerald-100"
                           >
-                            <div className="flex flex-col">
-                              <span className="font-black text-slate-900 text-sm">#{order.orderNumber}</span>
-                              <span className={cn(
-                                "text-[9px] font-black uppercase tracking-widest w-fit",
-                                order.status === 'COMPLETED' ? "text-emerald-500" : "text-amber-500"
-                              )}>
-                                {order.status === 'COMPLETED' ? 'Hoàn thành' : 'Đang xử lý'}
-                              </span>
+                            <div className="grid grid-cols-5 items-center">
+                              <div className="flex flex-col">
+                                <span className="font-black text-slate-900 text-sm">#{order.orderNumber}</span>
+                                <span className={cn(
+                                  "text-[9px] font-black uppercase tracking-widest w-fit",
+                                  order.status === 'COMPLETED' ? "text-emerald-500" : "text-amber-500"
+                                )}>
+                                  {order.status === 'COMPLETED' ? 'Hoàn thành' : 'Đang xử lý'}
+                                </span>
+                              </div>
+                              <div className="text-xs font-bold text-slate-600">
+                                {order.tableId?.name || (order.orderType === 'TAKEAWAY' ? 'Mang về' : 'Ship')}
+                              </div>
+                              <div className="text-xs font-bold text-slate-500">
+                                {format(new Date(order.createdAt), 'HH:mm:ss')}
+                              </div>
+                              <div>
+                                 <span className={cn(
+                                   "text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-widest",
+                                   order.paymentMethod === 'CASH' ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"
+                                 )}>
+                                   {order.paymentMethod === 'CASH' ? 'Tiền mặt' : 'Chuyển khoản'}
+                                 </span>
+                              </div>
+                              <div className="text-right font-black text-slate-900 group-hover:text-emerald-600 transition-colors">
+                                {order.total.toLocaleString('vi-VN')}đ
+                              </div>
                             </div>
-                            <div className="text-xs font-bold text-slate-600">
-                              {order.tableId?.name || (order.orderType === 'TAKEAWAY' ? 'Mang về' : 'Ship')}
-                            </div>
-                            <div className="text-xs font-bold text-slate-500">
-                              {format(new Date(order.createdAt), 'HH:mm:ss')}
-                            </div>
-                            <div>
-                               <span className={cn(
-                                 "text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-widest",
-                                 order.paymentMethod === 'CASH' ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"
-                               )}>
-                                 {order.paymentMethod === 'CASH' ? 'Tiền mặt' : 'Chuyển khoản'}
-                               </span>
-                            </div>
-                            <div className="text-right font-black text-slate-900 group-hover:text-emerald-600 transition-colors">
-                              {order.total.toLocaleString('vi-VN')}đ
+
+                            {/* Order Items Detail */}
+                            <div className="mt-4 pt-4 border-t border-slate-200/50 space-y-2">
+                              {(order as any).items?.map((item: any, iIdx: number) => (
+                                <div key={iIdx} className="flex justify-between items-center text-[11px]">
+                                  <div className="flex items-center gap-2">
+                                    <div className="w-5 h-5 rounded bg-white border border-slate-200 flex items-center justify-center font-black text-emerald-600">
+                                      {item.quantity}
+                                    </div>
+                                    <span className="font-bold text-slate-700 uppercase tracking-tight">{item.name}</span>
+                                  </div>
+                                  <span className="font-mono text-slate-400">{(item.price * item.quantity).toLocaleString('vi-VN')}đ</span>
+                                </div>
+                              ))}
                             </div>
                           </div>
                         ))}

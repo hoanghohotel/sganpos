@@ -269,10 +269,10 @@ const KitchenPage = () => {
                             )}
                             {order.status === 'READY' && (
                               <button
-                                onClick={() => updateStatus(order._id, 'DELIVERED')}
+                                onClick={() => updateStatus(order._id, 'COMPLETED')}
                                 className="flex-1 py-2 bg-white border-2 border-emerald-600 text-emerald-600 rounded-xl text-[9px] font-black uppercase tracking-widest"
                               >
-                                Giao món
+                                Hoàn tất
                               </button>
                             )}
                           </div>
