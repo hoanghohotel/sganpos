@@ -8,6 +8,7 @@ import { getTenantPrefix, getTenantId, getTenantFromHostname, getTenantIdFromPat
 import { useSocket } from './hooks/useSocket';
 import ProtectedRoute from './components/ProtectedRoute';
 import ShiftGuard from './components/ShiftGuard';
+import DashboardPage from './pages/DashboardPage';
 import POSPage from './pages/POSPage';
 import KitchenPage from './pages/KitchenPage';
 import MenuPage from './pages/MenuPage';
@@ -208,7 +209,7 @@ const MainLayout = () => {
               {/* Wrapped in a tenant-aware route prefix group */}
               <Route path={`${tenantPrefix}`}>
                 <Route element={<ProtectedRoute />}>
-                  <Route index element={<Home />} />
+                  <Route index element={<DashboardPage />} />
                   <Route path="pos" element={
                     <ShiftGuard>
                       <POSPage />
@@ -250,21 +251,6 @@ const MainLayout = () => {
     </div>
   );
 };
-
-const Home = () => (
-  <motion.div 
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -10 }}
-    className="p-10"
-  >
-    <p className="text-emerald-600 font-bold text-sm uppercase tracking-widest mb-2">Hệ thống POS</p>
-    <h1 className="text-5xl font-black text-slate-900 tracking-tighter leading-none mb-8">
-      Chào mừng,<br/>
-      <span className="text-slate-400">Ngày mới tốt lành.</span>
-    </h1>
-  </motion.div>
-);
 
 const AdminPage = () => {
   return (

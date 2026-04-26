@@ -8,6 +8,78 @@ import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
 
+// GET /api/orders/reports - Statistical reports (Auth required)
+router.get('/reports', authenticate, async (req, res) => {
+  try {
+    const tenantId = getTenantId();
+    const { startDate, endDate } = req.query;
+
+    const start = startDate ? new Date(startDate as string) : new Date(new Date().setHours(0,0,0,0));
+    const end = endDate ? new Date(endDate as string) : new Date(new Date().setHours(23,59,59,999));
+
+    const dateFilter = {
+      tenantId,
+      createdAt: { $gte: start, $lte: end },
+      paymentStatus: 'PAID'
+    };
+
+    // Total Revenue
+    const revenueStats = await Order.aggregate([
+      { $match: dateFilter },
+      { $group: { _id: null, total: { $sum: '$total' }, count: { $sum: 1 } } }
+    ]);
+
+    // Revenue by Day
+    const dailyRevenue = await Order.aggregate([
+      { $match: dateFilter },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          revenue: { $sum: "$total" }
+        }
+      },
+      { $sort: { "_id": 1 } }
+    ]);
+
+    // Top 5 Products
+    const topProducts = await Order.aggregate([
+      { $match: dateFilter },
+      { $unwind: "$items" },
+      {
+        $group: {
+          _id: "$items.name",
+          quantity: { $sum: "$items.quantity" },
+          revenue: { $sum: { $multiply: ["$items.price", "$items.quantity"] } }
+        }
+      },
+      { $sort: { quantity: -1 } },
+      { $limit: 5 }
+    ]);
+
+    // Payment Methods
+    const paymentMethods = await Order.aggregate([
+      { $match: dateFilter },
+      {
+        $group: {
+          _id: "$paymentMethod",
+          revenue: { $sum: "$total" },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    res.json({
+      summary: revenueStats[0] || { total: 0, count: 0 },
+      daily: dailyRevenue,
+      topProducts,
+      paymentMethods
+    });
+  } catch (error) {
+    console.error('Report error:', error);
+    res.status(500).json({ error: 'Failed to generate reports' });
+  }
+});
+
 // GET /api/orders - List orders for the tenant (Auth required)
 router.get('/', authenticate, async (req, res) => {
   try {
