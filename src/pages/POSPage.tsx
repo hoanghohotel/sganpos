@@ -885,49 +885,82 @@ const POSPage = () => {
             initial={{ x: 400 }}
             animate={{ x: 0 }}
             exit={{ x: 400 }}
-            className="w-[340px] bg-white border-l border-slate-200 flex flex-col shadow-2xl z-20"
+            className="w-[380px] bg-white border-l border-slate-200 flex flex-col shadow-2xl z-20"
           >
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-              <h2 className="text-xl font-black text-slate-900 tracking-tighter uppercase">Giỏ hàng</h2>
-              <button onClick={resetFlow} className="text-[10px] font-black text-red-500 uppercase hover:bg-red-50 px-2 py-1 rounded">Xoá hết</button>
+            <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-lg">
+                  <ShoppingCart size={20} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-black text-slate-900 tracking-tighter uppercase leading-none">Giỏ hàng</h2>
+                  <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mt-1 italic">{selectedTable?.name}</p>
+                </div>
+              </div>
+              <button onClick={resetFlow} className="w-10 h-10 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all rounded-xl" title="Xoá hết">
+                <Trash2 size={18} />
+              </button>
             </div>
 
-            <div className="flex-1 overflow-auto p-4">
+            <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
               <AnimatePresence initial={false}>
                 {cart.length === 0 ? (
-                  <div key="empty-cart" className="h-full flex flex-col items-center justify-center text-slate-200">
-                    <img src="/logo.svg" alt="Logo" className="w-20 h-20 opacity-20 grayscale mb-4" />
-                    <p className="text-xs font-black uppercase tracking-widest text-slate-300">Chưa chọn món</p>
+                  <div key="empty-cart" className="h-full flex flex-col items-center justify-center text-slate-200 opacity-50">
+                    <div className="w-24 h-24 bg-slate-50 rounded-[32px] flex items-center justify-center mb-6">
+                      <Coffee size={40} className="text-slate-200" />
+                    </div>
+                    <p className="text-xs font-black uppercase tracking-widest text-slate-400">Chọn món từ menu</p>
                   </div>
                 ) : (
-                  <div key="cart-list" className="flex flex-col gap-3">
+                  <div key="cart-list" className="flex flex-col gap-4">
                     {cart.map((item) => (
                       <motion.div
                         layout
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, x: -20 }}
-                        key={item.id}
-                        className="p-4 bg-slate-50/50 border border-slate-100 rounded-2xl flex flex-col gap-3 shadow-sm hover:border-emerald-200 transition-colors"
+                        key={item.id + (item.isSent ? '-sent' : '-pending')}
+                        className={cn(
+                          "p-4 rounded-3xl border transition-all flex flex-col gap-3 group relative overflow-hidden",
+                          item.isSent 
+                            ? "bg-slate-50/80 border-slate-200 opacity-80" 
+                            : "bg-white border-slate-100 shadow-sm hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-50"
+                        )}
                       >
-                        <div className="flex justify-between items-start">
-                           <h4 className="text-xs font-black text-slate-800 line-clamp-1 uppercase tracking-tighter">{item.name}</h4>
-                           <button onClick={() => removeFromCart(item.id)} className="text-slate-300 hover:text-red-500 transition-colors">
-                            <Trash2 size={16} />
-                          </button>
+                        {item.isSent && (
+                          <div className="absolute top-0 right-0 px-2 py-0.5 bg-emerald-500 text-[8px] font-black text-white uppercase tracking-widest rounded-bl-xl">
+                            Đã báo bếp
+                          </div>
+                        )}
+                        <div className="flex justify-between items-start pr-8">
+                           <h4 className="text-xs font-black text-slate-800 uppercase tracking-tight leading-tight">{item.name}</h4>
+                           {!item.isSent && (
+                             <button onClick={() => removeFromCart(item.id)} className="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition-colors">
+                               <Trash2 size={16} />
+                             </button>
+                           )}
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-emerald-600 font-black text-sm font-mono">
+                          <span className="text-slate-900 font-black text-base font-mono">
                             {(item.price * item.quantity).toLocaleString('vi-VN')}đ
                           </span>
-                          <div className="flex items-center gap-3 bg-white rounded-xl p-1 border border-slate-100 shadow-inner">
-                            <button onClick={() => updateQuantity(item.id, -1)} className="p-1 hover:text-emerald-600 transition-colors">
-                              <Minus size={14} />
-                            </button>
-                            <span className="font-mono text-xs font-black min-w-[20px] text-center">{item.quantity}</span>
-                            <button onClick={() => updateQuantity(item.id, 1)} className="p-1 hover:text-emerald-600 transition-colors">
-                              <Plus size={14} />
-                            </button>
+                          <div className={cn(
+                            "flex items-center gap-3 p-1 rounded-xl shadow-inner border",
+                            item.isSent ? "bg-slate-100 border-slate-200" : "bg-slate-50 border-slate-100 ring-1 ring-slate-200/50"
+                          )}>
+                            {!item.isSent ? (
+                              <>
+                                <button onClick={() => updateQuantity(item.id, -1)} className="p-1.5 bg-white text-slate-400 hover:text-red-500 hover:shadow-sm rounded-lg transition-all">
+                                  <Minus size={14} />
+                                </button>
+                                <span className="font-mono text-sm font-black min-w-[24px] text-center">{item.quantity}</span>
+                                <button onClick={() => updateQuantity(item.id, 1)} className="p-1.5 bg-white text-emerald-600 hover:text-emerald-700 hover:shadow-sm rounded-lg transition-all">
+                                  <Plus size={14} />
+                                </button>
+                              </>
+                            ) : (
+                               <span className="font-mono text-sm font-black px-3 py-1 text-slate-500">x{item.quantity}</span>
+                            )}
                           </div>
                         </div>
                       </motion.div>

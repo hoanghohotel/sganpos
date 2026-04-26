@@ -34,6 +34,41 @@ interface TableInfo {
   currentOrderId?: string;
 }
 
+const ProductItem: React.FC<{ product: Product, onAdd: () => void, index: number }> = ({ product, onAdd, index }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: index * 0.05 }}
+    className="bg-white p-3 sm:p-4 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl transition-all group active:scale-[0.98] flex flex-col"
+  >
+    <div className="relative aspect-square bg-slate-50 rounded-3xl mb-4 overflow-hidden shadow-inner shrink-0">
+      {product.image ? (
+        <img src={product.image} alt={product.name} className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500" />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center text-slate-200">
+          <Coffee size={40} />
+        </div>
+      )}
+      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
+    </div>
+    
+    <div className="flex flex-col flex-1">
+      <h3 className="text-xs sm:text-sm font-black text-slate-900 leading-tight mb-1 uppercase tracking-tight line-clamp-2 min-h-[2.5rem]">{product.name}</h3>
+      <p className="text-[9px] font-black text-emerald-600/60 uppercase tracking-widest mt-auto mb-2">{product.category}</p>
+      <div className="flex items-center justify-between mt-auto">
+        <span className="text-sm font-black text-slate-900 tracking-tighter">{product.basePrice.toLocaleString('vi-VN')}đ</span>
+        <motion.button 
+          whileTap={{ scale: 0.8 }}
+          onClick={onAdd}
+          className="w-10 h-10 bg-emerald-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-100 active:bg-emerald-700 transition-colors"
+        >
+          <Plus size={20} />
+        </motion.button>
+      </div>
+    </div>
+  </motion.div>
+);
+
 const CustomerOrderPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const tableId = searchParams.get('tableId');
@@ -398,57 +433,50 @@ const CustomerOrderPage = () => {
 
         {/* Banner (Optional) */}
         {selectedCategory === 'Tất cả' && !searchQuery && (
-          <div className="mb-8 rounded-[40px] bg-emerald-600 p-6 sm:p-8 text-white relative overflow-hidden shadow-2xl shadow-emerald-200">
+          <div className="mb-12 rounded-[48px] bg-slate-900 p-8 text-white relative overflow-hidden shadow-2xl shadow-slate-200">
              <div className="relative z-10 w-2/3">
-                <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tighter mb-2 leading-none">Món mới <br/>trong ngày!</h2>
-                <p className="text-[10px] uppercase font-black tracking-widest opacity-80">Giảm 10% khi đặt qua QR</p>
+                <h2 className="text-3xl sm:text-4xl font-black uppercase tracking-tighter mb-4 leading-[0.9]">Món mới<br/><span className="text-emerald-500">hôm nay!</span></h2>
+                <p className="text-[10px] uppercase font-black tracking-[0.2em] opacity-60">Ưu đãi giảm giá khi đặt qua mã QR</p>
              </div>
-             <Coffee className="absolute -right-4 -bottom-4 text-emerald-500/30 w-32 h-32 sm:w-48 sm:h-48 rotate-12" />
+             <div className="absolute right-[-20px] bottom-[-20px] opacity-20">
+                <Coffee size={180} className="rotate-12" />
+             </div>
           </div>
         )}
 
-        <div className="flex items-center justify-between mb-6 px-1">
-           <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest">{selectedCategory === 'Tất cả' ? 'Danh sách Menu' : selectedCategory}</h2>
-           <p className="text-[10px] font-bold text-slate-400 uppercase">{filteredProducts.length} món</p>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-          {filteredProducts.map((product, idx) => (
-            <motion.div
-              key={product._id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.05 }}
-              className="bg-white p-3 sm:p-4 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl transition-all group active:scale-[0.98] flex flex-col"
-            >
-              <div className="relative aspect-square bg-slate-50 rounded-3xl mb-4 overflow-hidden shadow-inner shrink-0">
-                {product.image ? (
-                  <img src={product.image} alt={product.name} className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-slate-200">
-                    <Coffee size={40} />
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
-              </div>
-              
-              <div className="flex flex-col flex-1">
-                <h3 className="text-xs sm:text-sm font-black text-slate-900 leading-tight mb-1 uppercase tracking-tight line-clamp-2 min-h-[2.5rem]">{product.name}</h3>
-                <p className="text-[9px] font-black text-emerald-600/60 uppercase tracking-widest mt-auto mb-2">{product.category}</p>
-                <div className="flex items-center justify-between mt-auto">
-                  <span className="text-sm font-black text-slate-900 tracking-tighter">{product.basePrice.toLocaleString('vi-VN')}đ</span>
-                  <motion.button 
-                    whileTap={{ scale: 0.8 }}
-                    onClick={() => addToCart(product)}
-                    className="w-10 h-10 bg-emerald-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-100 active:bg-emerald-700 transition-colors"
-                  >
-                    <Plus size={20} />
-                  </motion.button>
+        {selectedCategory === 'Tất cả' && !searchQuery ? (
+          categories.filter(c => c !== 'Tất cả').map((cat) => {
+            const catProducts = products.filter(p => p.category === cat);
+            if (catProducts.length === 0) return null;
+            return (
+              <div key={`cat-section-${cat}`} className="mb-12">
+                <div className="flex items-center gap-4 mb-6 px-2">
+                  <h2 className="text-sm font-black text-slate-900 uppercase tracking-widest whitespace-nowrap">{cat}</h2>
+                  <div className="flex-1 h-px bg-slate-200/50" />
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">{catProducts.length} món</p>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                  {catProducts.map((product, idx) => (
+                    <ProductItem key={product._id} product={product} onAdd={() => addToCart(product)} index={idx} />
+                  ))}
                 </div>
               </div>
-            </motion.div>
-          ))}
-        </div>
+            );
+          })
+        ) : (
+          <div className="space-y-12">
+             <div className="flex items-center gap-4 mb-6 px-2">
+                <h2 className="text-sm font-black text-slate-900 uppercase tracking-widest whitespace-nowrap">{selectedCategory}</h2>
+                <div className="flex-1 h-px bg-slate-200/50" />
+                <p className="text-[10px] font-bold text-slate-400 uppercase">{filteredProducts.length} món</p>
+             </div>
+             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+               {filteredProducts.map((product, idx) => (
+                 <ProductItem key={product._id} product={product} onAdd={() => addToCart(product)} index={idx} />
+               ))}
+             </div>
+          </div>
+        )}
         
         {filteredProducts.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
