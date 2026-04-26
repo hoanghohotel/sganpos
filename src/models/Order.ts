@@ -22,7 +22,7 @@ export interface IOrder extends Document {
     address?: string;
   };
   items: IOrderItem[];
-  status: 'PENDING' | 'PREPARING' | 'READY' | 'COMPLETED';
+  status: 'PENDING' | 'PREPARING' | 'READY' | 'DELIVERED' | 'COMPLETED';
   paymentStatus: 'UNPAID' | 'PAID';
   subtotal: number;
   taxRate: number;
@@ -75,7 +75,7 @@ const OrderSchema: Schema = new Schema({
   ],
   status: {
     type: String,
-    enum: ['PENDING', 'PREPARING', 'READY', 'COMPLETED'],
+    enum: ['PENDING', 'PREPARING', 'READY', 'DELIVERED', 'COMPLETED'],
     default: 'PENDING',
   },
   paymentStatus: {

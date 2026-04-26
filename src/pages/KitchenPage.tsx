@@ -24,7 +24,7 @@ interface Order {
   orderType: string;
   items: OrderItem[];
   total: number;
-  status: 'PENDING' | 'PREPARING' | 'READY' | 'COMPLETED';
+  status: 'PENDING' | 'PREPARING' | 'READY' | 'DELIVERED' | 'COMPLETED';
   createdAt: string;
 }
 
@@ -37,7 +37,8 @@ const KitchenPage = () => {
     try {
       const response = await api.get('/api/orders');
       const data = Array.isArray(response.data) ? response.data : [];
-      const activeOrders = data.filter((o: Order) => o.status !== 'COMPLETED');
+      // Kho chỉ hiện các đơn chưa giao hoặc chưa hoàn thành
+      const activeOrders = data.filter((o: Order) => o.status !== 'COMPLETED' && o.status !== 'DELIVERED');
       setOrders(activeOrders);
       setLastRefreshed(new Date());
     } catch (error) {
@@ -54,7 +55,7 @@ const KitchenPage = () => {
       setOrders(prev => [data, ...prev]);
     } else if (event === 'order:update') {
       setOrders(prev => {
-        if (data.status === 'COMPLETED') {
+        if (data.status === 'COMPLETED' || data.status === 'DELIVERED') {
           return prev.filter(o => o._id !== data._id);
         }
         return prev.map(o => o._id === data._id ? data : o);
@@ -90,6 +91,8 @@ const KitchenPage = () => {
       case 'PENDING': return 'Đang Chờ';
       case 'PREPARING': return 'Đang Làm';
       case 'READY': return 'Sẵn Sàng';
+      case 'DELIVERED': return 'Đã Giao';
+      case 'COMPLETED': return 'Hoàn Thành';
       default: return status;
     }
   };
@@ -205,7 +208,7 @@ const KitchenPage = () => {
                       )}
                       {order.status === 'READY' && (
                         <button
-                          onClick={() => updateStatus(order._id, 'COMPLETED')}
+                          onClick={() => updateStatus(order._id, 'DELIVERED')}
                           className="flex-1 py-3 bg-white border-2 border-emerald-600 text-emerald-600 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-50 transition-colors"
                         >
                           <CheckCircle size={12} /> Đã Giao

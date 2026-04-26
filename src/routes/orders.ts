@@ -82,11 +82,14 @@ router.post('/', async (req, res) => {
 router.patch('/:id', authenticate, async (req, res) => {
   try {
     const tenantId = getTenantId();
-    const { status, paymentStatus } = req.body;
+    const updateData: any = {};
+    if (req.body.status) updateData.status = req.body.status;
+    if (req.body.paymentStatus) updateData.paymentStatus = req.body.paymentStatus;
+    if (req.body.paymentMethod) updateData.paymentMethod = req.body.paymentMethod;
     
     const order = await Order.findOneAndUpdate(
       { _id: req.params.id, tenantId },
-      { $set: { status, paymentStatus } },
+      { $set: updateData },
       { new: true }
     );
 
@@ -94,7 +97,7 @@ router.patch('/:id', authenticate, async (req, res) => {
 
     // If order status is set to COMPLETED or paymentStatus to PAID, we might want to free the table
     // For simplicity, let's free the table when status is COMPLETED
-    if (status === 'COMPLETED' && order.tableId) {
+    if (order.status === 'COMPLETED' && order.tableId) {
       await Table.findOneAndUpdate(
         { _id: order.tableId, tenantId },
         { $set: { status: 'EMPTY', currentOrderId: null } }

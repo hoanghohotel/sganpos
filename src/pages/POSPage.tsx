@@ -31,6 +31,7 @@ interface Table {
   _id: string;
   name: string;
   status: 'EMPTY' | 'OCCUPIED';
+  currentOrderId?: string;
 }
 
 const ProductCard: React.FC<{ product: Product, onAdd: () => void }> = ({ product, onAdd }) => (
@@ -78,6 +79,7 @@ const POSPage = () => {
   const [step, setStep] = useState<'TYPE' | 'TABLE' | 'MENU'>('TYPE');
   const [orderType, setOrderType] = useState<'DINE_IN' | 'TAKEAWAY' | 'DELIVERY' | null>(null);
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
+  const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [settings, setSettings] = useState<any>(null);
 
@@ -185,10 +187,42 @@ const POSPage = () => {
     setStep('TABLE');
   };
 
-  const handleTableSelect = (table: Table) => {
+  const handleTableSelect = async (table: Table) => {
     setSelectedTable(table);
-    // Load existing cart for this table if any
-    setCart(tableCarts[table._id] || []);
+    
+    if (table.status === 'OCCUPIED' && table.currentOrderId) {
+      setLoading(true);
+      try {
+        const res = await api.get(`/api/orders`);
+        const allOrders = Array.isArray(res.data) ? res.data : [];
+        const currentOrder = allOrders.find((o: any) => o._id === table.currentOrderId);
+        
+        if (currentOrder) {
+          setActiveOrderId(currentOrder._id);
+          setCart(currentOrder.items.map((item: any) => ({
+            id: item.productId,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity
+          })));
+          // also sync discount if any
+          setDiscountType(currentOrder.discountType || 'FIXED');
+          setDiscountValue(currentOrder.discountValue || 0);
+        } else {
+          setCart(tableCarts[table._id] || []);
+          setActiveOrderId(null);
+        }
+      } catch (err) {
+        console.error('Failed to fetch table order:', err);
+        setCart(tableCarts[table._id] || []);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      // Load existing local cart for this table if any
+      setCart(tableCarts[table._id] || []);
+      setActiveOrderId(null);
+    }
     setStep('MENU');
   };
 
@@ -310,14 +344,6 @@ const POSPage = () => {
   };
 
   const resetFlow = () => {
-    // When resetting, we might want to clear the specific table's cart after checkout
-    if (selectedTable) {
-      setTableCarts(prev => {
-         const newCarts = { ...prev };
-         delete newCarts[selectedTable._id];
-         return newCarts;
-      });
-    }
     setStep('TYPE');
     setOrderType(null);
     setSelectedTable(null);
@@ -325,6 +351,7 @@ const POSPage = () => {
     setShowPaymentModal(false);
     setPaymentMethod(null);
     setPaymentStep('SELECT');
+    setActiveOrderId(null);
   };
 
   const filteredTables = tables.filter(t => {
@@ -412,7 +439,11 @@ const POSPage = () => {
         paymentStatus: 'PAID'
       };
 
-      await api.post('/api/orders', orderData);
+      if (activeOrderId) {
+        await api.patch(`/api/orders/${activeOrderId}`, orderData);
+      } else {
+        await api.post('/api/orders', orderData);
+      }
       
       // Print Final Invoice
       const printWindow = window.open('', '_blank');
@@ -502,6 +533,15 @@ const POSPage = () => {
 
       setOrderSuccess(true);
       setShowPaymentModal(false);
+
+      // Clear the cart for this table in localStorage
+      if (selectedTable) {
+        setTableCarts(prev => {
+          const newCarts = { ...prev };
+          delete newCarts[selectedTable._id];
+          return newCarts;
+        });
+      }
       
       setTimeout(() => {
         setOrderSuccess(false);
@@ -682,11 +722,10 @@ const POSPage = () => {
                     <button
                       key={`table-${table._id}-${idx}`}
                       onClick={() => handleTableSelect(table)}
-                      disabled={table.status === 'OCCUPIED'}
                       className={cn(
                         "p-6 rounded-[24px] border-2 font-bold text-lg transition-all flex flex-col items-center gap-2 relative overflow-hidden group",
                         table.status === 'OCCUPIED' 
-                          ? "bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed"
+                          ? "bg-emerald-50 border-emerald-400 text-emerald-900 shadow-lg shadow-emerald-100/50"
                           : hasItems
                             ? "bg-amber-50 border-amber-400 text-amber-900 shadow-lg shadow-amber-100/50"
                             : "bg-white border-slate-100 hover:border-emerald-500 hover:bg-emerald-50/10 text-slate-900"
@@ -695,12 +734,12 @@ const POSPage = () => {
                       <div className={cn(
                         "text-[9px] uppercase tracking-widest font-black px-2 py-0.5 rounded-full",
                         table.status === 'OCCUPIED'
-                          ? "bg-slate-200 text-slate-400"
+                          ? "bg-emerald-600 text-white animate-pulse"
                           : hasItems
                             ? "bg-amber-400 text-white animate-pulse"
                             : "bg-slate-100 text-slate-400"
                       )}>
-                        {table.status === 'OCCUPIED' ? 'Đã khóa' : hasItems ? 'Phục vụ' : 'Trống'}
+                        {table.status === 'OCCUPIED' ? 'Phục vụ' : hasItems ? 'Phục vụ' : 'Trống'}
                       </div>
                       <span className="font-black text-2xl tracking-tighter italic">{table.name}</span>
                       {hasItems && (
