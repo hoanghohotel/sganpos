@@ -72,7 +72,7 @@ const KitchenPage = () => {
       audio.play().catch(e => console.log('Audio play blocked:', e));
     } else if (event === 'order:update') {
       setOrders(prev => {
-        if (data.status === 'COMPLETED') {
+        if (data.status === 'COMPLETED' || data.deleted) {
           return prev.filter(o => o._id !== data._id);
         }
         return prev.map(o => o._id === data._id ? data : o);
@@ -220,32 +220,53 @@ const KitchenPage = () => {
                         const allItems: any[] = [];
                         groupOrders.forEach(order => {
                           order.items.forEach(item => {
-                            const existing = allItems.find(i => i.productId === item.productId && i.notes === item.notes);
+                            const existing = allItems.find(i => 
+                              i.productId === item.productId && 
+                              i.notes === item.notes && 
+                              i.status === order.status
+                            );
                             if (existing) {
                               existing.quantity += item.quantity;
                             } else {
-                              allItems.push({ ...item });
+                              allItems.push({ ...item, status: order.status });
                             }
                           });
                         });
 
                         return (
-                          <div className="space-y-3">
-                            {allItems.map((item, iIdx) => (
-                              <div key={iIdx} className="flex gap-3">
-                                <div className="w-7 h-7 shrink-0 rounded-lg bg-slate-100 flex items-center justify-center font-black text-emerald-600 text-xs">
-                                  {item.quantity}
-                                </div>
-                                <div className="flex-1">
-                                  <p className="font-bold text-slate-900 leading-tight text-sm uppercase tracking-tighter">{item.name}</p>
-                                  {item.notes && (
-                                    <p className="text-[9px] text-rose-500 font-bold mt-0.5 italic flex items-center gap-1">
-                                      <AlertCircle size={8} /> {item.notes}
+                          <div className="space-y-4">
+                            {allItems.map((item, iIdx) => {
+                              const isFinished = item.status === 'READY' || item.status === 'DELIVERED';
+                              const isNew = item.status === 'PENDING';
+                              return (
+                                <div key={iIdx} className={cn(
+                                  "flex gap-3 items-start transition-all",
+                                  isFinished ? "opacity-50" : ""
+                                )}>
+                                  <div className={cn(
+                                    "w-7 h-7 shrink-0 rounded-lg flex items-center justify-center font-black text-xs",
+                                    isFinished ? "bg-slate-100 text-slate-400" : "bg-emerald-100 text-emerald-600 shadow-sm"
+                                  )}>
+                                    {item.quantity}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className={cn(
+                                      "font-bold text-sm uppercase tracking-tighter transition-all",
+                                      isFinished ? "text-slate-400 line-through decoration-2" : "text-slate-900",
+                                      isNew ? "text-rose-600 scale-105 origin-left" : ""
+                                    )}>
+                                      {item.name}
+                                      {isNew && <span className="ml-2 text-[8px] px-1.5 py-0.5 bg-rose-500 text-white rounded-md tracking-widest animate-pulse">MỚI</span>}
                                     </p>
-                                  )}
+                                    {item.notes && (
+                                      <p className="text-[9px] text-rose-500 font-bold mt-0.5 italic flex items-center gap-1">
+                                        <AlertCircle size={8} /> {item.notes}
+                                      </p>
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         );
                       })()}

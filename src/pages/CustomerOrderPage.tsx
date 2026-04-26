@@ -262,9 +262,9 @@ const CustomerOrderPage = () => {
             <div className="min-w-0">
               <h1 className="text-base sm:text-lg font-black text-slate-900 leading-none tracking-tight uppercase truncate">{settings?.storeName || 'SAIGON AN COFFEE'}</h1>
               <div className="flex items-center gap-1.5 mt-1.5">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shrink-0" />
-                <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest truncate">
-                  Phục vụ tại {table?.name || 'Bàn của bạn'}
+                <div className={cn("w-2 h-2 rounded-full animate-pulse shrink-0", table?.status === 'OCCUPIED' ? "bg-amber-500" : "bg-emerald-500")} />
+                <p className={cn("text-[10px] font-black uppercase tracking-widest truncate", table?.status === 'OCCUPIED' ? "text-amber-600" : "text-emerald-600")}>
+                  {table?.status === 'OCCUPIED' ? `Đang phục vụ tại ${table?.name}` : `Chào mừng bạn tới ${table?.name || 'Cửa hàng'}`}
                 </p>
               </div>
             </div>
@@ -274,9 +274,10 @@ const CustomerOrderPage = () => {
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setShowActiveOrderModal(true)}
-                className="relative p-2 bg-emerald-50 rounded-xl border border-emerald-100 text-emerald-600"
+                className="relative p-2 bg-amber-50 rounded-xl border border-amber-100 text-amber-600 flex items-center gap-2"
               >
                 <History size={18} />
+                <span className="text-[10px] font-black uppercase tracking-widest hidden sm:block">Lịch sử gọi món</span>
                 <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white animate-pulse" />
               </motion.button>
             )}
@@ -297,6 +298,31 @@ const CustomerOrderPage = () => {
             </motion.div>
           </div>
         </div>
+
+        {/* Active Order Summary (Persistent for Dine-in) */}
+        {activeOrder && (
+          <div className="mb-4">
+             <button 
+               onClick={() => setShowActiveOrderModal(true)}
+               className="w-full flex items-center justify-between p-3 bg-emerald-50/50 rounded-2xl border border-emerald-100 group hover:bg-emerald-50 transition-colors"
+             >
+                <div className="flex items-center gap-3">
+                   <div className="w-8 h-8 bg-emerald-600 rounded-xl flex items-center justify-center text-white">
+                      <Clock size={16} />
+                   </div>
+                   <div className="text-left">
+                      <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Bạn đang có món đang chờ</p>
+                      <p className="text-[11px] font-bold text-slate-800 line-clamp-1">
+                        {activeOrder.items.length} món đã gọi • {activeOrder.total.toLocaleString('vi-VN')}đ
+                      </p>
+                   </div>
+                </div>
+                <div className="text-emerald-400 group-hover:translate-x-1 transition-transform">
+                   <CheckCircle2 size={16} />
+                </div>
+             </button>
+          </div>
+        )}
 
         {/* Search */}
         <div className="relative mb-5 group">
@@ -333,6 +359,43 @@ const CustomerOrderPage = () => {
 
       {/* Main Content */}
       <main className="flex-1 p-4 pb-32">
+        {/* Active Order Banner for Occupied Tables */}
+        {activeOrder && activeOrder.items.length > 0 && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 p-6 bg-white rounded-[40px] border border-emerald-100 shadow-xl shadow-emerald-50/50"
+          >
+             <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center gap-2">
+                   <Clock className="text-emerald-600" size={16} />
+                   <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Món bạn đã gọi</h3>
+                </div>
+                <button 
+                  onClick={() => setShowActiveOrderModal(true)}
+                  className="text-[9px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-3 py-1.5 rounded-full"
+                >
+                  Chi tiết
+                </button>
+             </div>
+             <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+                {activeOrder.items.slice(0, 5).map((item: any, i: number) => (
+                  <div key={i} className="shrink-0 flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-2xl border border-slate-100">
+                     <div className="w-5 h-5 bg-emerald-600/10 rounded-lg flex items-center justify-center text-[9px] font-black text-emerald-600">
+                        {item.quantity}
+                     </div>
+                     <span className="text-[10px] font-bold text-slate-700 whitespace-nowrap">{item.name}</span>
+                  </div>
+                ))}
+                {activeOrder.items.length > 5 && (
+                  <div className="shrink-0 flex items-center justify-center px-3 py-2 bg-slate-50 rounded-2xl border border-slate-100 text-[10px] font-bold text-slate-400">
+                    +{activeOrder.items.length - 5}
+                  </div>
+                )}
+             </div>
+          </motion.div>
+        )}
+
         {/* Banner (Optional) */}
         {selectedCategory === 'Tất cả' && !searchQuery && (
           <div className="mb-8 rounded-[40px] bg-emerald-600 p-6 sm:p-8 text-white relative overflow-hidden shadow-2xl shadow-emerald-200">

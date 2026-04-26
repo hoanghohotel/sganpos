@@ -26,6 +26,7 @@ interface CartItem {
   price: number;
   quantity: number;
   isSent?: boolean;
+  orderId?: string;
 }
 
 interface Table {
@@ -161,7 +162,24 @@ const POSPage = () => {
     if (socket) {
       socket.on('table:update', (updatedTable: any) => {
         setTables(prev => prev.map(t => t._id === updatedTable._id ? { ...t, ...updatedTable } : t));
+        if (selectedTable?._id === updatedTable._id && updatedTable.status === 'EMPTY') {
+          resetFlow();
+        }
       });
+      
+      socket.on('order:new', (order: any) => {
+        if (selectedTable?._id === order.tableId && step === 'MENU') {
+           // Refresh active order data if we are currently in that table's menu
+           handleTableSelect(selectedTable);
+        }
+      });
+
+      socket.on('order:update', (order: any) => {
+        if (selectedTable?._id === order.tableId && step === 'MENU') {
+           handleTableSelect(selectedTable);
+        }
+      });
+
       // Also refresh products and settings if they change
       socket.on('product:update', fetchInitialData);
       socket.on('settings:update', fetchInitialData);
@@ -171,6 +189,8 @@ const POSPage = () => {
       window.removeEventListener('focus', fetchInitialData);
       if (socket) {
         socket.off('table:update');
+        socket.off('order:new');
+        socket.off('order:update');
         socket.off('product:update');
         socket.off('settings:update');
       }
@@ -190,6 +210,8 @@ const POSPage = () => {
 
   const handleTableSelect = async (table: Table) => {
     setSelectedTable(table);
+    // Keep reference to current unsent items to merge later
+    const unsentItems = cart.filter(item => !item.isSent);
     
     if (table.status === 'OCCUPIED') {
       setLoading(true);
@@ -219,27 +241,52 @@ const POSPage = () => {
             }
           });
 
+          // If multiple orders exist, merge them into the last one for a single source of truth
+          if (tableOrders.length > 1) {
+            const lastOrder = tableOrders[tableOrders.length - 1];
+            await api.patch(`/api/orders/${lastOrder._id}`, {
+              items: consolidatedCart.filter(i => i.isSent).map(i => ({
+                productId: i.id,
+                name: i.name,
+                price: i.price,
+                quantity: i.quantity
+              })),
+              subtotal: consolidatedCart.reduce((s, i) => s + i.price * i.quantity, 0),
+              total: consolidatedCart.reduce((s, i) => s + i.price * i.quantity, 0)
+            });
+            
+            await Promise.all(tableOrders.slice(0, -1).map(o => 
+              api.patch(`/api/orders/${o._id}`, { status: 'COMPLETED', total: 0, items: [] })
+            ));
+          }
+
+          // MERGE with local unsent items
+          unsentItems.forEach(u => {
+            const existing = consolidatedCart.find(c => c.id === u.id && !c.isSent);
+            if (existing) {
+              existing.quantity += u.quantity;
+            } else {
+              consolidatedCart.push({ ...u });
+            }
+          });
+
           setCart(consolidatedCart);
-          // We use the oldest order ID for patching during checkout, or handle multi-update
-          // For simplicity, we'll patch the 'latest' order or create a new summary order
           setActiveOrderId(tableOrders[tableOrders.length - 1]._id);
           
-          // sum discounts if any (might be complex, usually just one discount per table)
           setDiscountType(tableOrders[0].discountType || 'FIXED');
           setDiscountValue(tableOrders.reduce((sum, o) => sum + (o.discountValue || 0), 0));
         } else {
-          setCart(tableCarts[table._id] || []);
+          setCart(tableCarts[table._id] || unsentItems);
           setActiveOrderId(null);
         }
       } catch (err) {
         console.error('Failed to fetch table order:', err);
-        setCart(tableCarts[table._id] || []);
+        setCart(tableCarts[table._id] || unsentItems);
       } finally {
         setLoading(false);
       }
     } else {
-      // Load existing local cart for this table if any
-      setCart(tableCarts[table._id] || []);
+      setCart(tableCarts[table._id] || unsentItems);
       setActiveOrderId(null);
     }
     setStep('MENU');
@@ -430,18 +477,82 @@ const POSPage = () => {
     }
   };
 
-  const updateQuantity = (id: string, delta: number) => {
-    setCart((prev) =>
-      prev
+  const updateQuantity = async (id: string, delta: number) => {
+    const itemToUpdate = cart.find(i => i.id === id);
+    const isSentItem = itemToUpdate?.isSent;
+    
+    setCart((prev) => {
+      const updated = prev
         .map((item) =>
           item.id === id ? { ...item, quantity: Math.max(0, item.quantity + delta) } : item
         )
-        .filter((item) => item.quantity > 0)
-    );
+        .filter((item) => item.quantity > 0);
+      
+      // Sync with DB if it's a sent item and we have an active order
+      if (isSentItem && activeOrderId && selectedTable) {
+        const sentItems = updated.filter(i => i.isSent);
+        if (sentItems.length === 0) {
+          // If no items left, we might want to delete the order or mark it completed
+          api.delete(`/api/orders/${activeOrderId}`).catch(err => console.error(err));
+          // If the whole cart is empty, reset table
+          if (updated.length === 0) {
+            api.patch(`/api/tables/${selectedTable._id}`, { status: 'EMPTY' }).catch(err => console.error(err));
+            setStep('TABLE');
+            setSelectedTable(null);
+            setActiveOrderId(null);
+          }
+        } else {
+          api.patch(`/api/orders/${activeOrderId}`, {
+            items: sentItems.map(i => ({
+              productId: i.id,
+              name: i.name,
+              price: i.price,
+              quantity: i.quantity
+            })),
+            subtotal: sentItems.reduce((s, i) => s + i.price * i.quantity, 0),
+            total: sentItems.reduce((s, i) => s + i.price * i.quantity, 0)
+          }).catch(err => console.error('Failed to sync updated quantity:', err));
+        }
+      }
+      
+      return updated;
+    });
   };
 
-  const removeFromCart = (id: string) => {
-    setCart((prev) => prev.filter((item) => item.id !== id));
+  const removeFromCart = async (id: string) => {
+    const itemToRemove = cart.find(i => i.id === id);
+    const isSentItem = itemToRemove?.isSent;
+
+    setCart((prev) => {
+      const updated = prev.filter((item) => item.id !== id);
+
+      // Sync with DB if it's a sent item and we have an active order
+      if (isSentItem && activeOrderId && selectedTable) {
+        const sentItems = updated.filter(i => i.isSent);
+        if (sentItems.length === 0) {
+          api.delete(`/api/orders/${activeOrderId}`).catch(err => console.error(err));
+          if (updated.length === 0) {
+            api.patch(`/api/tables/${selectedTable._id}`, { status: 'EMPTY' }).catch(err => console.error(err));
+            setStep('TABLE');
+            setSelectedTable(null);
+            setActiveOrderId(null);
+          }
+        } else {
+          api.patch(`/api/orders/${activeOrderId}`, {
+            items: sentItems.map(i => ({
+              productId: i.id,
+              name: i.name,
+              price: i.price,
+              quantity: i.quantity
+            })),
+            subtotal: sentItems.reduce((s, i) => s + i.price * i.quantity, 0),
+            total: sentItems.reduce((s, i) => s + i.price * i.quantity, 0)
+          }).catch(err => console.error('Failed to sync removed item:', err));
+        }
+      }
+
+      return updated;
+    });
   };
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);

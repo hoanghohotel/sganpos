@@ -82,10 +82,9 @@ router.post('/', async (req, res) => {
 router.patch('/:id', authenticate, async (req, res) => {
   try {
     const tenantId = getTenantId();
-    const updateData: any = {};
-    if (req.body.status) updateData.status = req.body.status;
-    if (req.body.paymentStatus) updateData.paymentStatus = req.body.paymentStatus;
-    if (req.body.paymentMethod) updateData.paymentMethod = req.body.paymentMethod;
+    const updateData: any = { ...req.body };
+    delete updateData.tenantId; // Security check
+    delete updateData._id;
     
     const order = await Order.findOneAndUpdate(
       { _id: req.params.id, tenantId },
@@ -112,6 +111,24 @@ router.patch('/:id', authenticate, async (req, res) => {
     res.json(order);
   } catch (error) {
     res.status(400).json({ error: 'Failed to update order' });
+  }
+});
+
+// DELETE /api/orders/:id - Cancel/Delete order (Auth required)
+router.delete('/:id', authenticate, async (req, res) => {
+  try {
+    const tenantId = getTenantId();
+    const order = await Order.findOneAndDelete({ _id: req.params.id, tenantId });
+    
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+
+    // 🔥 REALTIME: Notify POS and Kitchen about removal
+    // We send an update with a flag or just the order with a special status
+    emitToTenant(tenantId, 'order:update', { ...order.toObject(), deleted: true });
+
+    res.json({ message: 'Order deleted successfully' });
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to delete order' });
   }
 });
 
