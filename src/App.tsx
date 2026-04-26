@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { cn } from './lib/utils';
 import { useAuthStore } from './store/authStore';
-import { getTenantPrefix, getTenantId } from './lib/tenantUtils';
+import { getTenantPrefix, getTenantId, getTenantFromHostname, getTenantIdFromPath } from './lib/tenantUtils';
 import { useSocket } from './hooks/useSocket';
 import ProtectedRoute from './components/ProtectedRoute';
 import ShiftGuard from './components/ShiftGuard';
@@ -26,7 +26,10 @@ const MainLayout = () => {
   const logout = useAuthStore((state) => state.logout);
   const user = useAuthStore((state) => state.user);
   const tenantPrefix = getTenantPrefix();
-  const currentTenant = useAuthStore((state) => (state.user as any)?.tenantId) || getTenantId();
+  // IMPORTANT: Priority goes to hostname for tenant detection
+  const fromHostname = getTenantFromHostname();
+  const currentTenant = fromHostname || useAuthStore((state) => (state.user as any)?.tenantId) || getTenantIdFromPath(location.pathname);
+  
   const [hasNewOrder, setHasNewOrder] = useState(false);
   const [audio] = useState(new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'));
 
@@ -43,8 +46,8 @@ const MainLayout = () => {
     }
   }, [location.pathname]);
 
-  // If no tenant is selected and we are on the root of main domain, show landing
-  const isMainLanding = !currentTenant && (location.pathname === '/' || location.pathname === '');
+  // If we are on a subdomain (fromHostname exists), we are NEVER on the main landing page
+  const isMainLanding = !fromHostname && !currentTenant && (location.pathname === '/' || location.pathname === '');
 
   const isCustomerPage = location.pathname.startsWith(`${tenantPrefix}/order`);
   const authPaths = [`${tenantPrefix}/login`, `${tenantPrefix}/register`, `/login`, `/register`].map(p => p.replace(/\/$/, ''));
