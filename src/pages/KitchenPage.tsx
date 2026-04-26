@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
-import { CookingPot, CheckCircle, Clock, ChefHat, AlertCircle } from 'lucide-react';
+import { CookingPot, CheckCircle, Clock, ChefHat, AlertCircle, Bell, Volume2, VolumeX } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -39,6 +39,8 @@ const KitchenPage = () => {
   const [tables, setTables] = useState<Table[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
+  const [isNotificationsEnabled, setIsNotificationsEnabled] = useState(false);
+  const [isRinging, setIsRinging] = useState(false);
 
   const fetchInitialData = async () => {
     try {
@@ -69,7 +71,13 @@ const KitchenPage = () => {
     if (event === 'order:new') {
       setOrders(prev => [data, ...prev]);
       // Play ding-dong sound
-      audio.play().catch(e => console.log('Audio play blocked:', e));
+      if (isNotificationsEnabled) {
+        audio.currentTime = 0;
+        audio.play().catch(e => console.log('Audio play blocked:', e));
+      }
+      // Ring the bell
+      setIsRinging(true);
+      setTimeout(() => setIsRinging(false), 3000);
     } else if (event === 'order:update') {
       setOrders(prev => {
         if (data.status === 'COMPLETED' || data.deleted) {
@@ -146,7 +154,41 @@ const KitchenPage = () => {
           </div>
         </div>
         
-        <div className="flex gap-4">
+        <div className="flex gap-4 items-center">
+          <button 
+            onClick={() => {
+              setIsNotificationsEnabled(!isNotificationsEnabled);
+              if (!isNotificationsEnabled) {
+                audio.play().catch(() => {});
+              }
+            }}
+            className={cn(
+              "p-3 rounded-xl border transition-all flex items-center gap-2",
+              isNotificationsEnabled 
+                ? "bg-emerald-50 border-emerald-200 text-emerald-600" 
+                : "bg-slate-50 border-slate-200 text-slate-400"
+            )}
+          >
+            {isNotificationsEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
+            <span className="text-[10px] font-black uppercase tracking-widest">
+              {isNotificationsEnabled ? 'Âm thanh: Bật' : 'Âm thanh: Tắt'}
+            </span>
+          </button>
+
+          <motion.div 
+            animate={isRinging ? {
+              rotate: [0, -15, 15, -15, 15, -10, 10, -5, 5, 0],
+              scale: [1, 1.2, 1.2, 1.2, 1.2, 1.1, 1.1, 1, 1, 1]
+            } : { rotate: 0, scale: 1 }}
+            transition={{ duration: 1.5, ease: "easeInOut" }}
+            className={cn(
+              "w-12 h-12 rounded-xl flex items-center justify-center border transition-colors",
+              isRinging ? "bg-rose-500 text-white border-rose-400 shadow-lg shadow-rose-200" : "bg-white text-slate-400 border-slate-100"
+            )}
+          >
+            <Bell size={24} className={isRinging ? "animate-pulse" : ""} />
+          </motion.div>
+
           <div className="bg-slate-50 px-6 py-2 rounded-2xl border border-slate-100 flex items-center gap-4">
             <div className="flex flex-col text-center">
               <span className="text-2xl font-black text-rose-600 leading-none">{pendingCount}</span>
