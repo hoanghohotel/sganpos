@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import api from '../lib/api';
 import axios from 'axios';
-import { ShoppingCart, Plus, Minus, Coffee, CheckCircle2, Info, Search } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Coffee, CheckCircle2, Info, Search, History, X, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -29,6 +29,8 @@ interface CartItem {
 interface TableInfo {
   _id: string;
   name: string;
+  status?: string;
+  currentOrderId?: string;
 }
 
 const CustomerOrderPage = () => {
@@ -41,6 +43,8 @@ const CustomerOrderPage = () => {
   const [table, setTable] = useState<TableInfo | null>(null);
   const [settings, setSettings] = useState<any>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [activeOrder, setActiveOrder] = useState<any>(null);
+  const [showActiveOrderModal, setShowActiveOrderModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
   const [loading, setLoading] = useState(true);
@@ -96,6 +100,19 @@ const CustomerOrderPage = () => {
       }
 
       setTable(targetTable);
+
+      if (targetTable.status === 'OCCUPIED' && targetTable.currentOrderId) {
+        try {
+          const orderRes = await api.get(`/api/orders`);
+          const allOrders = Array.isArray(orderRes.data) ? orderRes.data : [];
+          const currentOrder = allOrders.find((o: any) => o._id === targetTable.currentOrderId);
+          setActiveOrder(currentOrder || null);
+        } catch (err) {
+          console.error('Lỗi khi lấy thông tin đơn hàng hiện tại:', err);
+        }
+      } else {
+        setActiveOrder(null);
+      }
       
       const rawCategories = productsData.map((p: any) => p.category).filter(Boolean);
       const uniqueCats = Array.from(new Set(rawCategories as string[]));
@@ -208,10 +225,21 @@ const CustomerOrderPage = () => {
               </div>
             </div>
           </div>
-          <motion.div 
-            whileTap={{ scale: 0.9 }}
-            className="relative p-2 bg-slate-50 rounded-xl border border-slate-100"
-          >
+          <div className="flex items-center gap-2">
+            {activeOrder && (
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setShowActiveOrderModal(true)}
+                className="relative p-2 bg-emerald-50 rounded-xl border border-emerald-100 text-emerald-600"
+              >
+                <History size={20} />
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white animate-pulse" />
+              </motion.button>
+            )}
+            <motion.div 
+              whileTap={{ scale: 0.9 }}
+              className="relative p-2 bg-slate-50 rounded-xl border border-slate-100"
+            >
              {cart.length > 0 && (
                <motion.div 
                  initial={{ scale: 0 }}
@@ -222,7 +250,8 @@ const CustomerOrderPage = () => {
                </motion.div>
              )}
              <ShoppingCart className="text-slate-600" size={20} />
-          </motion.div>
+            </motion.div>
+          </div>
         </div>
 
         {/* Search */}
@@ -413,6 +442,83 @@ const CustomerOrderPage = () => {
               </button>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Active Order Modal */}
+      <AnimatePresence>
+        {showActiveOrderModal && activeOrder && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowActiveOrderModal(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-sm bg-white rounded-[40px] shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
+            >
+              <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <div>
+                  <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight">Đơn hàng hiện tại</h3>
+                  <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-1 italic">Mã đơn: {activeOrder.orderNumber}</p>
+                </div>
+                <button 
+                  onClick={() => setShowActiveOrderModal(false)}
+                  className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center text-slate-400 hover:text-slate-600 shadow-sm transition-colors border border-slate-100"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-auto p-6 no-scrollbar">
+                <div className="mb-6 flex justify-center">
+                   <div className={cn(
+                     "px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2",
+                     activeOrder.status === 'PENDING' ? "bg-amber-100 text-amber-600" :
+                     activeOrder.status === 'PREPARING' ? "bg-blue-100 text-blue-600 animate-pulse" :
+                     activeOrder.status === 'READY' ? "bg-emerald-100 text-emerald-600" :
+                     "bg-slate-100 text-slate-600"
+                   )}>
+                      <Clock size={12} />
+                      {activeOrder.status === 'PENDING' ? 'Chờ xác nhận' :
+                       activeOrder.status === 'PREPARING' ? 'Đang chế biến' :
+                       activeOrder.status === 'READY' ? 'Sẵn sàng phục vụ' :
+                       'Đã giao'}
+                   </div>
+                </div>
+
+                <div className="space-y-4">
+                  {activeOrder.items.map((item: any, idx: number) => (
+                    <div key={idx} className="flex justify-between items-start gap-4 p-4 bg-slate-50/50 rounded-2xl border border-slate-100">
+                      <div className="flex-1">
+                        <p className="text-xs font-black text-slate-900 uppercase tracking-tight">{item.name}</p>
+                        <p className="text-[10px] font-bold text-slate-400 mt-1">Số lượng: {item.quantity}</p>
+                      </div>
+                      <p className="text-xs font-black text-emerald-600 font-mono">{(item.price * item.quantity).toLocaleString('vi-VN')}đ</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-8 bg-slate-50 border-t border-slate-100">
+                <div className="flex justify-between items-center mb-6">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tổng thanh toán</p>
+                  <p className="text-2xl font-black text-slate-900 tracking-tighter italic">{activeOrder.total.toLocaleString('vi-VN')}đ</p>
+                </div>
+                <button 
+                  onClick={() => setShowActiveOrderModal(false)}
+                  className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-slate-200 active:scale-95 transition-transform"
+                >
+                  Đóng
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

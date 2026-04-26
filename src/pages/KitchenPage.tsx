@@ -48,11 +48,15 @@ const KitchenPage = () => {
     }
   };
 
+  const [audio] = useState(new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'));
+
   // 🔥 REALTIME: Listen for new orders and updates
   useSocket((event, data) => {
     console.log(`[Socket] Received ${event}:`, data);
     if (event === 'order:new') {
       setOrders(prev => [data, ...prev]);
+      // Play ding-dong sound
+      audio.play().catch(e => console.log('Audio play blocked:', e));
     } else if (event === 'order:update') {
       setOrders(prev => {
         if (data.status === 'COMPLETED' || data.status === 'DELIVERED') {
