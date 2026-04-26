@@ -193,9 +193,9 @@ const CustomerOrderPage = () => {
         setActiveOrder(null);
       }
       
-      const rawCategories = productsData.map((p: any) => p.category).filter(Boolean);
+      const rawCategories = productsData.map((p: any) => p.category || 'Khác');
       const uniqueCats = Array.from(new Set(rawCategories as string[]));
-      const cats: string[] = ['Tất cả', ...uniqueCats.filter(c => c !== 'Tất cả')];
+      const cats: string[] = ['Tất cả', ...uniqueCats.filter(c => c !== 'Tất cả' && c !== 'Khác'), 'Khác'].filter((c, i, a) => a.indexOf(c) === i);
       setCategories(cats);
     } catch (err) {
       console.error(err);
@@ -262,7 +262,7 @@ const CustomerOrderPage = () => {
   };
 
   const filteredProducts = products.filter(p => {
-    const matchesCategory = selectedCategory === 'Tất cả' || p.category === selectedCategory;
+    const matchesCategory = selectedCategory === 'Tất cả' || (p.category || 'Khác') === selectedCategory;
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
@@ -446,7 +446,7 @@ const CustomerOrderPage = () => {
 
         {selectedCategory === 'Tất cả' && !searchQuery ? (
           categories.filter(c => c !== 'Tất cả').map((cat) => {
-            const catProducts = products.filter(p => p.category === cat);
+            const catProducts = products.filter(p => (p.category || 'Khác') === cat);
             if (catProducts.length === 0) return null;
             return (
               <div key={`cat-section-${cat}`} className="mb-12">

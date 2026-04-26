@@ -42,22 +42,22 @@ const ProductCard: React.FC<{ product: Product, onAdd: () => void }> = ({ produc
     whileHover={{ scale: 1.02 }}
     whileTap={{ scale: 0.98 }}
     onClick={onAdd}
-    className="group bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:border-emerald-200 hover:shadow-emerald-100/20 transition-all text-left flex flex-col justify-between h-44"
+    className="group bg-white p-2.5 sm:p-4 rounded-2xl border border-slate-100 shadow-sm hover:border-emerald-200 hover:shadow-emerald-100/20 transition-all text-left flex flex-col justify-between h-40 sm:h-44"
   >
-    <div>
-      <div className="w-full h-20 bg-slate-50 rounded-xl mb-3 flex items-center justify-center group-hover:bg-emerald-50 transition-colors overflow-hidden">
+    <div className="flex flex-col h-full">
+      <div className="w-full h-20 sm:h-24 bg-slate-50 rounded-xl mb-2 sm:mb-3 flex items-center justify-center group-hover:bg-emerald-50 transition-colors overflow-hidden shrink-0">
         {product.image ? (
           <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
         ) : (
-          <Coffee className="text-slate-300 group-hover:text-emerald-300 transition-colors" />
+          <Coffee className="text-slate-300 group-hover:text-emerald-300 transition-colors" size={24} />
         )}
       </div>
-      <h3 className="font-bold text-slate-900 leading-tight group-hover:text-emerald-600 transition-colors line-clamp-1 text-sm uppercase tracking-tighter font-sans">{product.name}</h3>
-    </div>
-    <div className="flex justify-between items-end mt-2">
-      <span className="text-emerald-600 font-extrabold text-sm font-mono">
-        {product.basePrice.toLocaleString('vi-VN')}đ
-      </span>
+      <div className="flex flex-col justify-between flex-1">
+        <h3 className="font-bold text-slate-900 leading-tight group-hover:text-emerald-600 transition-colors line-clamp-2 text-[11px] sm:text-xs uppercase tracking-tighter font-sans">{product.name}</h3>
+        <span className="text-emerald-600 font-extrabold text-[12px] sm:text-sm font-mono mt-1">
+          {product.basePrice.toLocaleString('vi-VN')}đ
+        </span>
+      </div>
     </div>
   </motion.button>
 );
@@ -95,6 +95,7 @@ const POSPage = () => {
   const [discountValue, setDiscountValue] = useState<number>(0);
 
   // Payment states
+  const [showMobileCart, setShowMobileCart] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'TRANSFER' | null>(null);
   const [paymentStep, setPaymentStep] = useState<'SELECT' | 'QR'>('SELECT');
@@ -478,6 +479,18 @@ const POSPage = () => {
 
   const handleCheckoutInitiate = () => {
     if (cart.length === 0 || !orderType) return;
+    
+    // Sync prices with latest product catalog for final billing
+    // "Tất cả các đơn hàng phải chốt theo giá tại thời điểm hoàn thành"
+    const updatedCart = cart.map(item => {
+      const currentProduct = products.find(p => p._id === item.id);
+      if (currentProduct) {
+        return { ...item, price: currentProduct.basePrice };
+      }
+      return item;
+    });
+    setCart(updatedCart);
+
     setOrderCode(generateOrderCode());
     setShowPaymentModal(true);
     setPaymentStep('SELECT');
@@ -685,6 +698,193 @@ const POSPage = () => {
     }
   };
 
+  const discountTypeFormatted = discountType === 'PERCENTAGE' ? '%' : 'VNĐ';
+
+  const CartContent = ({ onBack }: { onBack?: () => void }) => (
+    <div className="flex flex-col h-full bg-white overflow-hidden">
+      <div className="p-6 sm:p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-lg shrink-0">
+            <ShoppingCart size={20} />
+          </div>
+          <div>
+            <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tighter uppercase leading-none">Giỏ hàng</h2>
+            <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mt-1 italic">{selectedTable?.name}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={resetFlow} className="w-10 h-10 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all rounded-xl" title="Xoá hết">
+            <Trash2 size={18} />
+          </button>
+          {onBack && (
+            <button onClick={onBack} className="w-10 h-10 flex items-center justify-center text-slate-400 hover:bg-slate-100 transition-all rounded-xl lg:hidden">
+              <X size={18} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 no-scrollbar">
+        <AnimatePresence initial={false}>
+          {cart.length === 0 ? (
+            <div key="empty-cart" className="h-full flex flex-col items-center justify-center text-slate-200 opacity-50">
+              <div className="w-24 h-24 bg-slate-50 rounded-[32px] flex items-center justify-center mb-6">
+                <Coffee size={40} className="text-slate-200" />
+              </div>
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400">Chọn món từ menu</p>
+            </div>
+          ) : (
+            <div key="cart-list" className="flex flex-col gap-4">
+              {cart.map((item) => (
+                <motion.div
+                  layout
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  key={item.id + (item.isSent ? '-sent' : '-pending')}
+                  className={cn(
+                    "p-4 rounded-3xl border transition-all flex flex-col gap-3 group relative overflow-hidden",
+                    item.isSent 
+                      ? "bg-slate-50 border-slate-200 opacity-80" 
+                      : "bg-white border-slate-100 shadow-sm hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-50"
+                  )}
+                >
+                  {item.isSent && (
+                    <div className="absolute top-0 right-0 px-2 py-0.5 bg-emerald-500 text-[8px] font-black text-white uppercase tracking-widest rounded-bl-xl">
+                      Đã báo bếp
+                    </div>
+                  )}
+                  <div className="flex justify-between items-start pr-8">
+                     <h4 className="text-xs font-black text-slate-800 uppercase tracking-tight leading-tight">{item.name}</h4>
+                     {!item.isSent && (
+                       <button onClick={() => removeFromCart(item.id)} className="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition-colors">
+                         <Trash2 size={16} />
+                       </button>
+                     )}
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-900 font-black text-base font-mono">
+                      {(item.price * item.quantity).toLocaleString('vi-VN')}đ
+                    </span>
+                    <div className={cn(
+                      "flex items-center gap-3 p-1 rounded-xl shadow-inner border",
+                      item.isSent ? "bg-slate-100 border-slate-200" : "bg-slate-50 border-slate-100 ring-1 ring-slate-200/50"
+                    )}>
+                      {!item.isSent ? (
+                        <>
+                          <button onClick={() => updateQuantity(item.id, -1)} className="p-1.5 bg-white text-slate-400 hover:text-red-500 hover:shadow-sm rounded-lg transition-all">
+                            <Minus size={14} />
+                          </button>
+                          <span className="font-mono text-sm font-black min-w-[24px] text-center">{item.quantity}</span>
+                          <button onClick={() => updateQuantity(item.id, 1)} className="p-1.5 bg-white text-emerald-600 hover:text-emerald-700 hover:shadow-sm rounded-lg transition-all">
+                            <Plus size={14} />
+                          </button>
+                        </>
+                      ) : (
+                         <span className="font-mono text-sm font-black px-3 py-1 text-slate-500">x{item.quantity}</span>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <div className="p-6 bg-white border-t border-slate-100 shadow-[0_-10px_20px_rgba(0,0,0,0.02)] sm:mb-0 mb-safe">
+        <div className="space-y-3 mb-6">
+          <div className="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
+            <span>Tạm tính</span>
+            <span className="text-slate-600 font-mono italic">{subtotal.toLocaleString('vi-VN')}đ</span>
+          </div>
+          
+          <div className="flex flex-col gap-2">
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Giảm giá</span>
+              <div className="flex items-center gap-1">
+                <button 
+                  onClick={() => setDiscountType(discountType === 'PERCENTAGE' ? 'FIXED' : 'PERCENTAGE')}
+                  className="text-[9px] font-black bg-slate-100 px-2 py-0.5 rounded text-slate-500 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
+                >
+                  {discountTypeFormatted}
+                </button>
+                <input 
+                  type="number"
+                  value={discountValue}
+                  onChange={(e) => setDiscountValue(Number(e.target.value))}
+                  className="w-16 bg-slate-50 border-none rounded text-right text-xs font-black text-emerald-600 p-1 focus:ring-1 focus:ring-emerald-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {taxRate > 0 && (
+            <div className="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              <span>Thuế ({taxRate}%)</span>
+              <span className="text-slate-600 font-mono italic">{taxAmount.toLocaleString('vi-VN')}đ</span>
+            </div>
+          )}
+
+          <div className="flex justify-between items-end pt-2 border-t border-dashed border-slate-100">
+            <span className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Tổng cộng</span>
+            <span className="text-2xl sm:text-3xl font-black text-emerald-600 tracking-tighter font-mono">
+              {total.toLocaleString('vi-VN')}đ
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <button
+            disabled={cart.length === 0 || ordering}
+            onClick={handleSendToKitchen}
+            className={cn(
+              "py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border shadow-sm",
+              cart.some(i => !i.isSent)
+                ? "bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100"
+                : "bg-slate-50 border-slate-100 text-slate-400 opacity-60 pointer-events-none"
+            )}
+          >
+            <Coffee size={14} />
+            <span>Báo bếp</span>
+          </button>
+          <button
+            disabled={cart.length === 0}
+            onClick={handlePrintProvisional}
+            className="py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-2 shadow-sm"
+          >
+            <Printer size={14} />
+            <span>Tạm tính</span>
+          </button>
+        </div>
+
+        <button
+          disabled={cart.length === 0 || ordering}
+          onClick={handleCheckoutInitiate}
+          className={cn(
+            "w-full py-4 rounded-2xl font-black text-lg transition-all flex items-center justify-center gap-3 uppercase tracking-widest shadow-xl",
+            cart.length === 0 ? "bg-slate-100 text-slate-300 cursor-not-allowed" : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-200/50 shadow-lg",
+            ordering && "opacity-70"
+          )}
+        >
+          {ordering ? (
+            <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+          ) : orderSuccess ? (
+            <>
+              <CheckCircle2 size={24} />
+              <span>Thành công!</span>
+            </>
+          ) : (
+            <>
+              <ShoppingCart size={20} />
+              <span>Thanh toán</span>
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center bg-[#F8FAFC]">
@@ -787,65 +987,75 @@ const POSPage = () => {
           {/* STEP 3: Select Menu Items */}
           {step === 'MENU' && (
             <motion.div 
-              key="menu-step"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex flex-col h-full"
+               key="menu-step"
+               initial={{ opacity: 0 }}
+               animate={{ opacity: 1 }}
+               className="flex flex-col h-full"
             >
-              <header className="flex justify-between items-center mb-8">
-                <div className="flex flex-col gap-4 w-full">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                      <button 
-                        onClick={async () => {
-                          const hasUnsent = cart.some(i => !i.isSent);
-                          if (hasUnsent) {
-                            await handleSendToKitchen();
-                          }
-                          setStep('TABLE');
-                        }} 
-                        className="p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 shadow-sm"
-                      >
-                        <ChevronLeft className="text-slate-400" />
-                      </button>
-                      <div>
-                        <h1 className="text-2xl font-black text-slate-900 tracking-tighter uppercase">{selectedTable?.name}</h1>
-                        <div className="flex items-center gap-2">
-                          <p className="text-emerald-600 text-[10px] font-black uppercase tracking-widest">{orderType?.replace('_', ' ')}</p>
-                          <span className="text-slate-300">|</span>
-                          <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Ca: {shift?.code}</p>
-                        </div>
+              <header className="px-4 sm:px-8 py-4 sm:py-6 bg-white/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-100 flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div className="flex items-center gap-4 w-full sm:w-auto">
+                    <button 
+                      onClick={async () => {
+                        const hasUnsent = cart.some(i => !i.isSent);
+                        if (hasUnsent) {
+                          await handleSendToKitchen();
+                        }
+                        setStep('TABLE');
+                      }} 
+                      className="p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 shadow-sm"
+                    >
+                      <ChevronLeft className="text-slate-400" />
+                    </button>
+                    <div className="flex-1 sm:flex-initial">
+                      <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tighter uppercase">{selectedTable?.name}</h1>
+                      <div className="flex items-center gap-2">
+                        <p className="text-emerald-600 text-[10px] font-black uppercase tracking-widest leading-none">{orderType?.replace('_', ' ')}</p>
+                        <span className="text-slate-200">|</span>
+                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest leading-none">Ca: {shift?.code}</p>
                       </div>
                     </div>
-                    <div className="relative">
-                      <input 
-                        type="text" 
-                        placeholder="Tìm món..." 
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="bg-white border border-slate-200 rounded-xl px-10 py-2 w-64 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm" 
-                      />
-                      <ShoppingCart className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                    </div>
+                    {/* Cart Trigger for Mobile */}
+                    <button 
+                      onClick={() => setShowMobileCart(true)}
+                      className="lg:hidden relative p-3 bg-emerald-600 text-white rounded-xl shadow-lg shadow-emerald-200 hover:scale-105 active:scale-95 transition-all"
+                    >
+                      <ShoppingCart size={20} />
+                      {cart.length > 0 && (
+                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 rounded-full border-2 border-white text-[10px] flex items-center justify-center font-black">
+                          {cart.reduce((acc, curr) => acc + curr.quantity, 0)}
+                        </span>
+                      )}
+                    </button>
                   </div>
-                  
-                  {/* Category Filter */}
-                  <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                    {categories.map((cat, index) => (
-                      <button
-                        key={`cat-${cat}-${index}`}
-                        onClick={() => setSelectedCategory(cat)}
-                        className={cn(
-                          "px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all whitespace-nowrap border",
-                          selectedCategory === cat 
-                            ? "bg-emerald-600 text-white border-emerald-600 shadow-lg shadow-emerald-100" 
-                            : "bg-white text-slate-500 border-slate-100 hover:border-emerald-200"
-                        )}
-                      >
-                        {cat}
-                      </button>
-                    ))}
+                  <div className="relative w-full sm:w-64">
+                    <input 
+                      type="text" 
+                      placeholder="Tìm món..." 
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="bg-white border border-slate-200 rounded-xl px-10 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm" 
+                    />
+                    <ShoppingCart className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                   </div>
+                </div>
+                
+                {/* Category Filter */}
+                <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+                  {categories.map((cat, index) => (
+                    <button
+                      key={`cat-${cat}-${index}`}
+                      onClick={() => setSelectedCategory(cat)}
+                      className={cn(
+                        "px-4 py-2 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-all whitespace-nowrap border",
+                        selectedCategory === cat 
+                          ? "bg-emerald-600 text-white border-emerald-600 shadow-lg shadow-emerald-100" 
+                          : "bg-white text-slate-500 border-slate-100 hover:border-emerald-200"
+                      )}
+                    >
+                      {cat}
+                    </button>
+                  ))}
                 </div>
               </header>
 
@@ -878,193 +1088,44 @@ const POSPage = () => {
         </AnimatePresence>
       </div>
 
-      {/* Cart Panel (Only show in MENU step) */}
+      {/* Cart Panel (Desktop) */}
       <AnimatePresence>
         {step === 'MENU' && (
           <motion.aside 
             initial={{ x: 400 }}
             animate={{ x: 0 }}
             exit={{ x: 400 }}
-            className="w-[380px] bg-white border-l border-slate-200 flex flex-col shadow-2xl z-20"
+            className="hidden lg:flex w-[380px] bg-white border-l border-slate-200 flex-col shadow-2xl z-20"
           >
-            <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-lg">
-                  <ShoppingCart size={20} />
-                </div>
-                <div>
-                  <h2 className="text-xl font-black text-slate-900 tracking-tighter uppercase leading-none">Giỏ hàng</h2>
-                  <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mt-1 italic">{selectedTable?.name}</p>
-                </div>
-              </div>
-              <button onClick={resetFlow} className="w-10 h-10 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all rounded-xl" title="Xoá hết">
-                <Trash2 size={18} />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
-              <AnimatePresence initial={false}>
-                {cart.length === 0 ? (
-                  <div key="empty-cart" className="h-full flex flex-col items-center justify-center text-slate-200 opacity-50">
-                    <div className="w-24 h-24 bg-slate-50 rounded-[32px] flex items-center justify-center mb-6">
-                      <Coffee size={40} className="text-slate-200" />
-                    </div>
-                    <p className="text-xs font-black uppercase tracking-widest text-slate-400">Chọn món từ menu</p>
-                  </div>
-                ) : (
-                  <div key="cart-list" className="flex flex-col gap-4">
-                    {cart.map((item) => (
-                      <motion.div
-                        layout
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        key={item.id + (item.isSent ? '-sent' : '-pending')}
-                        className={cn(
-                          "p-4 rounded-3xl border transition-all flex flex-col gap-3 group relative overflow-hidden",
-                          item.isSent 
-                            ? "bg-slate-50/80 border-slate-200 opacity-80" 
-                            : "bg-white border-slate-100 shadow-sm hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-50"
-                        )}
-                      >
-                        {item.isSent && (
-                          <div className="absolute top-0 right-0 px-2 py-0.5 bg-emerald-500 text-[8px] font-black text-white uppercase tracking-widest rounded-bl-xl">
-                            Đã báo bếp
-                          </div>
-                        )}
-                        <div className="flex justify-between items-start pr-8">
-                           <h4 className="text-xs font-black text-slate-800 uppercase tracking-tight leading-tight">{item.name}</h4>
-                           {!item.isSent && (
-                             <button onClick={() => removeFromCart(item.id)} className="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition-colors">
-                               <Trash2 size={16} />
-                             </button>
-                           )}
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-slate-900 font-black text-base font-mono">
-                            {(item.price * item.quantity).toLocaleString('vi-VN')}đ
-                          </span>
-                          <div className={cn(
-                            "flex items-center gap-3 p-1 rounded-xl shadow-inner border",
-                            item.isSent ? "bg-slate-100 border-slate-200" : "bg-slate-50 border-slate-100 ring-1 ring-slate-200/50"
-                          )}>
-                            {!item.isSent ? (
-                              <>
-                                <button onClick={() => updateQuantity(item.id, -1)} className="p-1.5 bg-white text-slate-400 hover:text-red-500 hover:shadow-sm rounded-lg transition-all">
-                                  <Minus size={14} />
-                                </button>
-                                <span className="font-mono text-sm font-black min-w-[24px] text-center">{item.quantity}</span>
-                                <button onClick={() => updateQuantity(item.id, 1)} className="p-1.5 bg-white text-emerald-600 hover:text-emerald-700 hover:shadow-sm rounded-lg transition-all">
-                                  <Plus size={14} />
-                                </button>
-                              </>
-                            ) : (
-                               <span className="font-mono text-sm font-black px-3 py-1 text-slate-500">x{item.quantity}</span>
-                            )}
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            <div className="p-6 bg-white border-t border-slate-100">
-              <div className="space-y-3 mb-6">
-                <div className="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                  <span>Tạm tính</span>
-                  <span className="text-slate-600 font-mono italic">{subtotal.toLocaleString('vi-VN')}đ</span>
-                </div>
-                
-                {/* Discount Section */}
-                <div className="flex flex-col gap-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Giảm giá</span>
-                    <div className="flex items-center gap-1">
-                      <button 
-                        onClick={() => setDiscountType(discountType === 'PERCENTAGE' ? 'FIXED' : 'PERCENTAGE')}
-                        className="text-[9px] font-black bg-slate-100 px-2 py-0.5 rounded text-slate-500 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
-                      >
-                        {discountType === 'PERCENTAGE' ? '%' : 'VNĐ'}
-                      </button>
-                      <input 
-                        type="number"
-                        value={discountValue}
-                        onChange={(e) => setDiscountValue(Number(e.target.value))}
-                        className="w-16 bg-slate-50 border-none rounded text-right text-xs font-black text-emerald-600 p-1 focus:ring-1 focus:ring-emerald-500"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {taxRate > 0 && (
-                  <div className="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                    <span>Thuế ({taxRate}%)</span>
-                    <span className="text-slate-600 font-mono italic">{taxAmount.toLocaleString('vi-VN')}đ</span>
-                  </div>
-                )}
-
-                <div className="flex justify-between items-end pt-2 border-t border-dashed border-slate-100">
-                  <span className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Tổng cộng</span>
-                  <span className="text-3xl font-black text-emerald-600 tracking-tighter font-mono">
-                    {total.toLocaleString('vi-VN')}đ
-                  </span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 mb-3">
-                <button
-                  disabled={cart.length === 0 || !cart.some(i => !i.isSent) || ordering}
-                  onClick={handleSendToKitchen}
-                  className="py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
-                >
-                  <Coffee size={14} />
-                  <span>Báo bếp</span>
-                </button>
-                <button
-                  disabled={cart.length === 0}
-                  onClick={handlePrintProvisional}
-                  className="py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
-                >
-                  <Plus className="rotate-45" size={14} />
-                  <span>In tạm tính</span>
-                </button>
-                <button
-                  disabled={cart.length === 0}
-                  onClick={() => {/* Custom note logic if needed */}}
-                  className="py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
-                >
-                  <CircleDollarSign size={14} />
-                  <span>Ghi chú</span>
-                </button>
-              </div>
-
-              <button
-                disabled={cart.length === 0 || ordering}
-                onClick={handleCheckoutInitiate}
-                className={cn(
-                  "w-full py-4 rounded-2xl font-black text-lg transition-all flex items-center justify-center gap-3 uppercase tracking-widest shadow-xl",
-                  cart.length === 0 ? "bg-slate-100 text-slate-300 cursor-not-allowed" : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-100",
-                  ordering && "opacity-70"
-                )}
-              >
-                {ordering ? (
-                  <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                ) : orderSuccess ? (
-                  <>
-                    <CheckCircle2 size={24} />
-                    <span>Xong!</span>
-                  </>
-                ) : (
-                  <>
-                    <ShoppingCart size={20} />
-                    <span>Thanh toán</span>
-                  </>
-                )}
-              </button>
-            </div>
+            <CartContent />
           </motion.aside>
+        )}
+      </AnimatePresence>
+
+      {/* Cart Drawer (Mobile) */}
+      <AnimatePresence>
+        {showMobileCart && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowMobileCart(false)}
+              className="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] z-[60] lg:hidden"
+            />
+            <motion.aside 
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed bottom-0 left-0 right-0 h-[90vh] bg-white rounded-t-[40px] shadow-[0_-20px_50px_rgba(0,0,0,0.15)] z-[70] lg:hidden flex flex-col overflow-hidden"
+            >
+              <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto my-4 shrink-0" />
+              <div className="flex-1 overflow-hidden">
+                <CartContent onBack={() => setShowMobileCart(false)} />
+              </div>
+            </motion.aside>
+          </>
         )}
       </AnimatePresence>
 
