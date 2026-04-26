@@ -1,6 +1,7 @@
 import express from 'express';
 import Order from '../models/Order.js';
 import Shift from '../models/Shift.js';
+import Table from '../models/Table.js';
 import { getTenantId } from '../lib/tenant.js';
 import { emitToTenant } from '../lib/socketService.js';
 import { authenticate } from '../middleware/auth.js';
@@ -47,6 +48,26 @@ router.post('/', async (req, res) => {
     };
     const order = new Order(orderData);
     await order.save();
+
+    // If order is linked to a table
+    if (req.body.tableId) {
+      if (orderData.status === 'COMPLETED') {
+        // If POS creates a completed order, ensure table is EMPTY
+        await Table.findOneAndUpdate(
+          { _id: req.body.tableId, tenantId },
+          { $set: { status: 'EMPTY', currentOrderId: null } }
+        );
+        emitToTenant(tenantId, 'table:update', { _id: req.body.tableId, status: 'EMPTY' });
+      } else {
+        // If it's a PENDING order (e.g. from customer), mark table as OCCUPIED
+        await Table.findOneAndUpdate(
+          { _id: req.body.tableId, tenantId },
+          { $set: { status: 'OCCUPIED', currentOrderId: order._id } }
+        );
+        // Notify about table update
+        emitToTenant(tenantId, 'table:update', { _id: req.body.tableId, status: 'OCCUPIED' });
+      }
+    }
     
     // 🔥 REALTIME: Notify kitchen
     emitToTenant(tenantId, 'order:new', order);
@@ -70,6 +91,17 @@ router.patch('/:id', authenticate, async (req, res) => {
     );
 
     if (!order) return res.status(404).json({ error: 'Order not found' });
+
+    // If order status is set to COMPLETED or paymentStatus to PAID, we might want to free the table
+    // For simplicity, let's free the table when status is COMPLETED
+    if (status === 'COMPLETED' && order.tableId) {
+      await Table.findOneAndUpdate(
+        { _id: order.tableId, tenantId },
+        { $set: { status: 'EMPTY', currentOrderId: null } }
+      );
+      // Notify about table update
+      emitToTenant(tenantId, 'table:update', { _id: order.tableId, status: 'EMPTY' });
+    }
 
     // 🔥 REALTIME: Notify POS and Kitchen
     emitToTenant(tenantId, 'order:update', order);

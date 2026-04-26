@@ -23,7 +23,7 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
     }
 
     const token = req.cookies?.token || req.headers.authorization?.split(' ')[1];
-    const currentTenantId = getTenantId();
+    let currentTenantId = getTenantId();
 
     if (!token) {
       return res.status(401).json({ error: 'Authentication required' });
@@ -35,20 +35,33 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
     // Exception for 'demo' tenant (system admin context) or if user is global admin
     const isGlobalAdmin = decoded.tenantId === 'demo';
     
+    const proceedWithUser = async (tenantToUse: string) => {
+      const user = await User.findOne({ _id: decoded.id, tenantId: decoded.tenantId }).select('-password');
+
+      if (!user) {
+        console.warn(`Auth Middleware: User not found for ID ${decoded.id} in tenant ${decoded.tenantId} (Target tenant: ${tenantToUse})`);
+        return res.status(401).json({ error: 'User not found or mismatch tenant' });
+      }
+
+      req.user = user;
+      next();
+    };
+
     if (decoded.tenantId !== currentTenantId && !isGlobalAdmin) {
-       console.warn(`Auth Middleware: Tenant mismatch. Token: ${decoded.tenantId}, Request: ${currentTenantId}`);
-       return res.status(403).json({ error: 'Tenant access mismatch' });
+       // If the detected tenant is 'demo' (the default fallback), OR it looks like an AI Studio system subdomain,
+       // but the token has a specific tenant, we "promote" the request context to that tenant.
+       const isSystemSubdomain = currentTenantId.startsWith('ais-dev-') || currentTenantId.startsWith('ais-pre-');
+       
+       if (currentTenantId === 'demo' || isSystemSubdomain) {
+         console.log(`Auth Middleware: Promoting tenant context from '${currentTenantId}' to '${decoded.tenantId}' based on token`);
+         return (await import('../lib/tenant.js')).tenantStorage.run({ tenantId: decoded.tenantId }, () => proceedWithUser(decoded.tenantId));
+       } else {
+         console.warn(`Auth Middleware: Tenant mismatch. Token: ${decoded.tenantId}, Request: ${currentTenantId}`);
+         return res.status(403).json({ error: 'Tenant access mismatch' });
+       }
     }
 
-    const user = await User.findOne({ _id: decoded.id, tenantId: decoded.tenantId }).select('-password');
-
-    if (!user) {
-      console.warn(`Auth Middleware: User not found for ID ${decoded.id} in tenant ${decoded.tenantId} (Request tenant: ${currentTenantId})`);
-      return res.status(401).json({ error: 'User not found or mismatch tenant' });
-    }
-
-    req.user = user;
-    next();
+    await proceedWithUser(currentTenantId);
   } catch (error) {
     console.error('Auth Middleware Error:', error);
     res.status(401).json({ error: 'Invalid token' });

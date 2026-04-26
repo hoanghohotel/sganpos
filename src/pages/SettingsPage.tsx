@@ -1,11 +1,120 @@
 import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
 import axios from 'axios';
-import { Save, Building2, CreditCard, Upload, CheckCircle2, AlertCircle, ChevronDown, Search, Globe, Link as LinkIcon, User } from 'lucide-react';
+import { Save, Building2, CreditCard, Upload, CheckCircle2, AlertCircle, ChevronDown, Search, Globe, Link as LinkIcon, User, Plus, Move, Trash2, GripVertical, Type, List, Hash, Layout, Printer, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { 
+  DndContext, 
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragOverlay,
+  defaultDropAnimationSideEffects,
+  DragStartEvent,
+  DragEndEvent
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { restrictToVerticalAxis, restrictToWindowEdges } from '@dnd-kit/modifiers';
 import { useAuthStore } from '../store/authStore';
+
+interface PrintField {
+  id: string;
+  type: 'text' | 'image' | 'list' | 'totals' | 'qr' | 'separator';
+  label: string;
+  value: string;
+  enabled: boolean;
+  isCustom?: boolean;
+}
+
+const SortableFieldItem: React.FC<{ 
+  field: PrintField; 
+  onToggle: (id: string) => void;
+  onDelete: (id: string) => void;
+  onUpdate: (id: string, value: string) => void;
+}> = ({ field, onToggle, onDelete, onUpdate }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id: field.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "flex items-center gap-3 p-3 bg-white border border-slate-100 rounded-xl mb-2 group shadow-sm hover:shadow-md transition-all",
+        !field.enabled && "opacity-50 grayscale"
+      )}
+    >
+      <div {...attributes} {...listeners} className="cursor-grab text-slate-300 hover:text-slate-600 transition-colors">
+        <GripVertical size={16} />
+      </div>
+      
+      <div className="flex-1 flex flex-col">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+            {field.type === 'text' && <Type size={10} className="inline mr-1" />}
+            {field.type === 'image' && <Upload size={10} className="inline mr-1" />}
+            {field.type === 'list' && <List size={10} className="inline mr-1" />}
+            {field.type === 'qr' && <Hash size={10} className="inline mr-1" />}
+            {field.label}
+          </span>
+          {field.isCustom && <span className="bg-emerald-100 text-emerald-600 text-[8px] px-1.5 py-0.5 rounded-full font-black uppercase">Tự tạo</span>}
+        </div>
+        {field.type === 'text' && field.isCustom && (
+           <input 
+             type="text" 
+             value={field.value}
+             onChange={(e) => onUpdate(field.id, e.target.value)}
+             className="text-xs font-bold text-slate-900 bg-transparent border-b border-dashed border-slate-200 focus:border-emerald-500 focus:ring-0 p-0 h-6 outline-none"
+           />
+        )}
+      </div>
+
+      <div className="flex items-center gap-1">
+        <button 
+          onClick={() => onToggle(field.id)}
+          className={cn(
+            "p-1.5 rounded-lg transition-colors",
+            field.enabled ? "text-emerald-500 hover:bg-emerald-50" : "text-slate-300 hover:bg-slate-100"
+          )}
+        >
+          <CheckCircle2 size={16} />
+        </button>
+        {field.isCustom && (
+          <button 
+            onClick={() => onDelete(field.id)}
+            className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+          >
+            <Trash2 size={16} />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -21,6 +130,135 @@ interface Bank {
   transferSupported: number;
   lookupSupported: number;
 }
+
+const PrintPreview = ({ fields, settings }: { fields: PrintField[], settings: any }) => {
+  const isModern = settings.defaultPrintTemplate === 'modern';
+  const isMinimal = settings.defaultPrintTemplate === 'minimal';
+  const isRetro = settings.defaultPrintTemplate === 'retro';
+  const isElegant = settings.defaultPrintTemplate === 'elegant';
+
+  return (
+    <div className={cn(
+      "w-[300px] min-h-[500px] bg-white shadow-2xl p-6 transition-all duration-500 mx-auto border border-slate-100",
+      isRetro && "font-mono scale-[0.98] border-dashed border-slate-300 shadow-none",
+      isModern && "rounded-3xl shadow-emerald-200/20",
+      isElegant && "border-double border-4 border-slate-900 shadow-none px-8",
+      isMinimal && "border-none shadow-sm"
+    )}>
+      <div className="flex flex-col gap-4 text-slate-800">
+        {fields.filter(f => f.enabled).map(field => {
+          switch (field.id) {
+            case 'logo':
+              return settings.logoUrl ? (
+                <div key={field.id} className="flex justify-center">
+                  <img src={settings.logoUrl} alt="Logo" className="w-16 h-16 object-contain grayscale" />
+                </div>
+              ) : null;
+            case 'store-name':
+              return (
+                <div key={field.id} className={cn(
+                   "text-center font-black uppercase tracking-tight",
+                   isModern ? "text-xl text-emerald-600" : "text-lg",
+                   isElegant && "border-b-2 border-slate-900 pb-2 mb-2"
+                )}>
+                  {settings.storeName || 'SAIGON AN COFFEE'}
+                </div>
+              );
+            case 'address':
+              return (
+                <div key={field.id} className="text-[10px] text-center text-slate-500 font-medium leading-tight">
+                  {settings.address || '123 Đường ABC, Quận 1, TP.HCM'}
+                </div>
+              );
+            case 'hotline':
+              return (
+                <div key={field.id} className="text-[10px] text-center font-bold">
+                  Hotline: {settings.hotline || '0123.456.789'}
+                </div>
+              );
+            case 'sep-1':
+            case 'sep-2':
+              return (
+                <div key={field.id} className={cn(
+                  "border-t my-1",
+                  isRetro ? "border-dotted border-slate-400" : "border-slate-100"
+                )} />
+              );
+            case 'order-info':
+              return (
+                <div key={field.id} className="space-y-1 text-xs">
+                  <div className="flex justify-between">
+                    <span className="font-bold">Mã đơn:</span>
+                    <span>#ORD-123456</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-bold">Bàn:</span>
+                    <span>Bàn 05</span>
+                  </div>
+                </div>
+              );
+            case 'items-list':
+              return (
+                <div key={field.id} className="space-y-2 py-2">
+                  <div className="flex justify-between text-[10px] font-black uppercase text-slate-400">
+                    <span>Món</span>
+                    <span>T.Tiền</span>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs">
+                        <span>Cà phê sữa đá x2</span>
+                        <span>50k</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                        <span>Bạc xỉu x1</span>
+                        <span>25k</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            case 'totals':
+              return (
+                <div key={field.id} className="space-y-1 pt-2 border-t border-slate-100">
+                  <div className="flex justify-between text-xs">
+                    <span>Tạm tính</span>
+                    <span>75k</span>
+                  </div>
+                  <div className="flex justify-between text-base font-black">
+                    <span>TỔNG CỘNG</span>
+                    <span className={isModern ? "text-emerald-600" : ""}>75k</span>
+                  </div>
+                </div>
+              );
+            case 'qr':
+              return (
+                <div key={field.id} className="flex flex-col items-center gap-2 mt-4">
+                  <div className="text-[8px] font-black uppercase text-slate-400">Quét mã để thanh toán</div>
+                  <div className="w-32 h-32 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center grayscale overflow-hidden">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=example" alt="QR" className="w-24 h-24 opacity-50" />
+                  </div>
+                </div>
+              );
+            case 'footer':
+              return (
+                <div key={field.id} className="text-[10px] text-center text-slate-400 italic mt-4 px-4 leading-relaxed">
+                  {field.value || 'Cảm ơn quý khách và hẹn gặp lại!'}
+                </div>
+              );
+            default:
+              if (field.isCustom) {
+                return (
+                  <div key={field.id} className="text-xs text-center py-1">
+                    {field.value}
+                  </div>
+                );
+              }
+              return null;
+          }
+        })}
+      </div>
+    </div>
+  );
+};
 
 const SettingsPage = () => {
   const { user } = useAuthStore();
@@ -53,6 +291,66 @@ const SettingsPage = () => {
     { id: 'elegant', name: 'Sang trọng', description: 'Bố cục cân đối, phù hợp nhà hàng cao cấp.' }
   ];
 
+  const [templateFields, setTemplateFields] = useState<PrintField[]>([
+    { id: 'logo', type: 'image', label: 'Logo cửa hàng', value: '', enabled: true },
+    { id: 'store-name', type: 'text', label: 'Tên cửa hàng', value: '', enabled: true },
+    { id: 'address', type: 'text', label: 'Địa chỉ', value: '', enabled: true },
+    { id: 'hotline', type: 'text', label: 'Hotline', value: '', enabled: true },
+    { id: 'sep-1', type: 'separator', label: 'Phân cách', value: '', enabled: true },
+    { id: 'order-info', type: 'text', label: 'Thông tin đơn hàng', value: '', enabled: true },
+    { id: 'items-list', type: 'list', label: 'Danh sách món', value: '', enabled: true },
+    { id: 'sep-2', type: 'separator', label: 'Phân cách', value: '', enabled: true },
+    { id: 'totals', type: 'totals', label: 'Tổng cộng', value: '', enabled: true },
+    { id: 'qr', type: 'qr', label: 'Mã QR thanh toán', value: '', enabled: true },
+    { id: 'footer', type: 'text', label: 'Lời cảm ơn', value: 'Cảm ơn và hẹn gặp lại!', enabled: true },
+  ]);
+
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [isDesigning, setIsDesigning] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setTemplateFields((items) => {
+        const oldIndex = items.findIndex((i) => i.id === active.id);
+        const newIndex = items.findIndex((i) => i.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+    setActiveId(null);
+  };
+
+  const toggleField = (id: string) => {
+    setTemplateFields(prev => prev.map(f => f.id === id ? { ...f, enabled: !f.enabled } : f));
+  };
+
+  const deleteField = (id: string) => {
+    setTemplateFields(prev => prev.filter(f => f.id !== id));
+  };
+
+  const updateField = (id: string, value: string) => {
+    setTemplateFields(prev => prev.map(f => f.id === id ? { ...f, value } : f));
+  };
+
+  const addCustomField = () => {
+    const id = `custom-${Date.now()}`;
+    setTemplateFields(prev => [
+      ...prev,
+      { id, type: 'text', label: 'Trường tùy chỉnh', value: 'Nội dung mới', enabled: true, isCustom: true }
+    ]);
+  };
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -71,7 +369,11 @@ const SettingsPage = () => {
       // Fetch settings via authenticated API
       try {
         const settingsRes = await api.get('/api/settings');
-        setSettings(prev => ({ ...prev, ...settingsRes.data }));
+        const data = settingsRes.data;
+        setSettings(prev => ({ ...prev, ...data }));
+        if (data.templateFields) {
+          setTemplateFields(data.templateFields);
+        }
       } catch (err) {
         console.error('Lỗi khi lấy cài đặt:', err);
       }
@@ -103,7 +405,10 @@ const SettingsPage = () => {
     setSaving(true);
     setMessage(null);
     try {
-      await api.put('/api/settings', settings);
+      await api.put('/api/settings', { 
+        ...settings, 
+        templateFields: templateFields // Save custom template structure
+      });
       setMessage({ type: 'success', text: 'Đã lưu cài đặt thành công!' });
       setTimeout(() => setMessage(null), 3000);
     } catch (err: any) {
@@ -402,59 +707,144 @@ const SettingsPage = () => {
               exit={{ opacity: 0, scale: 0.95 }}
               className="space-y-8"
             >
-              <div className="bg-slate-900 text-white p-6 rounded-3xl shadow-xl">
-                 <h3 className="text-sm font-black uppercase tracking-widest mb-2 italic">Quản lý mẫu in hóa đơn</h3>
-                 <p className="text-[10px] text-slate-400 font-medium tracking-tight leading-relaxed">Chọn một trong các mẫu thiết kế sẵn bên dưới để hiển thị trên hóa đơn và phiếu tạm tính của cửa hàng.</p>
+              <div className="bg-slate-900 text-white p-6 rounded-3xl shadow-xl flex justify-between items-center gap-4">
+                 <div>
+                    <h3 className="text-sm font-black uppercase tracking-widest mb-2 italic">Thiết kế mẫu in</h3>
+                    <p className="text-[10px] text-slate-400 font-medium tracking-tight">Tùy chỉnh nội dung và hình thức hiển thị trên hóa đơn của bạn.</p>
+                 </div>
+                 <button 
+                   type="button"
+                   onClick={() => setIsDesigning(!isDesigning)}
+                   className={cn(
+                     "px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                     isDesigning ? "bg-emerald-500 text-white shadow-lg shadow-emerald-200" : "bg-white/10 text-white hover:bg-white/20"
+                   )}
+                 >
+                   {isDesigning ? 'Chọn mẫu có sẵn' : 'Sửa mẫu đang chọn'}
+                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {printTemplates.map((template) => (
-                  <div 
-                    key={template.id}
-                    onClick={() => setSettings(prev => ({ ...prev, defaultPrintTemplate: template.id }))}
-                    className={cn(
-                      "p-6 rounded-[24px] border-2 transition-all cursor-pointer group flex flex-col gap-3",
-                      settings.defaultPrintTemplate === template.id 
-                        ? "bg-emerald-50 border-emerald-500 shadow-xl shadow-emerald-200/20" 
-                        : "bg-white border-slate-100 hover:border-emerald-200"
-                    )}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 group-hover:text-emerald-500 transition-colors">
-                        <CreditCard size={20} />
-                      </div>
-                      {settings.defaultPrintTemplate === template.id && (
-                        <div className="bg-emerald-500 text-white p-1 rounded-full">
-                          <CheckCircle2 size={14} />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                {/* Designer Side */}
+                <div className="space-y-6">
+                  {!isDesigning ? (
+                    <div className="grid grid-cols-1 gap-4">
+                      {printTemplates.map((template) => (
+                        <div 
+                          key={template.id}
+                          onClick={() => setSettings(prev => ({ ...prev, defaultPrintTemplate: template.id }))}
+                          className={cn(
+                            "p-5 rounded-[24px] border-2 transition-all cursor-pointer group flex items-center gap-4",
+                            settings.defaultPrintTemplate === template.id 
+                              ? "bg-emerald-50 border-emerald-500 shadow-xl shadow-emerald-200/20" 
+                              : "bg-white border-slate-100 hover:border-emerald-200"
+                          )}
+                        >
+                          <div className={cn(
+                            "w-12 h-12 rounded-2xl flex items-center justify-center transition-colors",
+                            settings.defaultPrintTemplate === template.id ? "bg-emerald-500 text-white" : "bg-slate-50 text-slate-400 group-hover:text-emerald-500"
+                          )}>
+                            <Printer size={20} />
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-0.5">{template.name}</h4>
+                            <p className="text-[9px] text-slate-500 font-medium leading-relaxed">{template.description}</p>
+                          </div>
+                          {settings.defaultPrintTemplate === template.id && (
+                            <div className="bg-emerald-500 text-white p-1 rounded-full">
+                              <CheckCircle2 size={14} />
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-1">{template.name}</h4>
-                      <p className="text-[10px] text-slate-500 font-medium leading-relaxed">{template.description}</p>
-                    </div>
-                  </div>
-                ))}
+                      ))}
 
-                <div 
-                  className="p-6 rounded-[24px] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-3 bg-slate-50/50 hover:bg-slate-50 transition-all cursor-not-allowed grayscale opacity-60"
-                >
-                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-300">
-                    <Plus size={20} />
-                  </div>
-                  <div className="text-center">
-                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Tự thiết kế</h4>
-                    <p className="text-[9px] text-slate-300 font-bold uppercase">Sắp ra mắt</p>
-                  </div>
+                      <div 
+                        onClick={() => {
+                          setIsDesigning(true);
+                          setSettings(prev => ({ ...prev, defaultPrintTemplate: 'custom' }));
+                        }}
+                        className="p-5 rounded-[24px] border-2 border-dashed border-slate-200 flex items-center gap-4 bg-slate-50/50 hover:bg-slate-50 transition-all cursor-pointer group"
+                      >
+                        <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-slate-300 group-hover:text-emerald-500 transition-colors">
+                          <Plus size={20} />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-0.5">Tạo mẫu mới</h4>
+                          <p className="text-[9px] text-slate-300 font-bold uppercase tracking-tight">Tự do kéo thả các trường thông tin</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Sắp xếp các trường</h4>
+                        <button 
+                          type="button" 
+                          onClick={addCustomField}
+                          className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-all shadow-sm"
+                        >
+                          <Plus size={12} />
+                          Thêm trường
+                        </button>
+                      </div>
+
+                      <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragStart={handleDragStart}
+                        onDragEnd={handleDragEnd}
+                        modifiers={[restrictToVerticalAxis]}
+                      >
+                        <SortableContext
+                          items={templateFields.map(f => f.id)}
+                          strategy={verticalListSortingStrategy}
+                        >
+                          {templateFields.map((field) => (
+                            <SortableFieldItem 
+                              key={field.id} 
+                              field={field} 
+                              onToggle={toggleField}
+                              onDelete={deleteField}
+                              onUpdate={updateField}
+                            />
+                          ))}
+                        </SortableContext>
+
+                        <DragOverlay dropAnimation={{
+                          sideEffects: defaultDropAnimationSideEffects({
+                            styles: {
+                              active: {
+                                opacity: '0.4',
+                              },
+                            },
+                          }),
+                        }}>
+                          {activeId ? (
+                            <div className="flex items-center gap-3 p-3 bg-white border-2 border-emerald-500 rounded-xl shadow-2xl opacity-90 scale-105">
+                               <GripVertical size={16} className="text-emerald-500" />
+                               <span className="text-xs font-black uppercase text-slate-900">
+                                 {templateFields.find(f => f.id === activeId)?.label}
+                               </span>
+                            </div>
+                          ) : null}
+                        </DragOverlay>
+                      </DndContext>
+                    </div>
+                  )}
                 </div>
-              </div>
 
-              <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 mt-6">
-                <div className="flex gap-3 items-center">
-                  <div className="w-8 h-8 bg-white border border-slate-100 rounded-lg flex items-center justify-center text-emerald-600">
-                    <CheckCircle2 size={16} />
+                {/* Preview Side */}
+                <div className="sticky top-0 bg-slate-50 p-8 rounded-[40px] flex flex-col gap-6 items-center">
+                  <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    <Eye size={14} />
+                    Xem trước bản in
                   </div>
-                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Mẫu đã chọn sẽ được áp dụng cho toàn bộ các lần in tiếp theo.</p>
+                  
+                  <PrintPreview fields={templateFields} settings={settings} />
+
+                  <div className="max-w-[280px] text-center italic text-[9px] text-slate-400 leading-relaxed font-medium">
+                    Lưu ý: Hình ảnh thực tế khi in ra từ máy in nhiệt có thể khác nhau tùy thuộc vào khổ giấy (58mm/80mm) và độ phân giải của máy.
+                  </div>
                 </div>
               </div>
             </motion.div>

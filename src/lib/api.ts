@@ -21,7 +21,10 @@ api.interceptors.request.use((config) => {
       const host = window.location.hostname;
       const hostParts = host.split('.');
       if (hostParts.length >= 3 && !host.includes('localhost') && !host.includes('0.0.0.0')) {
-        config.headers['x-tenant-id'] = hostParts[0];
+        const sub = hostParts[0];
+        if (!sub.startsWith('ais-dev-') && !sub.startsWith('ais-pre-') && sub !== 'www') {
+          config.headers['x-tenant-id'] = sub;
+        }
       }
     }
   }

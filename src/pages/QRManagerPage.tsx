@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
+import { getTenantPrefix } from '../lib/tenantUtils';
 import { QRCodeCanvas } from 'qrcode.react';
 import { Download, Printer, Filter } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -37,7 +38,8 @@ const QRManagerPage = () => {
   });
 
   const getQRLink = (tableId: string) => {
-    return `${window.location.origin}/order?tableId=${tableId}`;
+    const prefix = getTenantPrefix();
+    return `${window.location.origin}${prefix}/order?tableId=${tableId}`;
   };
 
   const downloadQR = (tableId: string, tableName: string) => {

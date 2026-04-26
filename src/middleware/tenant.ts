@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { tenantStorage } from '../lib/tenant.js';
+import jwt from 'jsonwebtoken';
 
 /**
  * Middleware to detect the tenant from the subdomain.
@@ -10,7 +11,7 @@ import { tenantStorage } from '../lib/tenant.js';
 export const tenantMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const host = (req.headers['x-forwarded-host'] as string) || req.headers.host || '';
   const headerTenantId = req.headers['x-tenant-id'] as string;
-  let tenantId = 'demo';
+  let tenantId = '';
 
   if (headerTenantId) {
     tenantId = headerTenantId;
@@ -46,17 +47,26 @@ export const tenantMiddleware = (req: Request, res: Response, next: NextFunction
         } catch (e) { /* ignore URL parse error */ }
       }
 
-      // 4. Default: Subdomain detection from Host if still demo
-      if (tenantId === 'demo') {
+      // 4. Default: Subdomain detection from Host
+      if (!tenantId) {
         const isLocal = host.includes('localhost') || host.includes('0.0.0.0') || host.includes('127.0.0.1') || host.includes('.internal');
         if (host && !isLocal) {
           const parts = host.split('.');
           const isPublicSuffix = host.includes('vercel.app') || host.includes('run.app') || host.includes('github.io');
           if (isPublicSuffix) {
-            if (parts.length >= 3) tenantId = parts[0];
+            if (parts.length >= 3) {
+              const sub = parts[0];
+              // Skip AI Studio system subdomains
+              if (!sub.startsWith('ais-dev-') && !sub.startsWith('ais-pre-')) {
+                tenantId = sub;
+              }
+            }
           } else {
             if (parts.length >= 3) {
-              tenantId = parts[0];
+              const sub = parts[0];
+              if (sub !== 'www' && !sub.startsWith('ais-dev-') && !sub.startsWith('ais-pre-')) {
+                tenantId = sub;
+              }
             } else if (parts.length === 2) {
               const commonTlds = ['com', 'net', 'org', 'vn', 'biz', 'info'];
               if (!commonTlds.includes(parts[0])) tenantId = parts[0];
@@ -64,8 +74,24 @@ export const tenantMiddleware = (req: Request, res: Response, next: NextFunction
           }
         }
       }
+      
+      // 5. Ultimate Fallback: JWT Token peeking (Decode without verify just to guess tenant context)
+      if (!tenantId) {
+        try {
+          const token = req.cookies?.token || req.headers.authorization?.split(' ')[1];
+          if (token) {
+            const decoded: any = jwt.decode(token);
+            if (decoded && decoded.tenantId) {
+              tenantId = decoded.tenantId;
+            }
+          }
+        } catch (e) { /* ignore jwt decode error */ }
+      }
     }
   }
+
+  // Final fallback to 'demo'
+  if (!tenantId) tenantId = 'demo';
 
   // Inject tenantId into request context for logs
   (req as any).tenantId = tenantId;

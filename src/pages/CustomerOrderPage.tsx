@@ -32,7 +32,7 @@ interface TableInfo {
 }
 
 const CustomerOrderPage = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const tableId = searchParams.get('tableId');
   
   const [products, setProducts] = useState<Product[]>([]);
@@ -60,17 +60,42 @@ const CustomerOrderPage = () => {
     return () => window.removeEventListener('focus', fetchData);
   }, [tableId]);
 
+  const getOrderTypeFromTableName = (name: string) => {
+    if (name.startsWith('Mang về')) return 'TAKEAWAY';
+    if (name.startsWith('Ship')) return 'DELIVERY';
+    return 'DINE_IN';
+  };
+
   const fetchData = async () => {
     try {
-      const [prodRes, tableRes, setRes] = await Promise.all([
+      const [prodRes, tableRes, setRes, allTablesRes] = await Promise.all([
         api.get('/api/products'),
         api.get(`/api/tables/${tableId}`),
-        api.get('/api/settings')
+        api.get('/api/settings'),
+        api.get('/api/tables')
       ]);
+
       const productsData = Array.isArray(prodRes.data) ? prodRes.data : [];
       setProducts(productsData);
-      setTable(tableRes.data);
       setSettings(setRes.data);
+      
+      const targetTable = tableRes.data;
+      
+      // Auto-redirection for Takeaway/Ship slots if current is occupied
+      const currentOrderType = getOrderTypeFromTableName(targetTable.name);
+      if ((currentOrderType === 'TAKEAWAY' || currentOrderType === 'DELIVERY') && targetTable.status === 'OCCUPIED') {
+        const allTables = Array.isArray(allTablesRes.data) ? allTablesRes.data : [];
+        const prefix = currentOrderType === 'TAKEAWAY' ? 'Mang về' : 'Ship';
+        const emptySlot = allTables.find((t: any) => t.name.startsWith(prefix) && t.status === 'EMPTY');
+        
+        if (emptySlot && emptySlot._id !== tableId) {
+          console.log(`Slot ${targetTable.name} đang bận, chuyển hướng sang ${emptySlot.name}`);
+          setSearchParams({ tableId: emptySlot._id });
+          return;
+        }
+      }
+
+      setTable(targetTable);
       
       const rawCategories = productsData.map((p: any) => p.category).filter(Boolean);
       const uniqueCats = Array.from(new Set(rawCategories as string[]));
@@ -109,11 +134,11 @@ const CustomerOrderPage = () => {
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   const handleCheckout = async () => {
-    if (cart.length === 0 || !tableId) return;
+    if (cart.length === 0 || !tableId || !table) return;
     setOrdering(true);
     try {
       const orderData = {
-        orderType: 'DINE_IN',
+        orderType: getOrderTypeFromTableName(table.name),
         tableId: tableId,
         items: cart.map((item) => ({
           productId: item.id,
@@ -121,6 +146,7 @@ const CustomerOrderPage = () => {
           price: item.price,
           quantity: item.quantity,
         })),
+        subtotal: total,
         total: total,
       };
 
@@ -128,8 +154,12 @@ const CustomerOrderPage = () => {
       setCart([]);
       setOrderSuccess(true);
       setTimeout(() => setOrderSuccess(false), 5000);
-    } catch (error) {
-      alert('Lỗi khi gửi yêu cầu gọi món');
+      
+      // Refresh table status
+      fetchData();
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.error || 'Lỗi khi gửi yêu cầu gọi món';
+      alert(errorMsg);
     } finally {
       setOrdering(false);
     }
