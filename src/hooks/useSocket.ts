@@ -22,6 +22,10 @@ export const useSocket = (onEvent?: (event: string, data: any) => void) => {
       onEvent?.('order:update', data);
     });
 
+    socket.on('table:update', (data) => {
+      onEvent?.('table:update', data);
+    });
+
     return () => {
       socket.disconnect();
     };

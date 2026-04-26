@@ -217,12 +217,25 @@ const ShiftListPage = () => {
                     </div>
 
                     <div>
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Cộng dồn thực tế</label>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Tổng tiền hóa đơn</label>
                       <div className="text-xl font-black text-slate-900 tracking-tight">
                         {shiftOrders.reduce((sum, o) => sum + o.total, 0).toLocaleString('vi-VN')}đ
                       </div>
                       <p className="text-[9px] font-bold text-slate-400 uppercase mt-1 italic">
-                        {shiftOrders.filter(o => o.status === 'COMPLETED').length} hoàn thành / {shiftOrders.length} đơn
+                        {shiftOrders.filter(o => o.status === 'COMPLETED').length} hoàn tất / {shiftOrders.length} đơn hàng
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest block mb-1">Doanh thu chốt ca (Đã thu)</label>
+                      <div className="text-xl font-black text-emerald-600 tracking-tight">
+                        {shiftOrders
+                          .filter(o => o.paymentStatus === 'PAID')
+                          .reduce((sum, o) => sum + o.total, 0)
+                          .toLocaleString('vi-VN')}đ
+                      </div>
+                      <p className="text-[9px] font-bold text-emerald-500 uppercase mt-1 italic">
+                        {shiftOrders.filter(o => o.paymentStatus === 'PAID').length} đơn đã thanh toán
                       </p>
                     </div>
 

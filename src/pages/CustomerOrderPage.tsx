@@ -6,6 +6,7 @@ import { ShoppingCart, Plus, Minus, Coffee, CheckCircle2, Info, Search, History,
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { useSocket } from '../hooks/useSocket';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

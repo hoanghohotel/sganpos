@@ -57,8 +57,8 @@ router.patch('/:id', authenticate, async (req, res) => {
     }
 
     // Notify other clients about table update
-    const { getSocketIO } = await import('../lib/socketService.js');
-    const io = getSocketIO();
+    const { getIO } = await import('../lib/socketService.js');
+    const io = getIO();
     if (io) {
       io.to(tenantId).emit('table:update', table);
     }
