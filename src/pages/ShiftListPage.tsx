@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { History, Search, Calendar, ChevronRight, X, DollarSign, Package, Clock, User, Coffee as CoffeeIcon } from 'lucide-react';
+import { History, Search, Calendar, ChevronRight, X, DollarSign, Package, Clock, User, Coffee as CoffeeIcon, Printer } from 'lucide-react';
 import api from '../lib/api';
 import { cn } from '../lib/utils';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { printOrder } from '../lib/printing';
 
 interface ShiftItem {
   _id: string;
@@ -36,12 +37,17 @@ const ShiftListPage = () => {
   const [shiftOrders, setShiftOrders] = useState<OrderItem[]>([]);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [settings, setSettings] = useState<any>(null);
 
   const fetchShifts = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/api/shifts');
-      setShifts(res.data.shifts);
+      const [shiftsRes, settingsRes] = await Promise.all([
+        api.get('/api/shifts'),
+        api.get('/api/settings')
+      ]);
+      setShifts(shiftsRes.data.shifts);
+      setSettings(settingsRes.data);
     } catch (error) {
       console.error('Failed to fetch shifts:', error);
     } finally {
@@ -341,8 +347,30 @@ const ShiftListPage = () => {
                                    {order.paymentMethod === 'CASH' ? 'Tiền mặt' : 'Chuyển khoản'}
                                  </span>
                               </div>
-                              <div className="text-right font-black text-slate-900 group-hover:text-emerald-600 transition-colors">
-                                {order.total.toLocaleString('vi-VN')}đ
+                              <div className="flex items-center justify-end gap-4">
+                                <div className="text-right font-black text-slate-900 group-hover:text-emerald-600 transition-colors">
+                                  {order.total.toLocaleString('vi-VN')}đ
+                                </div>
+                                {order.status === 'COMPLETED' && (
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      printOrder({
+                                        orderCode: order.orderNumber,
+                                        tableName: order.tableId?.name || (order.orderType === 'TAKEAWAY' ? 'Mang về' : 'Ship'),
+                                        items: (order as any).items || [],
+                                        subtotal: order.total,
+                                        total: order.total,
+                                        paymentMethod: order.paymentMethod,
+                                        createdAt: order.createdAt
+                                      }, settings);
+                                    }}
+                                    className="w-10 h-10 bg-white border border-slate-200 text-slate-400 rounded-xl flex items-center justify-center hover:bg-emerald-50 hover:text-emerald-600 transition-all shadow-sm"
+                                    title="In lại hóa đơn"
+                                  >
+                                    <Printer size={18} />
+                                  </button>
+                                )}
                               </div>
                             </div>
 

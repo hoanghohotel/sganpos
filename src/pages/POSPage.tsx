@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
 import axios from 'axios';
-import { ShoppingCart, Plus, Minus, Trash2, Coffee, CheckCircle2, Banknote, CreditCard, X, ChevronRight, LogOut, CircleDollarSign, ChevronLeft } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Trash2, Coffee, CheckCircle2, Banknote, CreditCard, X, ChevronRight, LogOut, CircleDollarSign, ChevronLeft, Printer } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuthStore } from '../store/authStore';
 import { useSocket } from '../hooks/useSocket';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { printOrder } from '../lib/printing';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -302,111 +303,21 @@ const POSPage = () => {
   const handlePrintProvisional = () => {
     if (cart.length === 0) return;
     
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-
-    const qrUrl = settings?.bankCode 
-      ? `https://img.vietqr.io/image/${settings.bankCode}-${settings.bankAccount}-compact2.png?amount=${total}&addInfo=TT%20BAN%20${selectedTable?.name || ''}&accountName=${encodeURIComponent(settings.bankAccountHolder || '')}`
-      : null;
-
-    const templateId = settings?.defaultPrintTemplate || 'classic';
-    
-    // Simple template mapping for demo
-    const isModern = templateId === 'modern';
-    const isMinimal = templateId === 'minimal';
-    const isRetro = templateId === 'retro';
-    const isElegant = templateId === 'elegant';
-
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Phiếu Tạm Tính</title>
-          <style>
-            body { 
-              font-family: ${isRetro ? 'monospace' : 'sans-serif'}; 
-              padding: 20px; 
-              line-height: 1.4; 
-              font-size: 14px; 
-              ${isMinimal ? 'color: #333;' : ''}
-              width: 300px;
-              margin: 0 auto;
-            }
-            .header { text-align: center; margin-bottom: 20px; ${isElegant ? 'border-bottom: 2px solid #000; padding-bottom: 10px;' : ''} }
-            .store-name { font-size: ${isModern ? '24px' : '20px'}; font-weight: bold; text-transform: uppercase; }
-            .order-info { margin: 10px 0; border-bottom: 1px dashed #ccc; padding-bottom: 10px; font-size: 12px; }
-            .item-row { display: flex; justify-content: space-between; margin: 5px 0; }
-            .totals { margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px; }
-            .total-row { display: flex; justify-content: space-between; font-weight: bold; margin: 3px 0; }
-            .grand-total { font-size: 18px; margin-top: 10px; border-top: 1px double #333; padding-top: 10px; }
-            .qr-container { text-align: center; margin-top: 20px; }
-            .qr-container img { width: 150px; h-auto; }
-            .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; font-style: italic; }
-            ${isRetro ? '.item-row { border-bottom: 1px dotted #ccc; }' : ''}
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div class="store-name">${settings?.storeName || 'SAIGON AN COFFEE'}</div>
-            <div style="font-size: 10px;">${settings?.address || ''}</div>
-            <div style="font-size: 10px;">Hotline: ${settings?.hotline || ''}</div>
-            <h3 style="margin-top: 15px; text-transform: uppercase;">Phiếu Tạm Tính</h3>
-          </div>
-
-          <div class="order-info">
-            <div>Bàn: <b>${selectedTable?.name || 'Mang về'}</b></div>
-            <div>Giờ vào: ${new Date().toLocaleTimeString('vi-VN')}</div>
-            <div>Nhân viên: ${useAuthStore.getState().user?.name || ''}</div>
-          </div>
-
-          <div class="items">
-            ${cart.map(item => `
-              <div class="item-row">
-                <span>${item.name} x${item.quantity}</span>
-                <span>${(item.price * item.quantity).toLocaleString('vi-VN')}đ</span>
-              </div>
-            `).join('')}
-          </div>
-
-          <div class="totals">
-            <div class="total-row">
-              <span>Tạm tính:</span>
-              <span>${subtotal.toLocaleString('vi-VN')}đ</span>
-            </div>
-            ${discountAmount > 0 ? `
-              <div class="total-row">
-                <span>Giảm giá:</span>
-                <span>-${discountAmount.toLocaleString('vi-VN')}đ</span>
-              </div>
-            ` : ''}
-            ${taxAmount > 0 ? `
-              <div class="total-row">
-                <span>Thuế (${taxRate}%):</span>
-                <span>${taxAmount.toLocaleString('vi-VN')}đ</span>
-              </div>
-            ` : ''}
-            <div class="total-row grand-total">
-              <span>TỔNG CỘNG:</span>
-              <span>${total.toLocaleString('vi-VN')}đ</span>
-            </div>
-          </div>
-
-          ${qrUrl ? `
-            <div class="qr-container">
-              <p style="font-size: 10px; font-weight: bold; margin-bottom: 10px;">QUÉT MÃ ĐỂ THANH TOÁN</p>
-              <img src="${qrUrl}" alt="QR Thanh toán" />
-            </div>
-          ` : ''}
-
-          <div class="footer">
-            <p>Đây là phiếu tạm tính, chưa phải hóa đơn thanh toán.</p>
-            <p>Cảm ơn quý khách và hẹn gặp lại!</p>
-          </div>
-
-          <script>window.print(); setTimeout(() => window.close(), 500);</script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
+    printOrder({
+      tableName: selectedTable?.name || 'Mang về',
+      items: cart.map(item => ({
+        productId: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity
+      })),
+      subtotal,
+      taxRate,
+      taxAmount,
+      discountAmount,
+      total,
+      orderType: orderType || undefined
+    }, settings, true);
   };
 
   const resetFlow = () => {
@@ -634,90 +545,23 @@ const POSPage = () => {
       }
       
       // Print Final Invoice
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        const qrUrl = (method === 'TRANSFER' && settings?.bankCode)
-          ? `https://img.vietqr.io/image/${settings.bankCode}-${settings.bankAccount}-compact2.png?amount=${total}&addInfo=TT%20BAN%20${selectedTable?.name || ''}&accountName=${encodeURIComponent(settings.bankAccountHolder || '')}`
-          : null;
-
-        const templateId = settings?.defaultPrintTemplate || 'classic';
-        const isModern = templateId === 'modern';
-        const isMinimal = templateId === 'minimal';
-        const isRetro = templateId === 'retro';
-        const isElegant = templateId === 'elegant';
-
-        printWindow.document.write(`
-          <html>
-            <head>
-              <title>Hóa Đơn Thanh Toán</title>
-              <style>
-                body { 
-                  font-family: ${isRetro ? 'monospace' : 'sans-serif'}; 
-                  padding: 20px; 
-                  line-height: 1.4; 
-                  font-size: 14px; 
-                  width: 300px;
-                  margin: 0 auto;
-                }
-                .header { text-align: center; margin-bottom: 20px; ${isElegant ? 'border-bottom: 2px solid #000; padding-bottom: 10px;' : ''} }
-                .store-name { font-size: 20px; font-weight: bold; text-transform: uppercase; }
-                .order-info { margin: 10px 0; border-bottom: 1px dashed #ccc; padding-bottom: 10px; font-size: 12px; }
-                .item-row { display: flex; justify-content: space-between; margin: 3px 0; }
-                .totals { margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px; }
-                .total-row { display: flex; justify-content: space-between; font-weight: bold; margin: 2px 0; }
-                .grand-total { font-size: 18px; border-top: 1px double #333; margin-top: 10px; padding-top: 10px; }
-                .qr-container { text-align: center; margin-top: 20px; }
-                .qr-container img { width: 150px; h-auto; }
-                .footer { text-align: center; margin-top: 30px; font-size: 10px; color: #666; }
-              </style>
-            </head>
-            <body>
-              <div class="header">
-                <div class="store-name">${settings?.storeName || 'SAIGON AN COFFEE'}</div>
-                <div style="font-size: 10px;">${settings?.address || ''}</div>
-                <h3 style="margin-top: 10px; text-transform: uppercase;">Hóa Đơn Thanh Toán</h3>
-              </div>
-
-              <div class="order-info">
-                <div>Mã Đơn: <b>${orderCode}</b></div>
-                <div>Bàn: <b>${selectedTable?.name || 'Mang về'}</b></div>
-                <div>Ngày: ${new Date().toLocaleString('vi-VN')}</div>
-                <div>PTTT: <b>${method === 'CASH' ? 'Tiền mặt' : 'Chuyển khoản'}</b></div>
-              </div>
-
-              <div class="items">
-                ${cart.map(item => `
-                  <div class="item-row">
-                    <span>${item.name} x${item.quantity}</span>
-                    <span>${(item.price * item.quantity).toLocaleString('vi-VN')}đ</span>
-                  </div>
-                `).join('')}
-              </div>
-
-              <div class="totals">
-                <div class="total-row"><span>Tạm tính:</span><span>${subtotal.toLocaleString('vi-VN')}đ</span></div>
-                ${discountAmount > 0 ? `<div class="total-row"><span>Giảm giá:</span><span>-${discountAmount.toLocaleString('vi-VN')}đ</span></div>` : ''}
-                ${taxAmount > 0 ? `<div class="total-row"><span>Thuế (${taxRate}%):</span><span>${taxAmount.toLocaleString('vi-VN')}đ</span></div>` : ''}
-                <div class="total-row grand-total"><span>TỔNG CỘNG:</span><span>${total.toLocaleString('vi-VN')}đ</span></div>
-              </div>
-
-              ${qrUrl ? `
-                <div class="qr-container">
-                  <p style="font-size: 9px; font-weight: bold;">MÃ QR THANH TOÁN (ĐÃ GIAO DỊCH)</p>
-                  <img src="${qrUrl}" alt="QR" />
-                </div>
-              ` : ''}
-
-              <div class="footer">
-                <p>Cảm ơn quý khách! Hẹn gặp lại.</p>
-                <p>Bản in từ hệ thống PosApp</p>
-              </div>
-              <script>window.print(); setTimeout(() => window.close(), 500);</script>
-            </body>
-          </html>
-        `);
-        printWindow.document.close();
-      }
+      printOrder({
+        orderCode: orderCode,
+        tableName: selectedTable?.name || 'Mang về',
+        items: cart.map(item => ({
+          productId: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity
+        })),
+        subtotal: subtotal,
+        taxRate: taxRate,
+        taxAmount: taxAmount,
+        discountAmount: discountAmount,
+        total: total,
+        paymentMethod: method,
+        orderType: orderType || undefined
+      }, settings);
 
       setOrderSuccess(true);
       setShowPaymentModal(false);
