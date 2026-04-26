@@ -190,24 +190,41 @@ const POSPage = () => {
   const handleTableSelect = async (table: Table) => {
     setSelectedTable(table);
     
-    if (table.status === 'OCCUPIED' && table.currentOrderId) {
+    if (table.status === 'OCCUPIED') {
       setLoading(true);
       try {
         const res = await api.get(`/api/orders`);
         const allOrders = Array.isArray(res.data) ? res.data : [];
-        const currentOrder = allOrders.find((o: any) => o._id === table.currentOrderId);
+        const tableOrders = allOrders.filter((o: any) => o.tableId === table._id && o.status !== 'COMPLETED');
         
-        if (currentOrder) {
-          setActiveOrderId(currentOrder._id);
-          setCart(currentOrder.items.map((item: any) => ({
+        if (tableOrders.length > 0) {
+          // Flatten all items from all active orders
+          const allItems = tableOrders.flatMap((o: any) => o.items.map((item: any) => ({
             id: item.productId,
             name: item.name,
             price: item.price,
             quantity: item.quantity
           })));
-          // also sync discount if any
-          setDiscountType(currentOrder.discountType || 'FIXED');
-          setDiscountValue(currentOrder.discountValue || 0);
+
+          // Consolidate identical items
+          const consolidatedCart: CartItem[] = [];
+          allItems.forEach(item => {
+            const existing = consolidatedCart.find(c => c.id === item.id);
+            if (existing) {
+              existing.quantity += item.quantity;
+            } else {
+              consolidatedCart.push({ ...item });
+            }
+          });
+
+          setCart(consolidatedCart);
+          // We use the oldest order ID for patching during checkout, or handle multi-update
+          // For simplicity, we'll patch the 'latest' order or create a new summary order
+          setActiveOrderId(tableOrders[tableOrders.length - 1]._id);
+          
+          // sum discounts if any (might be complex, usually just one discount per table)
+          setDiscountType(tableOrders[0].discountType || 'FIXED');
+          setDiscountValue(tableOrders.reduce((sum, o) => sum + (o.discountValue || 0), 0));
         } else {
           setCart(tableCarts[table._id] || []);
           setActiveOrderId(null);

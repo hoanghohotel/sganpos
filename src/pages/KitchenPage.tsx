@@ -18,10 +18,16 @@ interface OrderItem {
   notes?: string;
 }
 
+interface Table {
+  _id: string;
+  name: string;
+}
+
 interface Order {
   _id: string;
   orderNumber: string;
   orderType: string;
+  tableId?: string;
   items: OrderItem[];
   total: number;
   status: 'PENDING' | 'PREPARING' | 'READY' | 'DELIVERED' | 'COMPLETED';
@@ -30,19 +36,26 @@ interface Order {
 
 const KitchenPage = () => {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [tables, setTables] = useState<Table[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
 
-  const fetchOrders = async () => {
+  const fetchInitialData = async () => {
     try {
-      const response = await api.get('/api/orders');
-      const data = Array.isArray(response.data) ? response.data : [];
-      // Kho chỉ hiện các đơn chưa giao hoặc chưa hoàn thành
-      const activeOrders = data.filter((o: Order) => o.status !== 'COMPLETED' && o.status !== 'DELIVERED');
+      const [orderRes, tableRes] = await Promise.all([
+        api.get('/api/orders'),
+        api.get('/api/tables')
+      ]);
+      
+      const orderData = Array.isArray(orderRes.data) ? orderRes.data : [];
+      // Kho chỉ hiện các đơn chưa hoàn thành (COMPLETED = Da thanh toan)
+      const activeOrders = orderData.filter((o: Order) => o.status !== 'COMPLETED');
       setOrders(activeOrders);
+      
+      setTables(Array.isArray(tableRes.data) ? tableRes.data : []);
       setLastRefreshed(new Date());
     } catch (error) {
-      console.error('Lỗi khi lấy danh sách đơn hàng:', error);
+      console.error('Lỗi khi lấy dữ liệu nhà bếp:', error);
     } finally {
       setLoading(false);
     }
@@ -59,7 +72,7 @@ const KitchenPage = () => {
       audio.play().catch(e => console.log('Audio play blocked:', e));
     } else if (event === 'order:update') {
       setOrders(prev => {
-        if (data.status === 'COMPLETED' || data.status === 'DELIVERED') {
+        if (data.status === 'COMPLETED') {
           return prev.filter(o => o._id !== data._id);
         }
         return prev.map(o => o._id === data._id ? data : o);
@@ -68,18 +81,34 @@ const KitchenPage = () => {
   });
 
   useEffect(() => {
-    fetchOrders();
-    // No more setInterval polling!
+    fetchInitialData();
   }, []);
 
   const updateStatus = async (orderId: string, newStatus: string) => {
     try {
       await api.patch(`/api/orders/${orderId}`, { status: newStatus });
-      fetchOrders();
+      fetchInitialData();
     } catch (error) {
       console.error('Lỗi khi cập nhật trạng thái:', error);
     }
   };
+
+  const getTableName = (tableId?: string) => {
+    if (!tableId) return 'Mang Về/Giao Hàng';
+    const table = tables.find(t => t._id === tableId);
+    return table ? table.name : `Bàn ${tableId.slice(-4)}`;
+  };
+
+  // Grouping logic
+  const groupedOrders = orders.reduce((acc: Record<string, Order[]>, order) => {
+    const key = order.tableId || `order-${order._id}`; // Group by tableId if exists, else individual for takeaway
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(order);
+    return acc;
+  }, {});
+
+  const pendingCount = orders.filter(o => o.status === 'PENDING').length;
+  const preparingCount = orders.filter(o => o.status === 'PREPARING').length;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -117,15 +146,27 @@ const KitchenPage = () => {
           </div>
         </div>
         
-        <div className="bg-slate-50 px-6 py-2 rounded-2xl border border-slate-100 flex items-center gap-4">
-          <div className="flex flex-col">
-            <span className="text-2xl font-black text-emerald-600 leading-none">{orders.length}</span>
-            <span className="text-[10px] text-slate-400 uppercase font-black tracking-tighter">Đơn chờ</span>
+        <div className="flex gap-4">
+          <div className="bg-slate-50 px-6 py-2 rounded-2xl border border-slate-100 flex items-center gap-4">
+            <div className="flex flex-col text-center">
+              <span className="text-2xl font-black text-rose-600 leading-none">{pendingCount}</span>
+              <span className="text-[10px] text-slate-400 uppercase font-black tracking-tighter">Mới</span>
+            </div>
+            <div className="w-px h-8 bg-slate-200" />
+            <div className="flex flex-col text-center">
+              <span className="text-2xl font-black text-orange-600 leading-none">{preparingCount}</span>
+              <span className="text-[10px] text-slate-400 uppercase font-black tracking-tighter">Đang làm</span>
+            </div>
+            <div className="w-px h-8 bg-slate-200" />
+            <div className="flex flex-col text-center">
+              <span className="text-2xl font-black text-emerald-600 leading-none">{orders.length}</span>
+              <span className="text-[10px] text-slate-400 uppercase font-black tracking-tighter">Tổng đơn</span>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Orders Grid */}
+      {/* Orders Grid grouped by Table */}
       <div className="flex-1 p-8 overflow-auto">
         {loading && orders.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-slate-300">
@@ -138,90 +179,109 @@ const KitchenPage = () => {
             <p className="text-lg font-bold text-slate-400">Không có đơn hàng nào cần xử lý</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-start">
             <AnimatePresence>
-              {orders.map((order) => (
-                <motion.div
-                  layout
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  key={order._id}
-                  className={cn(
-                    "flex flex-col bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden transition-all",
-                    order.status === 'PENDING' ? "ring-2 ring-emerald-500 ring-offset-4 animate-pulse-subtle bg-emerald-50/10" : ""
-                  )}
-                >
-                  {/* Order Card Header */}
-                  <div className="p-5 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
-                    <div>
-                      <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">#{order.orderNumber}</span>
-                      <h3 className="font-bold text-slate-800">{order.orderType === 'TAKEAWAY' ? 'Mang Về' : 'Tại Chỗ'}</h3>
-                    </div>
-                    <div className={cn("px-3 py-1 rounded-full text-[10px] font-black uppercase border-2", 
-                      order.status === 'PENDING' ? "bg-white text-emerald-600 border-emerald-100" : 
-                      order.status === 'PREPARING' ? "bg-orange-50 text-orange-600 border-orange-100" : 
-                      "bg-blue-50 text-blue-600 border-blue-100"
-                    )}>
-                      {getStatusLabel(order.status)}
-                    </div>
-                  </div>
+              {Object.entries(groupedOrders).map(([groupKey, groupOrders]) => {
+                const tableId = groupOrders[0].tableId;
+                const tableName = getTableName(tableId);
+                const isNew = groupOrders.some(o => o.status === 'PENDING');
+                const oldestOrder = groupOrders[0];
 
-                  {/* Order Items */}
-                  <div className="flex-1 p-5 space-y-4">
-                    {order.items.map((item, idx) => (
-                      <div key={idx} className="flex gap-4">
-                        <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center font-bold text-emerald-600">
-                          {item.quantity}
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-bold text-slate-900 leading-tight">{item.name}</p>
-                          {item.notes && (
-                            <div className="mt-1 flex items-center gap-1 p-2 bg-emerald-50 rounded-lg">
-                               <AlertCircle size={10} className="text-emerald-500" />
-                               <p className="text-[10px] text-emerald-700 font-medium">{item.notes}</p>
-                            </div>
-                          )}
-                        </div>
+                return (
+                  <motion.div
+                    layout
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    key={groupKey}
+                    className={cn(
+                      "flex flex-col bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden transition-all",
+                      isNew ? "ring-2 ring-rose-500 ring-offset-4 bg-rose-50/5 animate-pulse-subtle" : ""
+                    )}
+                  >
+                    {/* Header: Table Info */}
+                    <div className="p-5 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                      <div>
+                        <h3 className="font-black text-slate-900 uppercase tracking-tighter text-xl italic">{tableName}</h3>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mt-1">
+                          {groupOrders.length} Yêu cầu • <Clock size={8} className="inline mb-0.5" /> {Math.floor((new Date().getTime() - new Date(oldestOrder.createdAt).getTime()) / 60000)}p
+                        </p>
                       </div>
-                    ))}
-                  </div>
-
-                  {/* Order Card Footer */}
-                  <div className="p-5 bg-slate-50/30 mt-auto border-t border-slate-50 flex flex-col gap-4">
-                    <div className="flex justify-between items-center text-[10px] text-slate-400 uppercase font-black tracking-widest">
-                      <span className="flex items-center gap-1"><Clock size={10} /> Đợi: {Math.floor((new Date().getTime() - new Date(order.createdAt).getTime()) / 60000)} phút</span>
-                    </div>
-
-                    <div className="flex gap-2">
-                      {order.status === 'PENDING' && (
-                        <button
-                          onClick={() => updateStatus(order._id, 'PREPARING')}
-                          className="flex-1 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-colors"
-                        >
-                          Bắt đầu làm
-                        </button>
-                      )}
-                      {(order.status === 'PREPARING' || order.status === 'PENDING') && (
-                        <button
-                          onClick={() => updateStatus(order._id, 'READY')}
-                          className="flex-1 py-3 bg-emerald-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all"
-                        >
-                          Xong món
-                        </button>
-                      )}
-                      {order.status === 'READY' && (
-                        <button
-                          onClick={() => updateStatus(order._id, 'DELIVERED')}
-                          className="flex-1 py-3 bg-white border-2 border-emerald-600 text-emerald-600 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-50 transition-colors"
-                        >
-                          <CheckCircle size={12} /> Đã Giao
-                        </button>
+                      {isNew && (
+                        <div className="px-3 py-1 rounded-full bg-rose-500 text-white text-[9px] font-black uppercase tracking-widest animate-bounce">
+                          Mới
+                        </div>
                       )}
                     </div>
-                  </div>
-                </motion.div>
-              ))}
+
+                    {/* All items for this table/group */}
+                    <div className="p-5 space-y-6 max-h-[400px] overflow-auto no-scrollbar">
+                      {groupOrders.map((order, oIdx) => (
+                        <div key={order._id} className={cn(
+                          "pb-4 last:pb-0",
+                          oIdx !== groupOrders.length - 1 ? "border-b border-slate-100" : ""
+                        )}>
+                          <div className="flex justify-between items-center mb-3">
+                            <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">#{order.orderNumber}</span>
+                            <span className={cn(
+                              "text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest",
+                              getStatusColor(order.status)
+                            )}>
+                              {getStatusLabel(order.status)}
+                            </span>
+                          </div>
+                          
+                          <div className="space-y-3">
+                            {order.items.map((item, iIdx) => (
+                              <div key={iIdx} className="flex gap-3">
+                                <div className="w-7 h-7 shrink-0 rounded-lg bg-slate-100 flex items-center justify-center font-black text-emerald-600 text-xs">
+                                  {item.quantity}
+                                </div>
+                                <div className="flex-1">
+                                  <p className="font-bold text-slate-900 leading-tight text-sm uppercase tracking-tighter">{item.name}</p>
+                                  {item.notes && (
+                                    <p className="text-[9px] text-rose-500 font-bold mt-0.5 italic flex items-center gap-1">
+                                      <AlertCircle size={8} /> {item.notes}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Order Actions */}
+                          <div className="mt-4 flex gap-2">
+                            {order.status === 'PENDING' && (
+                              <button
+                                onClick={() => updateStatus(order._id, 'PREPARING')}
+                                className="flex-1 py-2 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-black"
+                              >
+                                Xác nhận
+                              </button>
+                            )}
+                            {(order.status === 'PREPARING' || order.status === 'PENDING') && (
+                              <button
+                                onClick={() => updateStatus(order._id, 'READY')}
+                                className="flex-1 py-2 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-50"
+                              >
+                                Xong món
+                              </button>
+                            )}
+                            {order.status === 'READY' && (
+                              <button
+                                onClick={() => updateStatus(order._id, 'DELIVERED')}
+                                className="flex-1 py-2 bg-white border-2 border-emerald-600 text-emerald-600 rounded-xl text-[9px] font-black uppercase tracking-widest"
+                              >
+                                Giao món
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                );
+              })}
             </AnimatePresence>
           </div>
         )}

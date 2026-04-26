@@ -101,14 +101,29 @@ const CustomerOrderPage = () => {
 
       setTable(targetTable);
 
-      if (targetTable.status === 'OCCUPIED' && targetTable.currentOrderId) {
+      if (targetTable.status === 'OCCUPIED' && targetTable._id) {
         try {
           const orderRes = await api.get(`/api/orders`);
           const allOrders = Array.isArray(orderRes.data) ? orderRes.data : [];
-          const currentOrder = allOrders.find((o: any) => o._id === targetTable.currentOrderId);
-          setActiveOrder(currentOrder || null);
+          // Lọc tất cả đơn hàng chưa hoàn thành của bàn này
+          const tableOrders = allOrders.filter((o: any) => o.tableId === targetTable._id && o.status !== 'COMPLETED');
+          
+          if (tableOrders.length > 0) {
+            // Aggregate items for display in the modal
+            const aggregatedOrder = {
+              orderNumber: tableOrders.length > 1 ? 'Nhiều đơn' : tableOrders[0].orderNumber,
+              items: tableOrders.flatMap(o => o.items),
+              total: tableOrders.reduce((sum, o) => sum + o.total, 0),
+              status: tableOrders.some(o => o.status === 'PENDING') ? 'PENDING' : 
+                      tableOrders.some(o => o.status === 'PREPARING') ? 'PREPARING' :
+                      tableOrders.every(o => o.status === 'READY') ? 'READY' : 'DELIVERED'
+            };
+            setActiveOrder(aggregatedOrder);
+          } else {
+            setActiveOrder(null);
+          }
         } catch (err) {
-          console.error('Lỗi khi lấy thông tin đơn hàng hiện tại:', err);
+          console.error('Lỗi khi lấy thông tin đơn hàng:', err);
         }
       } else {
         setActiveOrder(null);
