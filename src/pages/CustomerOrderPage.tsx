@@ -222,32 +222,32 @@ const CustomerOrderPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col max-w-lg mx-auto shadow-2xl">
+    <div className="min-h-screen bg-slate-50 flex flex-col sm:max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto shadow-2xl">
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-100 p-4 pt-6">
+      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-xl border-b border-slate-100 p-4 pt-6">
         <div className="flex justify-between items-center mb-5">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center overflow-hidden shadow-sm border border-emerald-100">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-50 rounded-2xl flex items-center justify-center overflow-hidden shadow-sm border border-emerald-100 shrink-0">
                <img src={settings?.logoUrl || "/logo.svg"} alt="Logo" className="w-full h-full object-contain p-2" />
             </div>
-            <div>
-              <h1 className="text-xl font-black text-slate-900 leading-none tracking-tight uppercase">{settings?.storeName || 'SAIGON AN COFFEE'}</h1>
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-lg font-black text-slate-900 leading-none tracking-tight uppercase truncate">{settings?.storeName || 'SAIGON AN COFFEE'}</h1>
               <div className="flex items-center gap-1.5 mt-1.5">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shrink-0" />
+                <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest truncate">
                   Phục vụ tại {table?.name || 'Bàn của bạn'}
                 </p>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             {activeOrder && (
               <motion.button
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setShowActiveOrderModal(true)}
                 className="relative p-2 bg-emerald-50 rounded-xl border border-emerald-100 text-emerald-600"
               >
-                <History size={20} />
+                <History size={18} />
                 <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white animate-pulse" />
               </motion.button>
             )}
@@ -264,7 +264,7 @@ const CustomerOrderPage = () => {
                   {cart.reduce((s, i) => s + i.quantity, 0)}
                </motion.div>
              )}
-             <ShoppingCart className="text-slate-600" size={20} />
+             <ShoppingCart className="text-slate-600" size={18} />
             </motion.div>
           </div>
         </div>
@@ -284,13 +284,13 @@ const CustomerOrderPage = () => {
         </div>
 
         {/* Categories Bar */}
-        <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide no-scrollbar">
+        <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 no-scrollbar">
           {categories.map(cat => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
               className={cn(
-                "px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all whitespace-nowrap active:scale-95",
+                "px-5 py-2.5 rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest border transition-all whitespace-nowrap active:scale-95",
                 selectedCategory === cat 
                   ? "bg-slate-900 border-slate-900 text-white shadow-xl shadow-slate-200" 
                   : "bg-white border-slate-100 text-slate-500 hover:bg-slate-50"
@@ -306,30 +306,30 @@ const CustomerOrderPage = () => {
       <main className="flex-1 p-4 pb-32">
         {/* Banner (Optional) */}
         {selectedCategory === 'Tất cả' && !searchQuery && (
-          <div className="mb-8 rounded-3xl bg-emerald-600 p-6 text-white relative overflow-hidden shadow-2xl shadow-emerald-200">
+          <div className="mb-8 rounded-[40px] bg-emerald-600 p-6 sm:p-8 text-white relative overflow-hidden shadow-2xl shadow-emerald-200">
              <div className="relative z-10 w-2/3">
-                <h2 className="text-xl font-black uppercase tracking-tighter mb-2 leading-none">Món mới <br/>trong ngày!</h2>
+                <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tighter mb-2 leading-none">Món mới <br/>trong ngày!</h2>
                 <p className="text-[10px] uppercase font-black tracking-widest opacity-80">Giảm 10% khi đặt qua QR</p>
              </div>
-             <Coffee className="absolute -right-4 -bottom-4 text-emerald-500/30 w-32 h-32 rotate-12" />
+             <Coffee className="absolute -right-4 -bottom-4 text-emerald-500/30 w-32 h-32 sm:w-48 sm:h-48 rotate-12" />
           </div>
         )}
 
-        <div className="flex items-center justify-between mb-4 px-1">
+        <div className="flex items-center justify-between mb-6 px-1">
            <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest">{selectedCategory === 'Tất cả' ? 'Danh sách Menu' : selectedCategory}</h2>
            <p className="text-[10px] font-bold text-slate-400 uppercase">{filteredProducts.length} món</p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
           {filteredProducts.map((product, idx) => (
             <motion.div
               key={product._id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.05 }}
-              className="bg-white p-3.5 rounded-[28px] border border-slate-100 shadow-sm hover:shadow-xl transition-all group active:scale-[0.98]"
+              className="bg-white p-3 sm:p-4 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-xl transition-all group active:scale-[0.98] flex flex-col"
             >
-              <div className="relative aspect-square bg-slate-50 rounded-2xl mb-4 overflow-hidden shadow-inner">
+              <div className="relative aspect-square bg-slate-50 rounded-3xl mb-4 overflow-hidden shadow-inner shrink-0">
                 {product.image ? (
                   <img src={product.image} alt={product.name} className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500" />
                 ) : (
@@ -337,21 +337,20 @@ const CustomerOrderPage = () => {
                     <Coffee size={40} />
                   </div>
                 )}
-                {/* Overlay for quick action on desktop (hover) */}
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
               </div>
               
-              <div className="flex flex-col h-20">
-                <h3 className="text-[11px] font-black text-slate-900 leading-tight mb-1 uppercase tracking-tight line-clamp-2">{product.name}</h3>
-                <p className="text-[9px] font-black text-emerald-600/60 uppercase tracking-widest mt-auto">{product.category}</p>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-xs font-black text-slate-900">{product.basePrice.toLocaleString('vi-VN')}</span>
+              <div className="flex flex-col flex-1">
+                <h3 className="text-xs sm:text-sm font-black text-slate-900 leading-tight mb-1 uppercase tracking-tight line-clamp-2 min-h-[2.5rem]">{product.name}</h3>
+                <p className="text-[9px] font-black text-emerald-600/60 uppercase tracking-widest mt-auto mb-2">{product.category}</p>
+                <div className="flex items-center justify-between mt-auto">
+                  <span className="text-sm font-black text-slate-900 tracking-tighter">{product.basePrice.toLocaleString('vi-VN')}đ</span>
                   <motion.button 
                     whileTap={{ scale: 0.8 }}
                     onClick={() => addToCart(product)}
-                    className="w-9 h-9 bg-emerald-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200 active:bg-emerald-700 transition-colors"
+                    className="w-10 h-10 bg-emerald-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-100 active:bg-emerald-700 transition-colors"
                   >
-                    <Plus size={18} />
+                    <Plus size={20} />
                   </motion.button>
                 </div>
               </div>

@@ -73,55 +73,85 @@ const MainLayout = () => {
   ];
 
   return (
-    <div className="flex h-screen bg-[#F8FAFC] text-slate-800">
+    <div className="flex h-screen bg-[#F8FAFC] text-slate-800 flex-col sm:flex-row">
       {!isCustomerPage && (
-        <aside className="w-20 bg-white border-r border-slate-200 flex flex-col items-center py-8 gap-10">
-          <Link to={`${tenantPrefix}/`} className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200 hover:scale-105 transition-transform">
-            <img src="/logo.svg" alt="Logo" className="w-8 h-8" />
-          </Link>
-          
-          <nav className="flex-1 flex flex-col gap-6 overflow-y-auto no-scrollbar">
-            {navItems.map((item) => (
+        <>
+          {/* Desktop Sidebar */}
+          <aside className="hidden sm:flex w-20 bg-white border-r border-slate-200 flex-col items-center py-8 gap-10">
+            <Link to={`${tenantPrefix}/`} className="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200 hover:scale-105 transition-transform shrink-0">
+              <img src="/logo.svg" alt="Logo" className="w-8 h-8" />
+            </Link>
+            
+            <nav className="flex-1 flex flex-col gap-6 overflow-y-auto no-scrollbar">
+              {navItems.map((item) => (
+                <Link 
+                  key={item.to}
+                  to={item.to} 
+                  className={cn(
+                    "p-3 transition-colors rounded-xl hover:bg-slate-50 group relative", 
+                    (location.pathname === item.to || (item.to === `${tenantPrefix}/` && (location.pathname === tenantPrefix || location.pathname === `${tenantPrefix}/`))) ? "text-emerald-600 bg-emerald-50" : "text-slate-400 hover:text-emerald-600"
+                  )}
+                >
+                  <item.icon className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                  {item.badge && (
+                    <motion.div 
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute top-2 right-2 w-3 h-3 bg-rose-500 rounded-full border-2 border-white flex items-center justify-center"
+                     >
+                       <motion.div
+                         animate={{ rotate: [0, -20, 20, -20, 20, 0] }}
+                         transition={{ repeat: Infinity, duration: 0.5 }}
+                       >
+                         <Bell size={6} className="text-white fill-current" />
+                       </motion.div>
+                     </motion.div>
+                  )}
+                  <span className="absolute left-full ml-4 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                    {item.label}
+                  </span>
+                </Link>
+              ))}
+            </nav>
+
+            <button 
+              onClick={() => logout()}
+              className="p-3 text-slate-400 hover:text-rose-600 transition-colors rounded-xl hover:bg-rose-50 shrink-0"
+            >
+              <LogOut className="w-6 h-6" />
+            </button>
+          </aside>
+
+          {/* Mobile Bottom Bar */}
+          <nav className="flex sm:hidden fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-slate-200 items-center justify-around px-2 z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+            {navItems.slice(0, 5).map((item) => (
               <Link 
                 key={item.to}
                 to={item.to} 
                 className={cn(
-                  "p-3 transition-colors rounded-xl hover:bg-slate-50 group relative", 
-                  (location.pathname === item.to || (item.to === `${tenantPrefix}/` && (location.pathname === tenantPrefix || location.pathname === `${tenantPrefix}/`))) ? "text-emerald-600 bg-emerald-50" : "text-slate-400 hover:text-emerald-600"
+                  "p-2.5 transition-colors rounded-xl group relative flex flex-col items-center gap-1", 
+                  (location.pathname === item.to || (item.to === `${tenantPrefix}/` && (location.pathname === tenantPrefix || location.pathname === `${tenantPrefix}/`))) ? "text-emerald-600 bg-emerald-50" : "text-slate-400"
                 )}
               >
-                <item.icon className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                <item.icon className="w-5 h-5" />
+                <span className="text-[9px] font-black uppercase tracking-tighter leading-none">{item.label}</span>
                 {item.badge && (
-                  <motion.div 
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute top-2 right-2 w-3 h-3 bg-rose-500 rounded-full border-2 border-white flex items-center justify-center"
-                   >
-                     <motion.div
-                       animate={{ rotate: [0, -20, 20, -20, 20, 0] }}
-                       transition={{ repeat: Infinity, duration: 0.5 }}
-                     >
-                       <Bell size={6} className="text-white fill-current" />
-                     </motion.div>
-                   </motion.div>
+                  <div className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full border-2 border-white shadow-sm" />
                 )}
-                <span className="absolute left-full ml-4 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                  {item.label}
-                </span>
               </Link>
             ))}
+            <button 
+              onClick={() => logout()}
+              className="p-2.5 text-slate-400 flex flex-col items-center gap-1"
+            >
+              <LogOut className="w-5 h-5" />
+              <span className="text-[9px] font-black uppercase tracking-tighter leading-none">Thoát</span>
+            </button>
           </nav>
-
-          <button 
-            onClick={() => logout()}
-            className="p-3 text-slate-400 hover:text-rose-600 transition-colors rounded-xl hover:bg-rose-50"
-          >
-            <LogOut className="w-6 h-6" />
-          </button>
-        </aside>
+        </>
       )}
 
-      <main className="flex-1 overflow-hidden">
+      <main className="flex-1 overflow-hidden pb-16 sm:pb-0">
         <AnimatePresence mode="wait">
           <motion.div key={location.pathname} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
             <Routes>

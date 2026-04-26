@@ -181,7 +181,7 @@ const KitchenPage = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-start">
             <AnimatePresence>
-              {Object.entries(groupedOrders).map(([groupKey, groupOrders]) => {
+              {(Object.entries(groupedOrders) as [string, Order[]][]).map(([groupKey, groupOrders]) => {
                 const tableId = groupOrders[0].tableId;
                 const tableName = getTableName(tableId);
                 const isNew = groupOrders.some(o => o.status === 'PENDING');

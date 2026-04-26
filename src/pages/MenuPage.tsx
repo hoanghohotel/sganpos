@@ -151,60 +151,62 @@ const MenuPage = () => {
   });
 
   return (
-    <div className="p-8 h-full flex flex-col gap-6">
-      <header className="flex justify-between items-end">
+    <div className="p-4 sm:p-8 h-full flex flex-col gap-6 overflow-hidden">
+      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
           <p className="text-emerald-600 font-bold text-sm uppercase tracking-widest mb-1">Quản lý Menu</p>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Danh sách món ăn</h1>
+          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tighter uppercase whitespace-nowrap">Danh sách món</h1>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <button 
             onClick={() => {
               setEditingProduct({ name: '', category: '', basePrice: 0 });
               setIsModalOpen(true);
             }}
-            className="flex items-center gap-2 bg-emerald-600 text-white px-5 py-3 rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-emerald-600 text-white px-5 py-3 rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 text-sm"
           >
-            <Plus size={20} />
-            Thêm món mới
+            <Plus size={18} />
+            Thêm món
           </button>
-          <button 
-            onClick={() => importInputRef.current?.click()}
-            className="flex items-center gap-2 bg-white text-slate-700 border border-slate-200 px-5 py-3 rounded-xl font-bold hover:bg-slate-50 transition-all"
-          >
-            <Upload size={20} />
-            Import
-          </button>
-          <input type="file" ref={importInputRef} onChange={handleImport} accept=".xlsx, .xls" className="hidden" />
-          <button 
-            onClick={handleExport}
-            className="flex items-center gap-2 bg-white text-slate-700 border border-slate-200 px-5 py-3 rounded-xl font-bold hover:bg-slate-50 transition-all"
-          >
-            <Download size={20} />
-            Export
-          </button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <button 
+              onClick={() => importInputRef.current?.click()}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white text-slate-700 border border-slate-200 px-4 py-3 rounded-xl font-bold hover:bg-slate-50 transition-all text-xs uppercase tracking-widest"
+            >
+              <Upload size={16} />
+              Import
+            </button>
+            <input type="file" ref={importInputRef} onChange={handleImport} accept=".xlsx, .xls" className="hidden" />
+            <button 
+              onClick={handleExport}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white text-slate-700 border border-slate-200 px-4 py-3 rounded-xl font-bold hover:bg-slate-50 transition-all text-xs uppercase tracking-widest"
+            >
+              <Download size={16} />
+              Export
+            </button>
+          </div>
         </div>
       </header>
 
       <div className="flex flex-col gap-4">
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+        <div className="relative group">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-emerald-500 transition-colors" size={20} />
           <input 
             type="text"
             placeholder="Tìm kiếm sản phẩm..."
-            className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-lg font-medium"
+            className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-base sm:text-lg font-medium shadow-sm"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
 
-        <div className="flex gap-2 overflow-auto pb-2 -mx-1 px-1 no-scrollbar">
+        <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 no-scrollbar shrink-0">
           {categories.map(cat => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
               className={cn(
-                "px-5 py-2.5 rounded-xl font-bold uppercase tracking-widest text-[10px] border transition-all whitespace-nowrap",
+                "px-5 py-2.5 rounded-xl font-black uppercase tracking-widest text-[9px] sm:text-[10px] border transition-all whitespace-nowrap",
                 selectedCategory === cat 
                   ? "bg-slate-900 border-slate-900 text-white shadow-lg shadow-slate-200" 
                   : "bg-white border-slate-100 text-slate-400 hover:border-slate-200 hover:text-slate-600"
@@ -216,18 +218,19 @@ const MenuPage = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
-        <table className="w-full text-left">
-          <thead className="bg-slate-50 border-b border-slate-200">
-            <tr>
-              <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Hình ảnh</th>
-              <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tên món</th>
-              <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Danh mục</th>
-              <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Giá</th>
-              <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Thao tác</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
+      <div className="flex-1 overflow-hidden bg-white border border-slate-200 rounded-3xl shadow-sm flex flex-col">
+        <div className="flex-1 overflow-auto">
+          <table className="w-full text-left min-w-[600px]">
+            <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
+              <tr>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Hình ảnh</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tên món</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Danh mục</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Giá</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
             {filteredProducts.map((product) => (
               <tr key={product._id} className="hover:bg-slate-50/50 transition-colors group">
                 <td className="px-6 py-4">
@@ -283,8 +286,9 @@ const MenuPage = () => {
           </tbody>
         </table>
       </div>
+    </div>
 
-      <AnimatePresence>
+    <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div 
