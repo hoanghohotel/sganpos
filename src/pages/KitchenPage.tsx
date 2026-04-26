@@ -214,25 +214,24 @@ const KitchenPage = () => {
                       )}
                     </div>
 
-                    {/* All items for this table/group */}
+                    {/* All items for this table/group (Consolidated) */}
                     <div className="p-5 space-y-6 max-h-[400px] overflow-auto no-scrollbar">
-                      {groupOrders.map((order, oIdx) => (
-                        <div key={order._id} className={cn(
-                          "pb-4 last:pb-0",
-                          oIdx !== groupOrders.length - 1 ? "border-b border-slate-100" : ""
-                        )}>
-                          <div className="flex justify-between items-center mb-3">
-                            <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">#{order.orderNumber}</span>
-                            <span className={cn(
-                              "text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest",
-                              getStatusColor(order.status)
-                            )}>
-                              {getStatusLabel(order.status)}
-                            </span>
-                          </div>
-                          
+                      {(() => {
+                        const allItems: any[] = [];
+                        groupOrders.forEach(order => {
+                          order.items.forEach(item => {
+                            const existing = allItems.find(i => i.productId === item.productId && i.notes === item.notes);
+                            if (existing) {
+                              existing.quantity += item.quantity;
+                            } else {
+                              allItems.push({ ...item });
+                            }
+                          });
+                        });
+
+                        return (
                           <div className="space-y-3">
-                            {order.items.map((item, iIdx) => (
+                            {allItems.map((item, iIdx) => (
                               <div key={iIdx} className="flex gap-3">
                                 <div className="w-7 h-7 shrink-0 rounded-lg bg-slate-100 flex items-center justify-center font-black text-emerald-600 text-xs">
                                   {item.quantity}
@@ -248,36 +247,43 @@ const KitchenPage = () => {
                               </div>
                             ))}
                           </div>
+                        );
+                      })()}
 
-                          {/* Order Actions */}
-                          <div className="mt-4 flex gap-2">
-                            {order.status === 'PENDING' && (
-                              <button
-                                onClick={() => updateStatus(order._id, 'PREPARING')}
-                                className="flex-1 py-2 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-black"
-                              >
-                                Xác nhận
-                              </button>
-                            )}
-                            {(order.status === 'PREPARING' || order.status === 'PENDING') && (
-                              <button
-                                onClick={() => updateStatus(order._id, 'READY')}
-                                className="flex-1 py-2 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-50"
-                              >
-                                Xong món
-                              </button>
-                            )}
-                            {order.status === 'READY' && (
-                              <button
-                                onClick={() => updateStatus(order._id, 'COMPLETED')}
-                                className="flex-1 py-2 bg-white border-2 border-emerald-600 text-emerald-600 rounded-xl text-[9px] font-black uppercase tracking-widest"
-                              >
-                                Hoàn tất
-                              </button>
-                            )}
+                      {/* Order Actions */}
+                      <div className="mt-4 space-y-2">
+                        {groupOrders.map(order => (
+                          <div key={order._id} className="flex items-center justify-between border-t border-slate-50 pt-2 first:border-0 first:pt-0">
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">#{order.orderNumber}</span>
+                            <div className="flex gap-2">
+                              {order.status === 'PENDING' && (
+                                <button
+                                  onClick={() => updateStatus(order._id, 'PREPARING')}
+                                  className="px-3 py-1 bg-slate-900 text-white rounded-lg text-[8px] font-black uppercase tracking-widest"
+                                >
+                                  Làm
+                                </button>
+                              )}
+                              {(order.status === 'PREPARING' || order.status === 'PENDING') && (
+                                <button
+                                  onClick={() => updateStatus(order._id, 'READY')}
+                                  className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-[8px] font-black uppercase tracking-widest"
+                                >
+                                  Xong
+                                </button>
+                              )}
+                              {order.status === 'READY' && (
+                                <button
+                                  onClick={() => updateStatus(order._id, 'DELIVERED')}
+                                  className="px-3 py-1 bg-white border border-emerald-600 text-emerald-600 rounded-lg text-[8px] font-black uppercase tracking-widest"
+                                >
+                                  Giao
+                                </button>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   </motion.div>
                 );

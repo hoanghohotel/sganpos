@@ -25,6 +25,7 @@ interface CartItem {
   name: string;
   price: number;
   quantity: number;
+  isSent?: boolean;
 }
 
 interface Table {
@@ -203,13 +204,14 @@ const POSPage = () => {
             id: item.productId,
             name: item.name,
             price: item.price,
-            quantity: item.quantity
+            quantity: item.quantity,
+            isSent: true
           })));
 
           // Consolidate identical items
           const consolidatedCart: CartItem[] = [];
           allItems.forEach(item => {
-            const existing = consolidatedCart.find(c => c.id === item.id);
+            const existing = consolidatedCart.find(c => c.id === item.id && c.isSent === item.isSent);
             if (existing) {
               existing.quantity += item.quantity;
             } else {
@@ -380,14 +382,52 @@ const POSPage = () => {
 
   const addToCart = (product: Product) => {
     setCart((prev) => {
-      const existing = prev.find((item) => item.id === product._id);
+      const existing = prev.find((item) => item.id === product._id && !item.isSent);
       if (existing) {
         return prev.map((item) =>
-          item.id === product._id ? { ...item, quantity: item.quantity + 1 } : item
+          (item.id === product._id && !item.isSent) ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
-      return [...prev, { id: product._id, name: product.name, price: product.basePrice, quantity: 1 }];
+      return [...prev, { id: product._id, name: product.name, price: product.basePrice, quantity: 1, isSent: false }];
     });
+  };
+
+  const handleSendToKitchen = async () => {
+    const unsentItems = cart.filter(item => !item.isSent);
+    if (unsentItems.length === 0 || !selectedTable) return;
+    
+    setOrdering(true);
+    try {
+      const orderData = {
+        orderType: orderType,
+        tableId: selectedTable._id,
+        items: unsentItems.map((item) => ({
+          productId: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+        subtotal: unsentItems.reduce((s, i) => s + i.price * i.quantity, 0),
+        total: unsentItems.reduce((s, i) => s + i.price * i.quantity, 0),
+        status: 'PENDING',
+        paymentStatus: 'UNPAID'
+      };
+
+      await api.post('/api/orders', orderData);
+      
+      // Update cart to mark these items as sent
+      setCart(prev => prev.map(item => ({ ...item, isSent: true })));
+      
+      // If we weren't occupied, we are now
+      if (selectedTable.status === 'EMPTY') {
+        setSelectedTable({ ...selectedTable, status: 'OCCUPIED' });
+      }
+    } catch (error) {
+      console.error('Failed to send to kitchen:', error);
+      alert('Lỗi khi báo bếp');
+    } finally {
+      setOrdering(false);
+    }
   };
 
   const updateQuantity = (id: string, delta: number) => {
@@ -434,6 +474,11 @@ const POSPage = () => {
     if (ordering) return;
     setOrdering(true);
     try {
+      // Find all active orders for this table to complete them
+      const res = await api.get('/api/orders');
+      const allOrders = Array.isArray(res.data) ? res.data : [];
+      const tableOrders = allOrders.filter((o: any) => o.tableId === selectedTable?._id && o.status !== 'COMPLETED');
+      
       const orderData = {
         orderCode: orderCode,
         orderType: orderType,
@@ -456,10 +501,25 @@ const POSPage = () => {
         paymentStatus: 'PAID'
       };
 
-      if (activeOrderId) {
-        await api.patch(`/api/orders/${activeOrderId}`, orderData);
-      } else {
+      // We complete all orders for the table. 
+      // If there are multiple, we update them all to COMPLETED.
+      // We also create/update one of them with the final receipt details or handle as needed.
+      // Best approach: Mark all existing as COMPLETED, and if new items were added (not yet in DB), 
+      // we've already handled the aggregation in 'cart'.
+      
+      await Promise.all(tableOrders.map(o => 
+        api.patch(`/api/orders/${o._id}`, { status: 'COMPLETED', paymentStatus: 'PAID' })
+      ));
+
+      // If we had a cart that included items not yet in ANY order, we should probably create a "Final" order 
+      // or ensure all items were sent to kitchen first.
+      // But based on handleSendToKitchen, all items should be isSent: true before checkout if we follow the flow.
+      // To be safe, if there's no active order but we have a cart, we create a new one.
+      if (tableOrders.length === 0) {
         await api.post('/api/orders', orderData);
+      } else {
+        // Update the last one with full details for record keeping
+        await api.patch(`/api/orders/${tableOrders[tableOrders.length - 1]._id}`, orderData);
       }
       
       // Print Final Invoice
@@ -781,7 +841,16 @@ const POSPage = () => {
                 <div className="flex flex-col gap-4 w-full">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-4">
-                      <button onClick={() => setStep('TABLE')} className="p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 shadow-sm">
+                      <button 
+                        onClick={async () => {
+                          const hasUnsent = cart.some(i => !i.isSent);
+                          if (hasUnsent) {
+                            await handleSendToKitchen();
+                          }
+                          setStep('TABLE');
+                        }} 
+                        className="p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 shadow-sm"
+                      >
                         <Plus className="rotate-45 text-slate-400" />
                       </button>
                       <div>
@@ -957,6 +1026,14 @@ const POSPage = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-3 mb-3">
+                <button
+                  disabled={cart.length === 0 || !cart.some(i => !i.isSent) || ordering}
+                  onClick={handleSendToKitchen}
+                  className="py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
+                >
+                  <Coffee size={14} />
+                  <span>Báo bếp</span>
+                </button>
                 <button
                   disabled={cart.length === 0}
                   onClick={handlePrintProvisional}

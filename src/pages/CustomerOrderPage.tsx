@@ -575,17 +575,51 @@ const CustomerOrderPage = () => {
                 </div>
               </div>
 
-              <div className="p-8 bg-slate-50 border-t border-slate-100">
-                <div className="flex justify-between items-center mb-6">
+              <div className="p-8 bg-slate-50 border-t border-slate-100 flex flex-col gap-3">
+                <div className="flex justify-between items-center mb-4">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tổng thanh toán</p>
                   <p className="text-2xl font-black text-slate-900 tracking-tighter italic">{activeOrder.total.toLocaleString('vi-VN')}đ</p>
                 </div>
-                <button 
-                  onClick={() => setShowActiveOrderModal(false)}
-                  className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-slate-200 active:scale-95 transition-transform"
-                >
-                  Đóng
-                </button>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <button 
+                    onClick={() => setShowActiveOrderModal(false)}
+                    className="py-4 bg-white border border-slate-200 text-slate-400 rounded-2xl font-black uppercase tracking-widest text-[10px] active:scale-95 transition-transform"
+                  >
+                    Đóng
+                  </button>
+                  <motion.button 
+                    whileTap={{ scale: 0.95 }}
+                    onClick={async () => {
+                      if (!tableId) return;
+                      setOrdering(true);
+                      try {
+                        // Find all orders for this table and complete them
+                        const res = await api.get('/api/orders');
+                        const orders = Array.isArray(res.data) ? res.data : [];
+                        const tableOrders = orders.filter((o: any) => o.tableId === tableId && o.status !== 'COMPLETED');
+                        
+                        await Promise.all(tableOrders.map((o: any) => 
+                          api.patch(`/api/orders/${o._id}`, { status: 'COMPLETED', paymentStatus: 'PAID' })
+                        ));
+                        
+                        setShowActiveOrderModal(false);
+                        setOrderSuccess(true);
+                        setTimeout(() => setOrderSuccess(false), 3000);
+                        fetchData();
+                      } catch (err) {
+                        console.error('Failed to complete order:', err);
+                        alert('Lỗi khi xác nhận thanh toán');
+                      } finally {
+                        setOrdering(false);
+                      }
+                    }}
+                    className="py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-emerald-100 hover:bg-emerald-700 active:scale-95 transition-transform"
+                  >
+                    Xác nhận đã chuyển khoản
+                  </motion.button>
+                </div>
+                <p className="text-[9px] text-center text-slate-400 font-bold uppercase tracking-widest">Vui lòng chuyển khoản đúng số tiền khớp với tổng cộng</p>
               </div>
             </motion.div>
           </div>
