@@ -4,6 +4,7 @@ import axios from 'axios';
 import { ShoppingCart, Plus, Minus, Trash2, Coffee, CheckCircle2, Banknote, CreditCard, X, ChevronRight, LogOut, CircleDollarSign } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuthStore } from '../store/authStore';
+import { useSocket } from '../hooks/useSocket';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -146,13 +147,32 @@ const POSPage = () => {
     }
   };
 
+  const socket = useSocket();
+
   useEffect(() => {
     fetchInitialData();
     
     // Refresh data when window regains focus to keep sync with Menu changes
     window.addEventListener('focus', fetchInitialData);
-    return () => window.removeEventListener('focus', fetchInitialData);
-  }, []);
+
+    if (socket) {
+      socket.on('table:update', (updatedTable: any) => {
+        setTables(prev => prev.map(t => t._id === updatedTable._id ? { ...t, ...updatedTable } : t));
+      });
+      // Also refresh products and settings if they change
+      socket.on('product:update', fetchInitialData);
+      socket.on('settings:update', fetchInitialData);
+    }
+
+    return () => {
+      window.removeEventListener('focus', fetchInitialData);
+      if (socket) {
+        socket.off('table:update');
+        socket.off('product:update');
+        socket.off('settings:update');
+      }
+    };
+  }, [socket]);
 
   const filteredProducts = products.filter(p => {
     const matchesCategory = selectedCategory === 'Tất cả' || p.category === selectedCategory;

@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Trash2, Edit2, QrCode, SlidersHorizontal, Table as TableIcon } from 'lucide-react';
+import { Plus, Search, Trash2, Edit2, QrCode, SlidersHorizontal, Table as TableIcon, Users } from 'lucide-react';
 import api from '../lib/api';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { QRCodeSVG } from 'qrcode.react';
+import { useSocket } from '../hooks/useSocket';
 
 interface Table {
   _id: string;
   name: string;
   isActive: boolean;
+  status: 'EMPTY' | 'OCCUPIED';
+  currentOrderId?: string;
   qrCode?: string;
 }
 
@@ -23,11 +26,21 @@ const TablesPage = () => {
   const [quickCreateCount, setQuickCreateCount] = useState(5);
   const [creating, setCreating] = useState(false);
 
+  const socket = useSocket();
+
   useEffect(() => {
     fetchTables();
-    window.addEventListener('focus', fetchTables);
-    return () => window.removeEventListener('focus', fetchTables);
-  }, []);
+
+    if (socket) {
+      socket.on('table:update', (updatedTable: any) => {
+        setTables(prev => prev.map(t => t._id === updatedTable._id ? { ...t, ...updatedTable } : t));
+      });
+    }
+
+    return () => {
+      if (socket) socket.off('table:update');
+    };
+  }, [socket]);
 
   const fetchTables = async () => {
     try {
@@ -148,8 +161,13 @@ const TablesPage = () => {
                 className="bg-white border border-slate-200 p-6 rounded-3xl shadow-sm hover:shadow-md transition-all group"
               >
                 <div className="flex justify-between items-start mb-6">
-                  <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-emerald-50 group-hover:text-emerald-500 transition-colors">
-                    <TableIcon size={24} />
+                  <div className={cn(
+                    "w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-sm",
+                    table.status === 'OCCUPIED' 
+                      ? "bg-amber-500 text-white shadow-amber-200/50" 
+                      : "bg-slate-50 text-slate-400 group-hover:bg-emerald-50 group-hover:text-emerald-500"
+                  )}>
+                    {table.status === 'OCCUPIED' ? <Users size={24} /> : <TableIcon size={24} />}
                   </div>
                   <div className="flex gap-1">
                     <button 
@@ -177,11 +195,16 @@ const TablesPage = () => {
                 </div>
                 
                 <div>
-                  <h3 className="text-xl font-black text-slate-900 group-hover:text-emerald-600 transition-colors">{table.name}</h3>
-                  <div className="mt-2 flex items-center gap-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-xl font-black text-slate-900 group-hover:text-emerald-600 transition-colors uppercase tracking-tight">{table.name}</h3>
+                    {table.status === 'OCCUPIED' && (
+                      <span className="px-2 py-0.5 bg-amber-100 text-amber-600 text-[8px] font-black uppercase rounded-full tracking-widest">Đang bận</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
                     <div className={cn("w-1.5 h-1.5 rounded-full", table.isActive ? "bg-emerald-500" : "bg-slate-300")} />
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                      {table.isActive ? 'Đang hoạt động' : 'Tạm ngưng'}
+                      {table.isActive ? (table.status === 'OCCUPIED' ? 'Đang phục vụ' : 'Đang trống') : 'Tạm ngưng'}
                     </span>
                   </div>
                 </div>
