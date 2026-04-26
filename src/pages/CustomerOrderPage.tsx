@@ -462,7 +462,7 @@ const CustomerOrderPage = () => {
 
       {/* Cart Drawer */}
       <AnimatePresence>
-        {cart.length > 0 && (
+        {(cart.length > 0 || (activeOrder && table?.status === 'OCCUPIED')) && (
           <motion.div
             initial={{ y: 200 }}
             animate={{ y: 0 }}

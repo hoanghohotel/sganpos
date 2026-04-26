@@ -2,16 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { LogIn, UserPlus, Fingerprint } from 'lucide-react';
-import { getTenantPrefix } from '../lib/tenantUtils';
+import { LogIn, UserPlus, Fingerprint, Globe } from 'lucide-react';
+import { getTenantPrefix, getTenantFromHostname } from '../lib/tenantUtils';
 
 const LoginPage = () => {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [subdomain, setSubdomain] = useState('');
   const [error, setError] = useState('');
   const { login, user } = useAuthStore();
   const navigate = useNavigate();
   const tenantPrefix = getTenantPrefix();
+  const currentTenantFromHost = getTenantFromHostname();
 
   useEffect(() => {
     if (user) {
@@ -21,6 +23,23 @@ const LoginPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // If we are on the main domain, we must ensure we have a subdomain or redirect to it
+    if (!currentTenantFromHost && subdomain) {
+      // Redirect to the subdomain login page
+      const protocol = window.location.protocol;
+      const domain = 'monday.com.vn';
+      // Only redirect if not on localhost
+      if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        window.location.href = `${protocol}//${subdomain}.${domain}/login`;
+        return;
+      } else {
+        // On localhost, we can just use the path-based approach by navigating
+        navigate(`/${subdomain}/login`);
+        return;
+      }
+    }
+
     try {
       await login(identifier, password);
       navigate(`${tenantPrefix}/`);
@@ -50,7 +69,9 @@ const LoginPage = () => {
             <Fingerprint className="text-white w-10 h-10" />
           </div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">Đăng nhập</h1>
-          <p className="text-slate-500 font-medium tracking-wide uppercase text-[10px] mt-2">Hệ thống quản lý cafe</p>
+          <p className="text-slate-500 font-medium tracking-wide uppercase text-[10px] mt-2">
+            {currentTenantFromHost ? `Chi nhánh: ${currentTenantFromHost}` : 'Hệ thống quản lý cafe'}
+          </p>
         </div>
 
         {error && (
@@ -61,6 +82,23 @@ const LoginPage = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {!currentTenantFromHost && (
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Nhập chi nhánh của bạn</label>
+              <div className="relative">
+                <input 
+                  type="text" 
+                  value={subdomain}
+                  onChange={(e) => setSubdomain(e.target.value.toLowerCase())}
+                  className="w-full h-14 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-emerald-500 pl-12 pr-4 font-medium text-slate-900"
+                  placeholder="ten-chi-nhanh"
+                  required={!currentTenantFromHost}
+                />
+                <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2">
             <label className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Email hoặc Số điện thoại</label>
             <input 

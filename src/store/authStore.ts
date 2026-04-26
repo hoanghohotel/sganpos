@@ -23,7 +23,7 @@ interface AuthState {
   shift: Shift | null;
   isLoading: boolean;
   login: (identifier: string, password: string) => Promise<void>;
-  register: (name: string, identifier: { email?: string; phone?: string }, password: string) => Promise<void>;
+  register: (name: string, identifier: { email?: string; phone?: string }, password: string, tenantId?: string) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
   checkShift: () => Promise<void>;
@@ -50,13 +50,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  register: async (name, identifier, password) => {
+  register: async (name, identifier, password, tenantId) => {
     try {
       await api.post('/api/auth/register', { 
         name, 
         email: identifier.email, 
         phone: identifier.phone, 
-        password 
+        password,
+        tenantId
       });
     } catch (err) {
       console.error('Register error:', err);

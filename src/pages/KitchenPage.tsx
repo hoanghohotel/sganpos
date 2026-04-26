@@ -39,8 +39,24 @@ const KitchenPage = () => {
   const [tables, setTables] = useState<Table[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
-  const [isNotificationsEnabled, setIsNotificationsEnabled] = useState(false);
+  const [isNotificationsEnabled, setIsNotificationsEnabled] = useState(true);
   const [isRinging, setIsRinging] = useState(false);
+
+  useEffect(() => {
+    // Request notification permission on mount
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  const showNotification = (order: any) => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(`Đơn mới từ ${order.table?.name || 'Mang về'}`, {
+        body: `${order.items.length} món • ${order.total.toLocaleString('vi-VN')}đ`,
+        icon: '/favicon.ico'
+      });
+    }
+  };
 
   const fetchInitialData = async () => {
     try {
@@ -70,6 +86,10 @@ const KitchenPage = () => {
     console.log(`[Socket] Received ${event}:`, data);
     if (event === 'order:new') {
       setOrders(prev => [data, ...prev]);
+      
+      // Browser Push Notification
+      showNotification(data);
+
       // Play ding-dong sound
       if (isNotificationsEnabled) {
         audio.currentTime = 0;

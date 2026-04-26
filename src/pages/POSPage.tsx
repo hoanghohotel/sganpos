@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
 import axios from 'axios';
-import { ShoppingCart, Plus, Minus, Trash2, Coffee, CheckCircle2, Banknote, CreditCard, X, ChevronRight, LogOut, CircleDollarSign } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Trash2, Coffee, CheckCircle2, Banknote, CreditCard, X, ChevronRight, LogOut, CircleDollarSign, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuthStore } from '../store/authStore';
 import { useSocket } from '../hooks/useSocket';
@@ -898,7 +898,7 @@ const POSPage = () => {
             >
               <div className="flex items-center gap-4 mb-10">
                 <button onClick={() => setStep('TYPE')} className="p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50">
-                  <Plus className="rotate-45 text-slate-400" />
+                  <ChevronLeft className="text-slate-400" />
                 </button>
                 <h2 className="text-3xl font-black text-slate-900 tracking-tighter">Chọn {orderType === 'DINE_IN' ? 'Bàn' : orderType === 'TAKEAWAY' ? 'Ô mang về' : 'Slot ship'}</h2>
               </div>
@@ -962,7 +962,7 @@ const POSPage = () => {
                         }} 
                         className="p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 shadow-sm"
                       >
-                        <Plus className="rotate-45 text-slate-400" />
+                        <ChevronLeft className="text-slate-400" />
                       </button>
                       <div>
                         <h1 className="text-2xl font-black text-slate-900 tracking-tighter uppercase">{selectedTable?.name}</h1>

@@ -1,10 +1,10 @@
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
-import { Coffee, CookingPot, Settings, LayoutDashboard, QrCode, LogOut, UtensilsCrossed, History, Bell } from 'lucide-react';
+import { Coffee, CookingPot, Settings, LayoutDashboard, QrCode, LogOut, UtensilsCrossed, History, Bell, Grid2X2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { cn } from './lib/utils';
 import { useAuthStore } from './store/authStore';
-import { getTenantPrefix } from './lib/tenantUtils';
+import { getTenantPrefix, getTenantId } from './lib/tenantUtils';
 import { useSocket } from './hooks/useSocket';
 import ProtectedRoute from './components/ProtectedRoute';
 import ShiftGuard from './components/ShiftGuard';
@@ -26,6 +26,7 @@ const MainLayout = () => {
   const logout = useAuthStore((state) => state.logout);
   const user = useAuthStore((state) => state.user);
   const tenantPrefix = getTenantPrefix();
+  const currentTenant = useAuthStore((state) => (state.user as any)?.tenantId) || getTenantId();
   const [hasNewOrder, setHasNewOrder] = useState(false);
   const [audio] = useState(new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'));
 
@@ -42,9 +43,53 @@ const MainLayout = () => {
     }
   }, [location.pathname]);
 
+  // If no tenant is selected and we are on the root of main domain, show landing
+  const isMainLanding = !currentTenant && (location.pathname === '/' || location.pathname === '');
+
   const isCustomerPage = location.pathname.startsWith(`${tenantPrefix}/order`);
-  const authPaths = [`${tenantPrefix}/login`, `${tenantPrefix}/register`];
+  const authPaths = [`${tenantPrefix}/login`, `${tenantPrefix}/register`, `/login`, `/register`].map(p => p.replace(/\/$/, ''));
   const isAuthPage = authPaths.includes(location.pathname.replace(/\/$/, ''));
+
+  if (isMainLanding && !isAuthPage) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 text-center overflow-hidden relative">
+        {/* Decorative background elements */}
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-50 rounded-full blur-[120px] opacity-60" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-50 rounded-full blur-[120px] opacity-60" />
+        
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="relative z-10"
+        >
+          <div className="w-24 h-24 bg-slate-900 rounded-[32px] flex items-center justify-center shadow-2xl mb-10 mx-auto transform hover:rotate-12 transition-transform duration-500">
+             <Coffee className="text-white w-12 h-12" />
+          </div>
+          <h1 className="text-7xl font-black text-slate-900 tracking-tighter mb-4">
+            Monday<span className="text-emerald-600">.</span>
+          </h1>
+          <p className="text-slate-500 text-xl font-medium max-w-lg mb-12 mx-auto leading-relaxed">
+            Nền tảng quản lý vận hành chuỗi cà phê & nhà hàng hiện đại. <br/>
+            <span className="text-slate-400">Đơn giản, hiệu quả, mọi lúc mọi nơi.</span>
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/login" className="px-10 h-16 bg-slate-900 text-white rounded-2xl font-bold flex items-center justify-center hover:bg-emerald-600 transition-all shadow-2xl shadow-slate-900/20 active:scale-95">
+              Đăng nhập hệ thống
+            </Link>
+            <Link to="/register" className="px-10 h-16 bg-white text-slate-900 border-2 border-slate-100 rounded-2xl font-bold flex items-center justify-center hover:border-emerald-500 transition-all shadow-sm active:scale-95">
+              Đăng ký chi nhánh mới
+            </Link>
+          </div>
+          
+          <div className="mt-20 pt-10 border-t border-slate-50 flex flex-wrap justify-center gap-12 grayscale opacity-40">
+            <p className="font-black tracking-tighter text-2xl">MONDAY.COM.VN</p>
+            <p className="font-black tracking-tighter text-2xl italic">CHINHANH.POS</p>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   if (isAuthPage) {
     return (
@@ -52,6 +97,8 @@ const MainLayout = () => {
         <AnimatePresence mode="wait">
           <motion.div key={location.pathname} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
             <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
               <Route path={`${tenantPrefix}/login`} element={<LoginPage />} />
               <Route path={`${tenantPrefix}/register`} element={<RegisterPage />} />
             </Routes>
@@ -67,7 +114,7 @@ const MainLayout = () => {
     { to: `${tenantPrefix}/shifts`, icon: History, label: 'Lịch sử ca' },
     { to: `${tenantPrefix}/kitchen`, icon: CookingPot, label: 'Bếp', badge: hasNewOrder },
     { to: `${tenantPrefix}/menu`, icon: UtensilsCrossed, label: 'Thực đơn' },
-    { to: `${tenantPrefix}/tables`, icon: UtensilsCrossed, label: 'Bàn' },
+    { to: `${tenantPrefix}/tables`, icon: Grid2X2, label: 'Bàn' },
     { to: `${tenantPrefix}/qr`, icon: QrCode, label: 'Mã QR' },
     { to: `${tenantPrefix}/settings`, icon: Settings, label: 'Cài đặt' },
   ];

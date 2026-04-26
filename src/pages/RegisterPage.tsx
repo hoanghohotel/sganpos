@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { UserPlus, ArrowLeft, Coffee } from 'lucide-react';
+import { UserPlus, ArrowLeft, Coffee, Globe } from 'lucide-react';
 import { getTenantPrefix } from '../lib/tenantUtils';
 
 const RegisterPage = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [subdomain, setSubdomain] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const { register, user } = useAuthStore();
@@ -27,9 +28,30 @@ const RegisterPage = () => {
       setError('Vui lòng nhập Email hoặc Số điện thoại');
       return;
     }
+    if (!subdomain) {
+      setError('Vui lòng nhập Subdomain cho chi nhánh của bạn');
+      return;
+    }
+    
+    // Validate subdomain format (alphanumeric and dashes only)
+    if (!/^[a-z0-9-]+$/.test(subdomain)) {
+      setError('Subdomain chỉ được chứa chữ cái viết thường, số và dấu gạch nối');
+      return;
+    }
+
     try {
-      await register(name, { email, phone }, password);
-      navigate(`${tenantPrefix}/login`);
+      await register(name, { email, phone }, password, subdomain);
+      // Construct the login URL for the new subdomain
+      const protocol = window.location.protocol;
+      const loginUrl = `${protocol}//${subdomain}.monday.com.vn/login`;
+      
+      // If we are on localhost, just navigate
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        navigate(`/${subdomain}/login`);
+      } else {
+        // Force redirect to the new subdomain login
+        window.location.href = loginUrl;
+      }
     } catch (err: any) {
       console.error('Register error:', err);
       let errorMessage = 'Đăng ký thất bại';
@@ -77,15 +99,34 @@ const RegisterPage = () => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Tên hiển thị</label>
+            <label className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Tên cửa hàng / Chi nhánh</label>
             <input 
               type="text" 
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full h-14 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-emerald-500 px-6 font-medium text-slate-900"
-              placeholder="Store Admin"
+              placeholder="Saigon Coffee HQ"
               required
             />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Địa chỉ Subdomain</label>
+            <div className="relative">
+              <input 
+                type="text" 
+                value={subdomain}
+                onChange={(e) => setSubdomain(e.target.value.toLowerCase().replace(/\s+/g, '-'))}
+                className="w-full h-14 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-emerald-500 pl-12 pr-40 font-medium text-slate-900"
+                placeholder="saigon-coffee"
+                required
+              />
+              <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+                .monday.com.vn
+              </div>
+            </div>
+            <p className="text-[10px] text-slate-400 font-medium px-1">Đây sẽ là đường dẫn truy cập riêng của bạn</p>
           </div>
 
           <div className="grid grid-cols-1 gap-6">
