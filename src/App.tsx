@@ -128,12 +128,12 @@ const MainLayout = () => {
       {!isCustomerPage && (
         <>
           {/* Desktop Sidebar - Improved */}
-          <aside className="hidden sm:flex w-24 bg-white border-r border-slate-200 flex-col items-center py-10 gap-12 z-50">
+          <aside className="hidden sm:flex w-[100px] bg-white border-r border-slate-200 flex-col items-center py-8 gap-10 z-50">
             <Link to={`${tenantPrefix}/`} className="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center shadow-xl shadow-slate-200 hover:scale-105 transition-all duration-300 shrink-0">
                <Coffee className="text-white w-8 h-8" />
             </Link>
             
-            <nav className="flex-1 flex flex-col gap-6 overflow-y-auto no-scrollbar">
+            <nav className="flex-1 flex flex-col gap-4 overflow-y-auto no-scrollbar w-full px-2">
               {navItems.map((item) => {
                 const isActive = (location.pathname === item.to || (item.to === `${tenantPrefix}/` && (location.pathname === tenantPrefix || location.pathname === `${tenantPrefix}/`)));
                 return (
@@ -141,21 +141,21 @@ const MainLayout = () => {
                     key={item.to}
                     to={item.to} 
                     className={cn(
-                      "p-3.5 transition-all duration-200 rounded-2xl group relative flex flex-col items-center gap-1.5", 
+                      "p-3 transition-all duration-200 rounded-2xl group relative flex flex-col items-center gap-1.5 w-full", 
                       isActive 
                         ? "text-emerald-600 bg-emerald-50 shadow-sm border border-emerald-100/50" 
                         : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
                     )}
                   >
                     <item.icon className={cn("w-6 h-6 transition-transform group-hover:scale-110", isActive && "scale-110")} />
-                    <span className={cn("text-[8px] font-black uppercase tracking-tighter text-center line-clamp-1", isActive ? "text-emerald-600" : "text-slate-400")}>
+                    <span className={cn("text-[9px] font-black uppercase tracking-tight text-center leading-tight", isActive ? "text-emerald-600" : "text-slate-400")}>
                       {item.label}
                     </span>
                     {item.badge && (
                       <motion.div 
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        className="absolute top-2 right-2 w-3 h-3 bg-rose-500 rounded-full border-2 border-white flex items-center justify-center shadow-sm"
+                        className="absolute top-1.5 right-1.5 w-3 h-3 bg-rose-500 rounded-full border-2 border-white flex items-center justify-center shadow-sm"
                        >
                          <motion.div
                            animate={{ rotate: [0, -20, 20, -20, 20, 0] }}
