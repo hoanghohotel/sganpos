@@ -23,6 +23,25 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /api/settings/public/brand - Fetch public brand info
+router.get('/public/brand', async (req, res) => {
+  try {
+    const tenantId = getTenantId();
+    const settings = await Settings.findOne({ tenantId }, 'storeName logoUrl');
+    
+    if (!settings) {
+      return res.json({ 
+        storeName: 'SAIGON AN COFFEE', 
+        logoUrl: '/logo.svg' 
+      });
+    }
+    
+    res.json(settings);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed' });
+  }
+});
+
 // PUT /api/settings - Update settings (Auth required)
 router.put('/', authenticate, async (req, res) => {
   try {

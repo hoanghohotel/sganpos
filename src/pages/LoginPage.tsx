@@ -11,6 +11,10 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [subdomain, setSubdomain] = useState('');
   const [error, setError] = useState('');
+  const [brand, setBrand] = useState<{ storeName: string; logoUrl: string }>({
+    storeName: 'Monday',
+    logoUrl: '/logo.svg'
+  });
   const [showResend, setShowResend] = useState(false);
   const [resendStatus, setResendStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [unverifiedEmail, setUnverifiedEmail] = useState('');
@@ -19,6 +23,23 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const tenantPrefix = getTenantPrefix();
   const currentTenantFromHost = getTenantFromHostname();
+
+  useEffect(() => {
+    // Fetch brand info if we have a tenant context
+    const fetchBrand = async () => {
+      try {
+        const api = (await import('../lib/api')).default;
+        const res = await api.get('/api/settings/public/brand');
+        if (res.data) {
+          setBrand(res.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch brand:', err);
+      }
+    };
+    
+    fetchBrand();
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -100,10 +121,21 @@ const LoginPage = () => {
         <div className="absolute top-0 left-0 w-full h-1 bg-emerald-500" />
         
         <div className="flex flex-col items-center mb-8">
-          <Logo size="lg" className="mb-6" />
+          {brand.logoUrl ? (
+            <img 
+              src={brand.logoUrl} 
+              alt={brand.storeName} 
+              className="h-20 w-auto mb-6 object-contain"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = '/logo.svg';
+              }}
+            />
+          ) : (
+            <Logo size="lg" className="mb-6" />
+          )}
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">Đăng nhập</h1>
           <p className="text-slate-500 font-bold tracking-widest uppercase text-[9px] mt-3 py-1 px-3 bg-slate-50 rounded-full">
-            {currentTenantFromHost ? `Chi nhánh: ${currentTenantFromHost}` : 'Hệ thống vận hành chuyên nghiệp'}
+            {currentTenantFromHost ? `Chi nhánh: ${brand.storeName || currentTenantFromHost}` : 'Hệ thống vận hành chuyên nghiệp'}
           </p>
         </div>
 

@@ -187,15 +187,21 @@ app.get('/api/admin/users', authenticate, async (req: AuthRequest, res) => {
     let query: any = { tenantId };
     
     if (user.role === 'MANAGER') {
-      query.managerId = user._id;
-      query.role = 'STAFF'; // Managers only see their staff
+      query.managerId = user._id.toString();
+      query.role = 'STAFF'; // Managers only see their own staff
     } else if (user.role === 'ADMIN') {
       // Admin sees everyone in tenant
+    } else if (user.permissions?.includes('USER_MANAGE')) {
+      // If a staff has USER_MANAGE permission, we might want to restrict them too
+      // or maybe they see everyone if they have this permission?
+      // Based on the request, let's treat them like MANAGER if they aren't ADMIN
+      query.managerId = user._id.toString();
+      query.role = 'STAFF';
     } else {
       return res.status(403).json({ error: 'Permission denied' });
     }
 
-    const users = await User.find(query, '-password');
+    const users = await User.find(query, '-password').sort({ createdAt: -1 });
     res.json(users);
   } catch (err) {
     console.error('[Admin] User fetch failed:', err);
@@ -210,11 +216,12 @@ app.post('/api/admin/users', authenticate, async (req: AuthRequest, res) => {
   try {
     const { role } = req.body;
 
-    if (currentUser.role === 'MANAGER') {
+    if (currentUser.role === 'MANAGER' || (currentUser.role === 'STAFF' && currentUser.permissions?.includes('USER_MANAGE'))) {
       if (role !== 'STAFF') {
-        return res.status(403).json({ error: 'MANAGER chỉ có thể tạo STAFF' });
+        return res.status(403).json({ error: 'Bạn chỉ có thể tạo người dùng với vai trò STAFF' });
       }
-      req.body.managerId = currentUser._id;
+      req.body.role = 'STAFF';
+      req.body.managerId = currentUser._id.toString();
     } else if (currentUser.role !== 'ADMIN') {
       return res.status(403).json({ error: 'Permission denied' });
     }
@@ -241,24 +248,33 @@ app.put('/api/admin/users/:id', authenticate, async (req: AuthRequest, res) => {
     const targetUser = await User.findOne({ _id: req.params.id, tenantId });
     if (!targetUser) return res.status(404).json({ error: 'User not found' });
 
-    if (currentUser.role === 'MANAGER') {
-      if (targetUser.managerId?.toString() !== currentUser._id.toString()) {
+    if (currentUser.role !== 'ADMIN') {
+      // Must be MANAGER or have permission, and must OWN the target or target has no manager (owner added them but manager needs to edit?)
+      // Actually, request says "ngoại trừ các Staft do họ thêm vào"
+      const isAllowedRole = currentUser.role === 'MANAGER' || currentUser.permissions?.includes('USER_MANAGE');
+      const isOwner = targetUser.managerId === currentUser._id.toString();
+
+      if (!isAllowedRole || !isOwner) {
         return res.status(403).json({ error: 'Bạn không có quyền sửa nhân viên này' });
       }
-      // Manager cannot change role or managerId
+      
+      // Manager cannot escalate privileges
       delete req.body.role;
       delete req.body.managerId;
-    } else if (currentUser.role !== 'ADMIN') {
-      return res.status(403).json({ error: 'Permission denied' });
     }
 
     const updateData = { ...req.body };
     if (updateData.password) {
       updateData.password = await bcrypt.hash(updateData.password, 10);
     } else {
-      delete updateData.password; // Don't overwrite with empty
+      delete updateData.password;
     }
-    const updatedUser = await User.findOneAndUpdate({ _id: req.params.id, tenantId }, updateData, { new: true });
+    
+    const updatedUser = await User.findOneAndUpdate(
+      { _id: req.params.id, tenantId }, 
+      updateData, 
+      { new: true }
+    );
     res.json(updatedUser);
   } catch (err: any) {
     console.error('Failed to update user:', err);
@@ -278,12 +294,13 @@ app.delete('/api/admin/users/:id', authenticate, async (req: AuthRequest, res) =
     const targetUser = await User.findOne({ _id: req.params.id, tenantId });
     if (!targetUser) return res.status(404).json({ error: 'User not found' });
 
-    if (currentUser.role === 'MANAGER') {
-      if (targetUser.managerId?.toString() !== currentUser._id.toString()) {
+    if (currentUser.role !== 'ADMIN') {
+      const isAllowedRole = currentUser.role === 'MANAGER' || currentUser.permissions?.includes('USER_MANAGE');
+      const isOwner = targetUser.managerId === currentUser._id.toString();
+
+      if (!isAllowedRole || !isOwner) {
         return res.status(403).json({ error: 'Bạn không có quyền xóa nhân viên này' });
       }
-    } else if (currentUser.role !== 'ADMIN') {
-      return res.status(403).json({ error: 'Permission denied' });
     }
 
     await User.findOneAndDelete({ _id: req.params.id, tenantId });

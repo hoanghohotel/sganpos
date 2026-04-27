@@ -58,6 +58,18 @@ router.post('/register', async (req: any, res) => {
       phone: phone ? phone.trim() : undefined,
       password: hashedPassword,
       role: 'MANAGER',
+      permissions: [
+        'DASHBOARD_VIEW',
+        'POS_ACCESS',
+        'ORDER_MANAGE',
+        'PRODUCT_MANAGE',
+        'TABLE_MANAGE',
+        'KITCHEN_ACCESS',
+        'USER_MANAGE',
+        'SETTINGS_EDIT',
+        'DEVELOP_ACCESS',
+        'REPORT_VIEW'
+      ],
       isActive: email ? false : true, // Require verification for email
       isVerified: email ? false : true,
       verificationToken
