@@ -92,9 +92,11 @@ const MainLayout = () => {
             <Link to="/login" className="px-10 h-16 bg-slate-900 text-white rounded-2xl font-bold flex items-center justify-center hover:bg-emerald-600 transition-all shadow-2xl shadow-slate-900/20 active:scale-95">
               Đăng nhập hệ thống
             </Link>
-            <Link to="/register" className="px-10 h-16 bg-white text-slate-900 border-2 border-slate-100 rounded-2xl font-bold flex items-center justify-center hover:border-emerald-500 transition-all shadow-sm active:scale-95">
-              Đăng ký chi nhánh mới
-            </Link>
+            {!fromHostname && (
+              <Link to="/register" className="px-10 h-16 bg-white text-slate-900 border-2 border-slate-100 rounded-2xl font-bold flex items-center justify-center hover:border-emerald-500 transition-all shadow-sm active:scale-95">
+                Đăng ký chi nhánh mới
+              </Link>
+            )}
           </div>
           
           <div className="mt-20 pt-10 border-t border-slate-50 flex flex-wrap justify-center gap-12 grayscale opacity-40">
@@ -113,9 +115,12 @@ const MainLayout = () => {
           <motion.div key={location.pathname} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="h-full">
             <Routes>
               <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
+              {!fromHostname && <Route path="/register" element={<RegisterPage />} />}
               <Route path={`${tenantPrefix}/login`} element={<LoginPage />} />
-              <Route path={`${tenantPrefix}/register`} element={<RegisterPage />} />
+              {tenantPrefix !== '' && !fromHostname && <Route path={`${tenantPrefix}/register`} element={<RegisterPage />} />}
+              {/* If someone tries to register on a subdomain, redirect to login */}
+              {fromHostname && <Route path="/register" element={<Navigate to="/login" replace />} />}
+              {fromHostname && <Route path={`${tenantPrefix}/register`} element={<Navigate to="/login" replace />} />}
             </Routes>
           </motion.div>
         </AnimatePresence>

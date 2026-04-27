@@ -3,7 +3,7 @@ import { useAuthStore } from '../store/authStore';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { UserPlus, ArrowLeft, Coffee, Globe } from 'lucide-react';
-import { getTenantPrefix } from '../lib/tenantUtils';
+import { getTenantPrefix, getTenantFromHostname } from '../lib/tenantUtils';
 
 const RegisterPage = () => {
   const [name, setName] = useState('');
@@ -16,8 +16,13 @@ const RegisterPage = () => {
   const { register, user } = useAuthStore();
   const navigate = useNavigate();
   const tenantPrefix = getTenantPrefix();
+  const fromHostname = getTenantFromHostname();
 
   useEffect(() => {
+    if (fromHostname) {
+      navigate(`${tenantPrefix}/login`);
+      return;
+    }
     if (user && !isSuccess) {
       navigate(`${tenantPrefix}/`);
     }
