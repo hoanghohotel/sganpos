@@ -67,16 +67,23 @@ export function tenantLink(path: string): string {
   const prefix = getTenantPrefix();
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   
-  // If we are on a subdomain, we don't need to add the tenant to the path
+  // If we are on a subdomain, the path in URL should NOT include the tenant
   const fromHost = getTenantFromHostname();
   if (fromHost) {
     return normalizedPath;
   }
 
-  // Don't prefix if it's already a system route or already prefixed
-  const pathParts = normalizedPath.split('/');
-  const firstPart = pathParts[1];
-  if (SYSTEM_ROUTES.includes(firstPart)) {
+  if (!prefix) return normalizedPath;
+
+  // Don't prefix if it's already prefixed
+  if (normalizedPath.startsWith(`${prefix}/`) || normalizedPath === prefix) {
+    return normalizedPath;
+  }
+
+  // Define routes that should NOT be prefixed (truly global)
+  const GLOBAL_ROUTES = ['api', 'assets'];
+  const firstPart = normalizedPath.split('/')[1];
+  if (GLOBAL_ROUTES.includes(firstPart)) {
     return normalizedPath;
   }
   

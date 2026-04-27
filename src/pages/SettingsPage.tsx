@@ -27,6 +27,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis, restrictToWindowEdges } from '@dnd-kit/modifiers';
 import { useAuthStore } from '../store/authStore';
+import { getTenantFromHostname } from '../lib/tenantUtils';
 
 interface PrintField {
   id: string;
@@ -283,6 +284,25 @@ const SettingsPage = () => {
     taxRate: 0,
     defaultPrintTemplate: 'classic'
   });
+
+  const getBaseDomain = () => {
+    if (typeof window === 'undefined') return 'monday.com.vn';
+    const host = window.location.hostname;
+    
+    // Explicit support for monday.com.vn
+    if (host.includes('monday.com.vn')) return 'monday.com.vn';
+    
+    // For other domains, try to strip the tenant if we're on a subdomain
+    const tenant = getTenantFromHostname();
+    if (tenant) {
+      return host.replace(`${tenant}.`, '');
+    }
+    
+    // Otherwise return the host itself (could be localhost or branch link)
+    return host;
+  };
+  
+  const baseDomain = getBaseDomain();
 
   const printTemplates = [
     { id: 'classic', name: 'Cổ điển', description: 'Giao diện truyền thống, dễ đọc.' },
@@ -897,10 +917,10 @@ const SettingsPage = () => {
                       className="w-full bg-slate-50 border-none rounded-2xl pr-32 pl-5 py-4 text-sm font-bold focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-slate-300"
                     />
                     <div className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-black uppercase tracking-tight">
-                      .pos.com
+                      .{baseDomain}
                     </div>
                   </div>
-                  <p className="text-[10px] text-slate-400 italic ml-1">Người dùng có thể truy cập qua: <span className="text-emerald-600 font-bold">{settings.subdomain || 'yourshop'}.pos.com</span></p>
+                  <p className="text-[10px] text-slate-400 italic ml-1">Người dùng có thể truy cập qua: <span className="text-emerald-600 font-bold">{settings.subdomain || 'yourshop'}.{baseDomain}</span></p>
                 </div>
 
                 <div className="space-y-2">
@@ -912,13 +932,13 @@ const SettingsPage = () => {
                       value={settings.customPath || ''}
                       onChange={handleChange}
                       placeholder="VD: coffee-house"
-                      className="w-full bg-slate-50 border-none rounded-2xl pl-32 pr-5 py-4 text-sm font-bold focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-slate-300"
+                      className="w-full bg-slate-50 border-none rounded-2xl pl-40 pr-5 py-4 text-sm font-bold focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-slate-300"
                     />
                     <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-black uppercase tracking-tight">
-                      pos.com/
+                      {baseDomain}/
                     </div>
                   </div>
-                  <p className="text-[10px] text-slate-400 italic ml-1">Hoặc qua đường dẫn: <span className="text-emerald-600 font-bold">pos.com/{settings.customPath || 'yourshop'}</span></p>
+                  <p className="text-[10px] text-slate-400 italic ml-1">Hoặc qua đường dẫn: <span className="text-emerald-600 font-bold">{baseDomain}/{settings.customPath || 'yourshop'}</span></p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
