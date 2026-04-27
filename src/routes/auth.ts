@@ -18,6 +18,13 @@ router.post('/register', async (req: any, res) => {
 
     console.log(`[Auth] Registration attempt for Name: ${name}, Email: ${email}, Phone: ${phone}, Tenant: ${tenantId}`);
 
+    // Global Subdomain check: if this is a new tenant registration, ensure it's unique
+    const existingTenantUser = await User.findOne({ tenantId });
+    if (existingTenantUser) {
+      console.warn(`[Auth] Registration failed: Tenant ID ${tenantId} already exists`);
+      return res.status(400).json({ error: 'Tên cửa hàng hoặc subdomain này đã được sử dụng. Vui lòng chọn tên khác.' });
+    }
+
     if (!name || (!email && !phone) || !password) {
       console.warn('[Auth] Registration failed: Missing required fields');
       return res.status(400).json({ error: 'Tên, mật khẩu và ít nhất một định danh (Email hoặc Số điện thoại) là bắt buộc' });
@@ -257,6 +264,25 @@ router.get('/me', authenticate, (req: AuthRequest, res) => {
   } catch (error) {
     console.error('Auth /me error:', error);
     res.status(500).json({ error: 'Auth failed internal' });
+  }
+});
+
+// Check subdomain availability
+router.get('/check-availability', async (req, res) => {
+  try {
+    const { tenantId } = req.query;
+    if (!tenantId || typeof tenantId !== 'string') {
+      return res.status(400).json({ error: 'Tenant ID is required' });
+    }
+
+    const normalizedTenantId = tenantId.toLowerCase().trim();
+    // Check if any user belongs to this tenantId
+    const existing = await User.findOne({ tenantId: normalizedTenantId });
+    
+    res.json({ available: !existing });
+  } catch (error) {
+    console.error('Check availability error:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 

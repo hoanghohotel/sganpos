@@ -339,6 +339,7 @@ const DevelopPage = () => {
                   <tr className="border-b border-slate-900">
                     <th className="p-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Name & Entity</th>
                     <th className="p-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Contact Info</th>
+                    <th className="p-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-left">Tenant ID</th>
                     <th className="p-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Access Role</th>
                     <th className="p-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Operations</th>
                   </tr>
@@ -353,6 +354,11 @@ const DevelopPage = () => {
                       <td className="p-6">
                         <div className="text-slate-400 font-medium">{user.email || '—'}</div>
                         <div className="text-[10px] text-slate-600 mt-0.5">{user.phone || '—'}</div>
+                      </td>
+                      <td className="p-6">
+                        <span className="font-mono text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20 uppercase">
+                          {user.tenantId}
+                        </span>
                       </td>
                       <td className="p-6">
                         <span className={cn(

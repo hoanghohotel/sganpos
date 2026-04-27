@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { UserPlus, ArrowLeft, Coffee, Globe } from 'lucide-react';
+import { UserPlus, ArrowLeft, Coffee, Globe, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { getTenantPrefix, getTenantFromHostname } from '../lib/tenantUtils';
 import Logo from '../components/Logo';
+import api from '../lib/api';
 
 const RegisterPage = () => {
   const [name, setName] = useState('');
@@ -14,6 +15,8 @@ const RegisterPage = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isSubdomainAvailable, setIsSubdomainAvailable] = useState<boolean | null>(null);
+  const [isCheckingSubdomain, setIsCheckingSubdomain] = useState(false);
   const { register, user } = useAuthStore();
   const navigate = useNavigate();
   const tenantPrefix = getTenantPrefix();
@@ -28,6 +31,27 @@ const RegisterPage = () => {
       navigate(`${tenantPrefix}/`);
     }
   }, [user, navigate, tenantPrefix, isSuccess]);
+
+  useEffect(() => {
+    if (subdomain.length < 3) {
+      setIsSubdomainAvailable(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsCheckingSubdomain(true);
+      try {
+        const response = await api.get(`/api/auth/check-availability?tenantId=${subdomain}`);
+        setIsSubdomainAvailable(response.data.available);
+      } catch (err) {
+        console.error('Check subdomain error:', err);
+      } finally {
+        setIsCheckingSubdomain(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [subdomain]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,7 +182,27 @@ const RegisterPage = () => {
                 .monday.com.vn
               </div>
             </div>
-            <p className="text-[10px] text-slate-400 font-medium px-1">Đây sẽ là đường dẫn truy cập riêng của bạn</p>
+            {subdomain.length >= 3 && (
+              <div className="flex items-center gap-2 mt-2 px-2">
+                {isCheckingSubdomain ? (
+                  <>
+                    <Loader2 className="w-3 h-3 text-slate-400 animate-spin" />
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Đang kiểm tra...</span>
+                  </>
+                ) : isSubdomainAvailable === true ? (
+                  <>
+                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                    <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Khả dụng</span>
+                  </>
+                ) : isSubdomainAvailable === false ? (
+                  <>
+                    <AlertCircle className="w-3 h-3 text-rose-500" />
+                    <span className="text-[10px] font-bold text-rose-500 uppercase tracking-widest">Đã được sử dụng</span>
+                  </>
+                ) : null}
+              </div>
+            )}
+            <p className="text-[10px] text-slate-400 font-medium px-1 mt-1">Đây sẽ là đường dẫn truy cập riêng của bạn</p>
           </div>
 
           <div className="grid grid-cols-1 gap-6">

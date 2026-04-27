@@ -268,6 +268,7 @@ const SettingsPage = () => {
   const [banks, setBanks] = useState<Bank[]>([]);
   const [showBankList, setShowBankList] = useState(false);
   const [bankSearch, setBankSearch] = useState('');
+  const [originalSubdomain, setOriginalSubdomain] = useState('');
   
   const [settings, setSettings] = useState({
     storeName: '',
@@ -392,6 +393,9 @@ const SettingsPage = () => {
         const settingsRes = await api.get('/api/settings');
         const data = settingsRes.data;
         setSettings(prev => ({ ...prev, ...data }));
+        if (data.subdomain) {
+          setOriginalSubdomain(data.subdomain);
+        }
         if (data.templateFields) {
           setTemplateFields(data.templateFields);
         }
@@ -426,10 +430,21 @@ const SettingsPage = () => {
     setSaving(true);
     setMessage(null);
     try {
+      // Check subdomain availability if changed
+      if (settings.subdomain && settings.subdomain !== originalSubdomain) {
+        const checkRes = await api.get(`/api/auth/check-availability?tenantId=${settings.subdomain}`);
+        if (!checkRes.data.available) {
+          setMessage({ type: 'error', text: 'Subdomain này đã được sử dụng bởi cửa hàng khác. Vui lòng chọn subdomain khác.' });
+          setSaving(false);
+          return;
+        }
+      }
+
       await api.put('/api/settings', { 
         ...settings, 
         templateFields: templateFields // Save custom template structure
       });
+      setOriginalSubdomain(settings.subdomain || '');
       setMessage({ type: 'success', text: 'Đã lưu cài đặt thành công!' });
       setTimeout(() => setMessage(null), 3000);
     } catch (err: any) {
