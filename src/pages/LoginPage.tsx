@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { LogIn, UserPlus, Fingerprint, Globe } from 'lucide-react';
+import { LogIn, UserPlus, Fingerprint, Globe, ArrowLeft } from 'lucide-react';
 import { getTenantPrefix, getTenantFromHostname } from '../lib/tenantUtils';
+import Logo from '../components/Logo';
 
 const LoginPage = () => {
   const [identifier, setIdentifier] = useState('');
@@ -62,15 +63,15 @@ const LoginPage = () => {
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-md w-full bg-white rounded-[32px] shadow-2xl shadow-slate-200 border border-slate-100 p-10"
+        className="max-w-md w-full bg-white rounded-[32px] shadow-2xl shadow-slate-200 border border-slate-100 p-10 relative overflow-hidden"
       >
+        <div className="absolute top-0 left-0 w-full h-1 bg-emerald-500" />
+        
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200 mb-4">
-            <Fingerprint className="text-white w-10 h-10" />
-          </div>
+          <Logo size="lg" className="mb-6" />
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">Đăng nhập</h1>
-          <p className="text-slate-500 font-medium tracking-wide uppercase text-[10px] mt-2">
-            {currentTenantFromHost ? `Chi nhánh: ${currentTenantFromHost}` : 'Hệ thống quản lý cafe'}
+          <p className="text-slate-500 font-bold tracking-widest uppercase text-[9px] mt-3 py-1 px-3 bg-slate-50 rounded-full">
+            {currentTenantFromHost ? `Chi nhánh: ${currentTenantFromHost}` : 'Hệ thống vận hành chuyên nghiệp'}
           </p>
         </div>
 
@@ -133,11 +134,29 @@ const LoginPage = () => {
         </form>
 
         <div className="mt-10 pt-8 border-t border-slate-100 text-center">
-          <p className="text-slate-500 text-sm font-medium">Chưa có tài khoản?</p>
-          <Link to={`${tenantPrefix}/register`} className="text-emerald-600 font-bold hover:underline flex items-center justify-center gap-2 mt-2">
-            <UserPlus className="w-4 h-4" />
-            Đăng ký cửa hàng mới
-          </Link>
+          {currentTenantFromHost ? (
+            <a 
+              href="https://monday.com.vn/register" 
+              className="text-slate-400 font-bold hover:text-emerald-600 flex items-center justify-center gap-2 transition-colors"
+            >
+              <UserPlus className="w-4 h-4" />
+              Đăng ký chi nhánh mới tại monday.com.vn
+            </a>
+          ) : (
+            <>
+              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-3">Chưa có tài khoản?</p>
+              <Link to="/register" className="text-emerald-600 font-bold hover:text-emerald-700 flex items-center justify-center gap-2">
+                <UserPlus className="w-5 h-5" />
+                Đăng ký cửa hàng mới
+              </Link>
+            </>
+          )}
+          {!currentTenantFromHost && (
+             <Link to="/" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-900 text-xs font-bold uppercase tracking-widest mt-8 transition-colors">
+               <ArrowLeft size={12} />
+               Quay lại trang chủ
+             </Link>
+          )}
         </div>
       </motion.div>
     </div>

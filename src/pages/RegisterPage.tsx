@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { UserPlus, ArrowLeft, Coffee, Globe } from 'lucide-react';
 import { getTenantPrefix, getTenantFromHostname } from '../lib/tenantUtils';
+import Logo from '../components/Logo';
 
 const RegisterPage = () => {
   const [name, setName] = useState('');
@@ -94,14 +95,14 @@ const RegisterPage = () => {
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="max-w-md w-full bg-white rounded-[32px] shadow-2xl shadow-slate-200 border border-slate-100 p-10"
+        className="max-w-md w-full bg-white rounded-[32px] shadow-2xl shadow-slate-200 border border-slate-100 p-10 relative overflow-hidden"
       >
+        <div className="absolute top-0 left-0 w-full h-1 bg-emerald-500" />
+        
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-slate-200 mb-4">
-            <Coffee className="text-white w-10 h-10" />
-          </div>
+          <Logo size="lg" className="mb-6" />
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">Đăng ký</h1>
-          <p className="text-slate-500 font-medium tracking-wide uppercase text-[10px] mt-2">Bắt đầu cửa hàng của bạn</p>
+          <p className="text-slate-500 font-bold tracking-widest uppercase text-[9px] mt-3 py-1 px-3 bg-slate-50 rounded-full">Bắt đầu chi nhánh mới</p>
         </div>
 
         {isSuccess ? (

@@ -1,11 +1,12 @@
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
-import { Coffee, CookingPot, Settings, LayoutDashboard, QrCode, LogOut, UtensilsCrossed, History, Bell, Grid2X2, Users } from 'lucide-react';
+import { Coffee, CookingPot, Settings, LayoutDashboard, QrCode, LogOut, UtensilsCrossed, History, Bell, Grid2X2, Users, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { cn } from './lib/utils';
 import { useAuthStore } from './store/authStore';
 import { getTenantPrefix, getTenantId, getTenantFromHostname, getTenantIdFromPath } from './lib/tenantUtils';
 import { useSocket } from './hooks/useSocket';
+import Logo from './components/Logo';
 import ProtectedRoute from './components/ProtectedRoute';
 import ShiftGuard from './components/ShiftGuard';
 import DashboardPage from './pages/DashboardPage';
@@ -66,42 +67,36 @@ const MainLayout = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="relative z-10"
+          className="relative z-10 flex flex-col items-center"
         >
-          <div className="w-24 h-24 bg-slate-900 rounded-[32px] flex items-center justify-center shadow-2xl mb-10 mx-auto transform hover:rotate-12 transition-transform duration-500">
-             <Coffee className="text-white w-12 h-12" />
-          </div>
-          <svg width="267" height="152" viewBox="0 0 267 152" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect width="267" height="152" fill="white"/>
-          <path d="M48.2643 83.8251C46.7763 83.8238 45.4063 83.049 44.6862 81.8015C43.966 80.554 44.0092 79.0304 44.7989 77.8221L52.1672 66.5519C52.924 65.3247 54.3162 64.5876 55.8034 64.6266C57.2906 64.6657 58.6386 65.4748 59.3241 66.7399C60.0096 68.0049 59.9247 69.5267 59.1023 70.7146L51.7384 81.9848C50.9894 83.1315 49.6762 83.8272 48.2643 83.8251Z" fill="#FB275D"/>
-          <path d="M60.8182 83.8251C59.3327 83.8238 57.9649 83.0508 57.246 81.8063C56.527 80.5618 56.5701 79.0417 57.3585 77.8364L64.7126 66.5929C65.4575 65.3478 66.8546 64.593 68.353 64.6262C69.8514 64.6593 71.2106 65.4751 71.8946 66.7518C72.5787 68.0285 72.4779 69.5612 71.632 70.7457L64.2779 81.9892C63.5318 83.1306 62.2247 83.8243 60.8182 83.8251V83.8251Z" fill="#FFCC00"/>
-          <path d="M73.0578 83.8481C75.3082 83.8481 77.1325 82.0269 77.1325 79.7804C77.1325 77.5339 75.3082 75.7128 73.0578 75.7128C70.8074 75.7128 68.9831 77.5339 68.9831 79.7804C68.9831 82.0269 70.8074 83.8481 73.0578 83.8481Z" fill="#00CA72"/>
-          <path d="M207.724 90.8956L211.158 83.1238L203.623 65.9666H209.957L214.258 77.0645L218.659 65.9666H224.726L213.858 90.8956H207.724Z" fill="black"/>
-          <path d="M190.348 65.7031C193.149 65.7031 195.116 66.9545 196.116 68.5682V65.9666H201.817V84.3422H196.116V81.7407C195.082 83.3543 193.115 84.6057 190.348 84.6057C185.781 84.6057 182.18 80.9174 182.18 75.1215C182.18 69.3256 185.781 65.7031 190.348 65.7031ZM187.981 75.1215C187.981 78.0524 189.882 79.6989 192.049 79.6989C194.216 79.6989 196.116 78.0853 196.116 75.1544C196.116 72.2235 194.216 70.6099 192.049 70.6099C189.882 70.6099 187.981 72.1906 187.981 75.1215Z" fill="black"/>
-          <path d="M168.272 65.7032C170.739 65.7032 172.839 66.8229 173.973 68.5024V59.9732H179.707V84.3424H173.973V81.7079C172.972 83.3874 171.006 84.6058 168.238 84.6058C163.671 84.6058 160.07 80.9175 160.07 75.1216C160.07 69.3257 163.671 65.7032 168.272 65.7032ZM165.871 75.1216C165.871 78.0525 167.772 79.6991 169.939 79.6991C172.106 79.6991 174.006 78.0854 174.006 75.1545C174.006 72.2236 172.106 70.61 169.939 70.61C167.772 70.61 165.871 72.1907 165.871 75.1216Z" fill="black"/>
-          <path d="M152.028 74.3641C152.028 71.8613 150.595 70.4782 148.461 70.4782C146.261 70.4782 144.86 71.8613 144.86 74.3641V84.3423H139.159V65.9666H144.86V68.4364C145.994 66.8557 147.994 65.769 150.494 65.769C154.828 65.769 157.696 68.667 157.696 73.6067V84.3423H152.028V74.3641Z" fill="black"/>
-          <path d="M126.95 84.7703C121.482 84.7703 117.381 81.1479 117.381 75.1544C117.381 69.1609 121.582 65.5384 127.05 65.5384C132.517 65.5384 136.718 69.1609 136.718 75.1544C136.718 81.1479 132.45 84.7703 126.95 84.7703ZM123.149 75.1544C123.149 78.2499 124.916 79.7318 126.95 79.7318C128.983 79.7318 130.917 78.2499 130.917 75.1544C130.917 72.0259 129.016 70.5769 127.016 70.5769C124.983 70.5769 123.149 72.0259 123.149 75.1544Z" fill="black"/>
-          <path d="M83.6429 65.9666H89.3437V68.3047C90.4439 66.7899 92.3775 65.769 94.7779 65.769C97.6117 65.769 99.8787 66.9875 101.146 69.1939C102.379 67.2509 104.679 65.769 107.413 65.769C112.014 65.769 114.981 68.667 114.981 73.6067V84.3423H109.313V74.3641C109.313 71.9601 107.88 70.6428 105.746 70.6428C103.546 70.6428 102.179 71.9601 102.179 74.3641V84.3423H96.5115V74.3641C96.5115 71.9601 95.0779 70.6428 92.9443 70.6428C90.7439 70.6428 89.3437 71.9601 89.3437 74.3641V84.3423H83.6429V65.9666Z" fill="black"/>
-          </svg>
+          <Logo size="xl" className="mb-8" />
 
-          <p className="text-slate-500 text-xl font-medium max-w-lg mb-12 mx-auto leading-relaxed">
-            Nền tảng quản lý vận hành chuỗi cà phê & nhà hàng hiện đại. <br/>
-            <span className="text-slate-400">Đơn giản, hiệu quả, mọi lúc mọi nơi.</span>
+          <h1 className="text-4xl sm:text-6xl font-black text-slate-900 tracking-tight leading-tight mb-6">
+            Quản lý vận hành <br/> 
+            <span className="text-emerald-600">với đẳng cấp mới</span>
+          </h1>
+
+          <p className="text-slate-500 text-lg sm:text-xl font-medium max-w-lg mb-12 mx-auto leading-relaxed">
+            Hệ sinh thái thông minh chuyên biệt cho chuỗi cà phê & nhà hàng hiện đại. 
+            Tối ưu quy trình, bứt phá doanh thu.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/login" className="px-10 h-16 bg-slate-900 text-white rounded-2xl font-bold flex items-center justify-center hover:bg-emerald-600 transition-all shadow-2xl shadow-slate-900/20 active:scale-95">
-              Đăng nhập hệ thống
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center w-full max-w-md">
+            <Link to="/login" className="px-10 h-16 bg-slate-900 text-white rounded-2xl font-bold flex items-center justify-center hover:bg-emerald-600 transition-all shadow-2xl shadow-slate-900/20 active:scale-95 group">
+              Truy cập hệ thống
+              <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
             {!fromHostname && (
               <Link to="/register" className="px-10 h-16 bg-white text-slate-900 border-2 border-slate-100 rounded-2xl font-bold flex items-center justify-center hover:border-emerald-500 transition-all shadow-sm active:scale-95">
-                Đăng ký chi nhánh mới
+                Mở chi nhánh mới
               </Link>
             )}
           </div>
           
-          <div className="mt-20 pt-10 border-t border-slate-50 flex flex-wrap justify-center gap-12 grayscale opacity-40">
-            <p className="font-black tracking-tighter text-2xl">MONDAY.COM.VN</p>
-            
+          <div className="mt-20 pt-10 border-t border-slate-50 flex flex-wrap justify-center gap-12 grayscale opacity-30 items-center">
+            <span className="font-black tracking-tighter text-2xl">MONDAY.COM.VN</span>
+            <div className="w-1 h-1 bg-slate-400 rounded-full" />
+            <span className="font-bold text-sm uppercase tracking-widest text-slate-500">Professional POS Solutions</span>
           </div>
         </motion.div>
       </div>
@@ -149,9 +144,9 @@ const MainLayout = () => {
       {!isCustomerPage && (
         <>
           {/* Desktop Sidebar - Premium Refinement */}
-          <aside className="hidden sm:flex w-[120px] bg-slate-50 border-r border-slate-200 flex-col items-center py-10 gap-12 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)] shrink-0">
-            <Link to={`${tenantPrefix}/`} className="w-16 h-16 bg-slate-900 rounded-[28px] flex items-center justify-center shadow-2xl shadow-slate-300 hover:scale-[1.08] transition-all duration-300 shrink-0 group rotate-3 hover:rotate-0">
-               <Coffee className="text-white w-9 h-9 group-hover:scale-110 transition-transform" />
+          <aside className="hidden sm:flex w-[120px] bg-slate-50 border-r border-slate-200 flex-col items-center py-8 gap-12 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)] shrink-0">
+            <Link to={`${tenantPrefix}/`} className="transition-all duration-300 hover:scale-110 active:scale-95">
+               <Logo variant="icon" size="md" />
             </Link>
             
             <nav className="flex-1 flex flex-col gap-6 overflow-y-auto no-scrollbar w-full px-3">
