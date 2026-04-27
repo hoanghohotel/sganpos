@@ -10,8 +10,8 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-export const sendVerificationEmail = async (email: string, token: string, tenantId: string) => {
-  const appUrl = process.env.APP_URL || 'http://localhost:3000';
+export const sendVerificationEmail = async (email: string, token: string, tenantId: string, origin?: string) => {
+  const appUrl = origin || process.env.APP_URL || 'http://localhost:3000';
   const verificationLink = `${appUrl}/api/auth/verify?token=${token}&tenantId=${tenantId}`;
 
   const mailOptions = {

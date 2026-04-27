@@ -61,7 +61,8 @@ router.post('/register', async (req: any, res) => {
       console.log(`[Auth] Registration successful: ${user.email || user.phone}`);
       
       if (email && verificationToken) {
-        await sendVerificationEmail(email.trim(), verificationToken, tenantId);
+        const origin = `${req.protocol}://${req.get('host')}`;
+        await sendVerificationEmail(email.trim(), verificationToken, tenantId, origin);
         return res.status(201).json({ 
           message: 'Tài khoản đã được tạo. Vui lòng kiểm tra email để xác thực và kích hoạt tài khoản.',
           requireVerification: true
@@ -169,7 +170,12 @@ router.post('/login', async (req: any, res) => {
     }
 
     if (user.email && !user.isVerified) {
-       return res.status(403).json({ error: 'Vui lòng xác thực email của bạn trước khi đăng nhập.' });
+       return res.status(403).json({ 
+         error: 'Vui lòng xác thực email của bạn trước khi đăng nhập.',
+         requireVerification: true,
+         email: user.email,
+         tenantId: user.tenantId
+       });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -205,6 +211,36 @@ router.post('/login', async (req: any, res) => {
       error: 'Login failed',
       details: error.message || String(error)
     });
+  }
+});
+
+// Resend Verification Email
+router.post('/resend-verification', async (req: any, res) => {
+  try {
+    const { email, tenantId } = req.body;
+
+    if (!email || !tenantId) {
+      return res.status(400).json({ error: 'Email and Tenant ID are required' });
+    }
+
+    const user = await User.findOne({ email, tenantId, isVerified: false });
+
+    if (!user) {
+      return res.status(404).json({ error: 'Người dùng không tồn tại hoặc đã được xác thực.' });
+    }
+
+    // Generate new token if needed or reuse
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    user.verificationToken = verificationToken;
+    await user.save();
+
+    const origin = `${req.protocol}://${req.get('host')}`;
+    await sendVerificationEmail(email, verificationToken, tenantId, origin);
+
+    res.json({ message: 'Email xác thực đã được gửi lại thành công.' });
+  } catch (error) {
+    console.error('Resend verification error:', error);
+    res.status(500).json({ error: 'Lỗi khi gửi lại email xác thực.' });
   }
 });
 

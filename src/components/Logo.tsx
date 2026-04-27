@@ -32,7 +32,7 @@ const Logo: React.FC<LogoProps> = ({ className, variant = 'full', size = 'md' })
   }
 
   return (
-    <div className={cn("flex items-center gap-3", className)}>
+    <div className={cn("flex items-center justify-center gap-3", className)}>
       <svg 
         width="267" 
         height="152" 

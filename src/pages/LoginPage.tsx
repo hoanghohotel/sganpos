@@ -11,6 +11,10 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [subdomain, setSubdomain] = useState('');
   const [error, setError] = useState('');
+  const [showResend, setShowResend] = useState(false);
+  const [resendStatus, setResendStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [unverifiedEmail, setUnverifiedEmail] = useState('');
+  const [unverifiedTenantId, setUnverifiedTenantId] = useState('');
   const { login, user } = useAuthStore();
   const navigate = useNavigate();
   const tenantPrefix = getTenantPrefix();
@@ -42,6 +46,8 @@ const LoginPage = () => {
     }
 
     try {
+      setError('');
+      setShowResend(false);
       await login(identifier, password);
       navigate(`${tenantPrefix}/`);
     } catch (err: any) {
@@ -49,12 +55,38 @@ const LoginPage = () => {
       if (err.response) {
         const msg = err.response.data?.error;
         const details = err.response.data?.details;
+        const requireVerification = err.response.data?.requireVerification;
+        
         setError(typeof msg === 'string' ? (details ? `${msg}: ${details}` : msg) : 'Đăng nhập thất bại');
+        
+        if (requireVerification) {
+          setShowResend(true);
+          setUnverifiedEmail(err.response.data.email);
+          setUnverifiedTenantId(err.response.data.tenantId);
+        }
       } else if (err.request) {
         setError('Không thể kết nối tới máy chủ. Vui lòng kiểm tra mạng.');
       } else {
         setError(`Lỗi: ${err.message}`);
       }
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!unverifiedEmail || !unverifiedTenantId) return;
+    
+    setResendStatus('loading');
+    try {
+      const api = (await import('../lib/api')).default;
+      await api.post('/api/auth/resend-verification', {
+        email: unverifiedEmail,
+        tenantId: unverifiedTenantId
+      });
+      setResendStatus('success');
+      setShowResend(false);
+    } catch (err) {
+      console.error('Resend error:', err);
+      setResendStatus('error');
     }
   };
 
@@ -76,9 +108,27 @@ const LoginPage = () => {
         </div>
 
         {error && (
-          <div className="bg-rose-50 text-rose-600 p-4 rounded-2xl text-sm mb-6 font-medium border border-rose-100 flex items-center gap-3">
-             <span className="w-2 h-2 bg-rose-600 rounded-full animate-pulse" />
-             {typeof error === 'string' ? error : JSON.stringify(error)}
+          <div className="bg-rose-50 text-rose-600 p-4 rounded-2xl text-sm mb-6 font-medium border border-rose-100 flex flex-col gap-2">
+             <div className="flex items-center gap-3">
+               <span className="w-2 h-2 bg-rose-600 rounded-full animate-pulse" />
+               {typeof error === 'string' ? error : JSON.stringify(error)}
+             </div>
+             {showResend && (
+               <button 
+                 onClick={handleResendVerification}
+                 disabled={resendStatus === 'loading'}
+                 className="text-xs text-rose-800 font-black uppercase tracking-widest mt-1 hover:underline ml-5 disabled:opacity-50"
+               >
+                 {resendStatus === 'loading' ? 'Đang gửi...' : 'Gửi lại email xác thực'}
+               </button>
+             )}
+          </div>
+        )}
+
+        {resendStatus === 'success' && (
+          <div className="bg-emerald-50 text-emerald-600 p-4 rounded-2xl text-sm mb-6 font-medium border border-emerald-100 flex items-center gap-3">
+            <span className="w-2 h-2 bg-emerald-600 rounded-full" />
+            Email xác thực đã được gửi lại vào hòm thư {unverifiedEmail}. Vui lòng kiểm tra.
           </div>
         )}
 
