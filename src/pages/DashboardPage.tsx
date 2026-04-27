@@ -35,7 +35,7 @@ import { ShieldAlert } from 'lucide-react';
 
 const DashboardPage = () => {
   const { user } = useAuthStore();
-  const canViewReports = user?.role === 'ADMIN' || user?.permissions?.includes('REPORT_VIEW');
+  const canViewReports = user?.role === 'ADMIN' || user?.role === 'MANAGER' || user?.permissions?.includes('REPORT_VIEW');
   const [filter, setFilter] = useState('today');
   const [dateRange, setDateRange] = useState({
     start: startOfDay(new Date()),

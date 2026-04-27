@@ -12,18 +12,20 @@ const RegisterPage = () => {
   const [subdomain, setSubdomain] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isSuccess, setIsSuccess] = useState(false);
   const { register, user } = useAuthStore();
   const navigate = useNavigate();
   const tenantPrefix = getTenantPrefix();
 
   useEffect(() => {
-    if (user) {
+    if (user && !isSuccess) {
       navigate(`${tenantPrefix}/`);
     }
-  }, [user, navigate, tenantPrefix]);
+  }, [user, navigate, tenantPrefix, isSuccess]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     if (!email && !phone) {
       setError('Vui lòng nhập Email hoặc Số điện thoại');
       return;
@@ -40,7 +42,13 @@ const RegisterPage = () => {
     }
 
     try {
-      await register(name, { email, phone }, password, subdomain);
+      const response = await register(name, { email, phone }, password, subdomain);
+      
+      if (email) {
+        setIsSuccess(true);
+        return;
+      }
+
       // Construct the login URL for the new subdomain
       const protocol = window.location.protocol;
       const loginUrl = `${protocol}//${subdomain}.monday.com.vn/login`;
@@ -91,13 +99,31 @@ const RegisterPage = () => {
           <p className="text-slate-500 font-medium tracking-wide uppercase text-[10px] mt-2">Bắt đầu cửa hàng của bạn</p>
         </div>
 
-        {error && (
-          <div className="bg-rose-50 text-rose-600 p-4 rounded-2xl text-sm mb-6 font-medium border border-rose-100">
-             {typeof error === 'string' ? error : JSON.stringify(error)}
+        {isSuccess ? (
+          <div className="text-center py-10">
+            <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900 mb-4">Đăng ký thành công!</h2>
+            <p className="text-slate-600 mb-8 leading-relaxed">
+              Chúng tôi đã gửi một email xác thực đến <strong>{email}</strong>. 
+              Vui lòng kiểm tra hộp thư (bao gồm cả thư rác) và nhấn vào liên kết xác thực để kích hoạt tài khoản của bạn.
+            </p>
+            <Link to={`${tenantPrefix}/login`} className="inline-block w-full h-14 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 transition-all flex items-center justify-center gap-3 shadow-xl shadow-slate-200">
+              Quay lại đăng nhập
+            </Link>
           </div>
-        )}
+        ) : (
+          <>
+            {error && (
+              <div className="bg-rose-50 text-rose-600 p-4 rounded-2xl text-sm mb-6 font-medium border border-rose-100">
+                {typeof error === 'string' ? error : JSON.stringify(error)}
+              </div>
+            )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <label className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Tên cửa hàng / Chi nhánh</label>
             <input 
@@ -173,6 +199,8 @@ const RegisterPage = () => {
             Đăng ký ngay
           </button>
         </form>
+        </>
+        )}
 
         <div className="mt-10 pt-8 border-t border-slate-100 text-center">
           <Link to={`${tenantPrefix}/login`} className="text-slate-400 font-bold hover:text-slate-900 flex items-center justify-center gap-2 transition-colors">

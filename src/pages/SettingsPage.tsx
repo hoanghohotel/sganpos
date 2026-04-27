@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
 import axios from 'axios';
-import { Save, Building2, CreditCard, Upload, CheckCircle2, AlertCircle, ChevronDown, Search, Globe, Link as LinkIcon, User, Plus, Move, Trash2, GripVertical, Type, List, Hash, Layout, Printer, Eye } from 'lucide-react';
+import { ShieldAlert, Save, Building2, CreditCard, Upload, CheckCircle2, AlertCircle, ChevronDown, Search, Globe, Link as LinkIcon, User, Plus, Move, Trash2, GripVertical, Type, List, Hash, Layout, Printer, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -262,6 +262,7 @@ const PrintPreview = ({ fields, settings }: { fields: PrintField[], settings: an
 
 const SettingsPage = () => {
   const { user } = useAuthStore();
+  const canManageSettings = user?.role === 'ADMIN' || user?.role === 'MANAGER' || user?.permissions?.includes('SETTINGS_MANAGE');
   const [activeTab, setActiveTab] = useState<'overview' | 'payment' | 'subdomain' | 'templates'>('overview');
   const [banks, setBanks] = useState<Bank[]>([]);
   const [showBankList, setShowBankList] = useState(false);
@@ -447,6 +448,18 @@ const SettingsPage = () => {
     return (
       <div className="p-10 flex items-center justify-center h-full">
         <div className="w-10 h-10 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!canManageSettings) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-500">
+        <div className="w-24 h-24 bg-red-50 rounded-[32px] flex items-center justify-center mb-6">
+          <ShieldAlert size={48} className="text-red-500 opacity-20" />
+        </div>
+        <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-2">Truy cập bị từ chối</h2>
+        <p className="max-w-md font-medium">Bạn không có quyền truy cập vào chức năng cài đặt. Vui lòng liên hệ quản trị viên.</p>
       </div>
     );
   }

@@ -396,7 +396,7 @@ const POSPage = () => {
     const isSentItem = itemToUpdate.isSent;
 
     // Check permission for sent items
-    if (isSentItem && (user as any)?.role !== 'ADMIN' && !(user as any)?.permissions?.includes('POS_EDIT')) {
+    if (isSentItem && (user as any)?.role !== 'ADMIN' && (user as any)?.role !== 'MANAGER' && !(user as any)?.permissions?.includes('POS_EDIT')) {
       alert('Bạn không có quyền sửa món đã gửi bếp!');
       return;
     }
@@ -446,7 +446,7 @@ const POSPage = () => {
     const isSentItem = itemToRemove.isSent;
 
     // Check permission for sent items
-    if (isSentItem && (user as any)?.role !== 'ADMIN' && !(user as any)?.permissions?.includes('POS_DELETE')) {
+    if (isSentItem && (user as any)?.role !== 'ADMIN' && (user as any)?.role !== 'MANAGER' && !(user as any)?.permissions?.includes('POS_DELETE')) {
       alert('Bạn không có quyền xóa món đã gửi bếp!');
       return;
     }

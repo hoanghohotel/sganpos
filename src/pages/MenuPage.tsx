@@ -21,7 +21,7 @@ interface Product {
 
 const MenuPage = () => {
   const { user } = useAuthStore();
-  const canManageMenu = user?.role === 'ADMIN' || user?.permissions?.includes('MENU_MANAGE');
+  const canManageMenu = user?.role === 'ADMIN' || user?.role === 'MANAGER' || user?.permissions?.includes('MENU_MANAGE');
   
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>([]);

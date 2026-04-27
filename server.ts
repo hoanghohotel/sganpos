@@ -136,6 +136,8 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/tables', tableRoutes);
 app.use('/api/settings', settingsRoutes);
 
+import { authenticate, AuthRequest } from './src/middleware/auth.js';
+
 // --- Development & Admin APIs ---
 app.get('/api/dev/logs', (req, res) => {
   console.log('[Dev] Fetching logs...');
@@ -176,11 +178,24 @@ app.get('/api/dev/db-status', async (req, res) => {
   }
 });
 
-app.get('/api/admin/users', async (req, res) => {
+app.get('/api/admin/users', authenticate, async (req: AuthRequest, res) => {
   const tenantId = (req as any).tenantId;
-  console.log(`[Admin] Fetching all users for tenant ${tenantId}...`);
+  const user = req.user;
+  
+  console.log(`[Admin] Fetching users for tenant ${tenantId}, user role: ${user.role}...`);
   try {
-    const users = await User.find({ tenantId }, '-password');
+    let query: any = { tenantId };
+    
+    if (user.role === 'MANAGER') {
+      query.managerId = user._id;
+      query.role = 'STAFF'; // Managers only see their staff
+    } else if (user.role === 'ADMIN') {
+      // Admin sees everyone in tenant
+    } else {
+      return res.status(403).json({ error: 'Permission denied' });
+    }
+
+    const users = await User.find(query, '-password');
     res.json(users);
   } catch (err) {
     console.error('[Admin] User fetch failed:', err);
@@ -188,13 +203,26 @@ app.get('/api/admin/users', async (req, res) => {
   }
 });
 
-app.post('/api/admin/users', async (req, res) => {
+app.post('/api/admin/users', authenticate, async (req: AuthRequest, res) => {
   const tenantId = (req as any).tenantId;
+  const currentUser = req.user;
+
   try {
+    const { role } = req.body;
+
+    if (currentUser.role === 'MANAGER') {
+      if (role !== 'STAFF') {
+        return res.status(403).json({ error: 'MANAGER chỉ có thể tạo STAFF' });
+      }
+      req.body.managerId = currentUser._id;
+    } else if (currentUser.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Permission denied' });
+    }
+
     const hashedPassword = await bcrypt.hash(req.body.password || 'password@123', 10);
-    const user = new User({ ...req.body, tenantId, password: hashedPassword });
-    await user.save();
-    res.json(user);
+    const newUser = new User({ ...req.body, tenantId, password: hashedPassword });
+    await newUser.save();
+    res.json(newUser);
   } catch (err: any) {
     console.error('Failed to create user:', err);
     if (err.code === 11000) {
@@ -205,17 +233,33 @@ app.post('/api/admin/users', async (req, res) => {
   }
 });
 
-app.put('/api/admin/users/:id', async (req, res) => {
+app.put('/api/admin/users/:id', authenticate, async (req: AuthRequest, res) => {
   const tenantId = (req as any).tenantId;
+  const currentUser = req.user;
+
   try {
+    const targetUser = await User.findOne({ _id: req.params.id, tenantId });
+    if (!targetUser) return res.status(404).json({ error: 'User not found' });
+
+    if (currentUser.role === 'MANAGER') {
+      if (targetUser.managerId?.toString() !== currentUser._id.toString()) {
+        return res.status(403).json({ error: 'Bạn không có quyền sửa nhân viên này' });
+      }
+      // Manager cannot change role or managerId
+      delete req.body.role;
+      delete req.body.managerId;
+    } else if (currentUser.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Permission denied' });
+    }
+
     const updateData = { ...req.body };
     if (updateData.password) {
       updateData.password = await bcrypt.hash(updateData.password, 10);
     } else {
       delete updateData.password; // Don't overwrite with empty
     }
-    const user = await User.findOneAndUpdate({ _id: req.params.id, tenantId }, updateData, { new: true });
-    res.json(user);
+    const updatedUser = await User.findOneAndUpdate({ _id: req.params.id, tenantId }, updateData, { new: true });
+    res.json(updatedUser);
   } catch (err: any) {
     console.error('Failed to update user:', err);
     if (err.code === 11000) {
@@ -226,9 +270,22 @@ app.put('/api/admin/users/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/admin/users/:id', async (req, res) => {
+app.delete('/api/admin/users/:id', authenticate, async (req: AuthRequest, res) => {
   const tenantId = (req as any).tenantId;
+  const currentUser = req.user;
+
   try {
+    const targetUser = await User.findOne({ _id: req.params.id, tenantId });
+    if (!targetUser) return res.status(404).json({ error: 'User not found' });
+
+    if (currentUser.role === 'MANAGER') {
+      if (targetUser.managerId?.toString() !== currentUser._id.toString()) {
+        return res.status(403).json({ error: 'Bạn không có quyền xóa nhân viên này' });
+      }
+    } else if (currentUser.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Permission denied' });
+    }
+
     await User.findOneAndDelete({ _id: req.params.id, tenantId });
     res.json({ success: true });
   } catch (err) {

@@ -10,7 +10,7 @@ interface User {
   name: string;
   email?: string;
   phone?: string;
-  role: 'ADMIN' | 'STAFF';
+  role: 'ADMIN' | 'MANAGER' | 'STAFF';
   permissions: string[];
   isActive: boolean;
 }
@@ -31,14 +31,14 @@ const AdminPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const { user: currentUser } = useAuthStore();
-  const canManageUsers = currentUser?.role === 'ADMIN' || currentUser?.permissions?.includes('USER_MANAGE');
+  const canManageUsers = currentUser?.role === 'ADMIN' || currentUser?.role === 'MANAGER' || currentUser?.permissions?.includes('USER_MANAGE');
 
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     password: '',
-    role: 'STAFF' as 'ADMIN' | 'STAFF',
+    role: 'STAFF' as 'ADMIN' | 'MANAGER' | 'STAFF',
     permissions: [] as string[],
     isActive: true
   });
@@ -212,7 +212,9 @@ const AdminPage = () => {
                 <div className="flex items-center gap-4 mt-2">
                   <span className={cn(
                     "text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest",
-                    user.role === 'ADMIN' ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"
+                    user.role === 'ADMIN' ? "bg-amber-100 text-amber-700" : 
+                    user.role === 'MANAGER' ? "bg-emerald-100 text-emerald-700" :
+                    "bg-slate-100 text-slate-600"
                   )}>
                     {user.role}
                   </span>
@@ -361,7 +363,7 @@ const AdminPage = () => {
                   <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Vai trò</label>
                     <div className="flex p-1 bg-slate-50 rounded-2xl gap-1">
-                      {['STAFF', 'ADMIN'].map((r) => (
+                      {(currentUser?.role === 'ADMIN' ? ['STAFF', 'MANAGER', 'ADMIN'] : ['STAFF']).map((r) => (
                         <button
                           key={r}
                           type="button"

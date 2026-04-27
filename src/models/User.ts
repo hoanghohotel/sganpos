@@ -6,9 +6,12 @@ export interface IUser extends Document {
   email?: string;
   phone?: string;
   password: string;
-  role: 'ADMIN' | 'STAFF';
+  role: 'ADMIN' | 'MANAGER' | 'STAFF';
+  managerId?: string;
   permissions: string[];
   isActive: boolean;
+  isVerified: boolean;
+  verificationToken?: string;
 }
 
 const UserSchema: Schema = new Schema({
@@ -19,11 +22,14 @@ const UserSchema: Schema = new Schema({
   password: { type: String, required: true },
   role: { 
     type: String, 
-    enum: ['ADMIN', 'STAFF'], 
+    enum: ['ADMIN', 'MANAGER', 'STAFF'], 
     default: 'STAFF' 
   },
+  managerId: { type: String, index: true },
   permissions: { type: [String], default: [] },
-  isActive: { type: Boolean, default: true }
+  isActive: { type: Boolean, default: true },
+  isVerified: { type: Boolean, default: false },
+  verificationToken: { type: String }
 }, { timestamps: true });
 
 // Ensure unique email/phone per tenant if they are provided

@@ -5,6 +5,8 @@ import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useSocket } from '../hooks/useSocket';
+import { useAuthStore } from '../store/authStore';
+import { ShieldAlert } from 'lucide-react';
 
 interface Table {
   _id: string;
@@ -16,6 +18,8 @@ interface Table {
 }
 
 const TablesPage = () => {
+  const { user } = useAuthStore();
+  const canManageTables = user?.role === 'ADMIN' || user?.role === 'MANAGER' || user?.permissions?.includes('TABLE_MANAGE');
   const [tables, setTables] = useState<Table[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -109,6 +113,18 @@ const TablesPage = () => {
     const baseUrl = window.location.origin;
     return `${baseUrl}/order?tableId=${tableId}`;
   };
+
+  if (!canManageTables) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-500">
+        <div className="w-24 h-24 bg-red-50 rounded-[32px] flex items-center justify-center mb-6">
+          <ShieldAlert size={48} className="text-red-500 opacity-20" />
+        </div>
+        <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-2">Truy cập bị từ chối</h2>
+        <p className="max-w-md font-medium">Bạn không có quyền truy cập vào chức năng quản lý bàn. Vui lòng liên hệ quản trị viên.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 h-full flex flex-col gap-6">

@@ -1,9 +1,11 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import User from '../models/User.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
 import { getTenantId } from '../lib/tenant.js';
+import { sendVerificationEmail } from '../lib/mail.js';
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'default_secret';
@@ -40,17 +42,32 @@ router.post('/register', async (req: any, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const verificationToken = email ? crypto.randomBytes(32).toString('hex') : undefined;
+
     const user = new User({
       tenantId,
       name,
       email: email ? email.trim() : undefined,
       phone: phone ? phone.trim() : undefined,
-      password: hashedPassword
+      password: hashedPassword,
+      role: 'MANAGER',
+      isActive: email ? false : true, // Require verification for email
+      isVerified: email ? false : true,
+      verificationToken
     });
 
     try {
       await user.save();
       console.log(`[Auth] Registration successful: ${user.email || user.phone}`);
+      
+      if (email && verificationToken) {
+        await sendVerificationEmail(email.trim(), verificationToken, tenantId);
+        return res.status(201).json({ 
+          message: 'Tài khoản đã được tạo. Vui lòng kiểm tra email để xác thực và kích hoạt tài khoản.',
+          requireVerification: true
+        });
+      }
+
       res.status(201).json({ message: 'User created successfully' });
     } catch (saveError: any) {
       console.error('[Auth] Mongoose Save Error:', saveError);
@@ -68,6 +85,39 @@ router.post('/register', async (req: any, res) => {
       error: 'Đăng ký thất bại hệ thống', 
       details: error.message || String(error)
     });
+  }
+});
+
+// Verify Email
+router.get('/verify', async (req: any, res) => {
+  try {
+    const { token, tenantId } = req.query;
+
+    if (!token || !tenantId) {
+      return res.status(400).send('<h1>Lỗi xác thực</h1><p>Token hoặc TenantId không hợp lệ.</p>');
+    }
+
+    const user = await User.findOne({ verificationToken: token, tenantId });
+
+    if (!user) {
+      return res.status(400).send('<h1>Lỗi xác thực</h1><p>Token không hợp lệ hoặc đã hết hạn.</p>');
+    }
+
+    user.isVerified = true;
+    user.isActive = true;
+    user.verificationToken = undefined;
+    await user.save();
+
+    res.send(`
+      <div style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+        <h1 style="color: #059669;">Xác thực thành công!</h1>
+        <p>Tài khoản của bạn đã được kích hoạt. Bây giờ bạn có thể đăng nhập.</p>
+        <a href="/" style="display: inline-block; margin-top: 20px; padding: 10px 20px; background-color: #059669; color: white; text-decoration: none; border-radius: 5px;">Quay lại trang chủ</a>
+      </div>
+    `);
+  } catch (error) {
+    console.error('Email verification error:', error);
+    res.status(500).send('<h1>Lỗi hệ thống</h1><p>Đã có lỗi xảy ra trong quá trình xác thực.</p>');
   }
 });
 
@@ -111,13 +161,21 @@ router.post('/login', async (req: any, res) => {
     }
 
     if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials - user not found' });
+      return res.status(401).json({ error: 'Thông tin đăng nhập không chính xác' });
+    }
+
+    if (!user.isActive) {
+      return res.status(403).json({ error: 'Tài khoản chưa được kích hoạt hoặc đã bị khóa.' });
+    }
+
+    if (user.email && !user.isVerified) {
+       return res.status(403).json({ error: 'Vui lòng xác thực email của bạn trước khi đăng nhập.' });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       console.warn(`[Auth] Password mismatch for ${loginId}.`);
-      return res.status(401).json({ error: 'Invalid credentials - password mismatch' });
+      return res.status(401).json({ error: 'Thông tin đăng nhập không chính xác' });
     }
     
     console.log(`[Auth] Login successful: ${loginId} (${user.role}) mapping to ID: ${user._id}`);
