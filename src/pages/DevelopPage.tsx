@@ -357,7 +357,9 @@ const DevelopPage = () => {
                       <td className="p-6">
                         <span className={cn(
                           "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter",
-                          user.role === 'ADMIN' ? "bg-purple-500/10 text-purple-400 border border-purple-500/20" : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                          user.role === 'ADMIN' ? "bg-purple-500/10 text-purple-400 border border-purple-500/20" : 
+                          user.role === 'MANAGER' ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" :
+                          "bg-blue-500/10 text-blue-400 border border-blue-500/20"
                         )}>
                           {user.role}
                         </span>
@@ -445,6 +447,7 @@ const DevelopPage = () => {
                             onChange={e => setEditingUser({ ...editingUser, role: e.target.value as any })}
                           >
                             <option value="STAFF">STAFF</option>
+                            <option value="MANAGER">MANAGER</option>
                             <option value="ADMIN">ADMIN</option>
                           </select>
                         </div>

@@ -10,10 +10,10 @@ interface LogoProps {
 
 const Logo: React.FC<LogoProps> = ({ className, variant = 'full', size = 'md' }) => {
   const sizeClasses = {
-    sm: 'h-8',
-    md: 'h-12',
-    lg: 'h-16',
-    xl: 'h-24'
+    sm: 'h-10',
+    md: 'h-14',
+    lg: 'h-24',
+    xl: 'h-36'
   };
 
   if (variant === 'icon') {
@@ -21,9 +21,9 @@ const Logo: React.FC<LogoProps> = ({ className, variant = 'full', size = 'md' })
       <div className={cn(
         "bg-slate-900 rounded-[28%] flex items-center justify-center shadow-xl transform active:scale-95 transition-all",
         sizeClasses[size],
-        size === 'sm' ? "w-8 p-1" : 
-        size === 'md' ? "w-12 p-2" : 
-        size === 'lg' ? "w-16 p-3" : "w-24 p-5",
+        size === 'sm' ? "w-10 p-1.5" : 
+        size === 'md' ? "w-14 p-2.5" : 
+        size === 'lg' ? "w-24 p-4" : "w-36 p-6",
         className
       )}>
         <Coffee className="text-white w-full h-full" />
