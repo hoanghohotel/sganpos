@@ -102,7 +102,7 @@ const POSPage = () => {
   const [orderCode, setOrderCode] = useState('');
   
   // Shift states
-  const { shift, closeShift } = useAuthStore();
+  const { user, shift, closeShift } = useAuthStore();
   const [showCloseShiftModal, setShowCloseShiftModal] = useState(false);
   const [showShiftWarning, setShowShiftWarning] = useState(false);
   const [closingBalance, setClosingBalance] = useState<number>(0);
@@ -391,7 +391,15 @@ const POSPage = () => {
 
   const updateQuantity = async (id: string, delta: number) => {
     const itemToUpdate = cart.find(i => i.id === id);
-    const isSentItem = itemToUpdate?.isSent;
+    if (!itemToUpdate) return;
+    
+    const isSentItem = itemToUpdate.isSent;
+
+    // Check permission for sent items
+    if (isSentItem && (user as any)?.role !== 'ADMIN' && !(user as any)?.permissions?.includes('POS_EDIT')) {
+      alert('Bạn không có quyền sửa món đã gửi bếp!');
+      return;
+    }
     
     setCart((prev) => {
       const updated = prev
@@ -433,7 +441,15 @@ const POSPage = () => {
 
   const removeFromCart = async (id: string) => {
     const itemToRemove = cart.find(i => i.id === id);
-    const isSentItem = itemToRemove?.isSent;
+    if (!itemToRemove) return;
+    
+    const isSentItem = itemToRemove.isSent;
+
+    // Check permission for sent items
+    if (isSentItem && (user as any)?.role !== 'ADMIN' && !(user as any)?.permissions?.includes('POS_DELETE')) {
+      alert('Bạn không có quyền xóa món đã gửi bếp!');
+      return;
+    }
 
     setCart((prev) => {
       const updated = prev.filter((item) => item.id !== id);
@@ -756,11 +772,9 @@ const POSPage = () => {
                   )}
                   <div className="flex justify-between items-start pr-8">
                      <h4 className="text-xs font-black text-slate-800 uppercase tracking-tight leading-tight">{item.name}</h4>
-                     {!item.isSent && (
-                       <button onClick={() => removeFromCart(item.id)} className="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition-colors">
-                         <Trash2 size={16} />
-                       </button>
-                     )}
+                     <button onClick={() => removeFromCart(item.id)} className="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition-colors">
+                       <Trash2 size={16} />
+                     </button>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-slate-900 font-black text-base font-mono">
@@ -770,19 +784,13 @@ const POSPage = () => {
                       "flex items-center gap-3 p-1 rounded-xl shadow-inner border",
                       item.isSent ? "bg-slate-100 border-slate-200" : "bg-slate-50 border-slate-100 ring-1 ring-slate-200/50"
                     )}>
-                      {!item.isSent ? (
-                        <>
-                          <button onClick={() => updateQuantity(item.id, -1)} className="p-1.5 bg-white text-slate-400 hover:text-red-500 hover:shadow-sm rounded-lg transition-all">
-                            <Minus size={14} />
-                          </button>
-                          <span className="font-mono text-sm font-black min-w-[24px] text-center">{item.quantity}</span>
-                          <button onClick={() => updateQuantity(item.id, 1)} className="p-1.5 bg-white text-emerald-600 hover:text-emerald-700 hover:shadow-sm rounded-lg transition-all">
-                            <Plus size={14} />
-                          </button>
-                        </>
-                      ) : (
-                         <span className="font-mono text-sm font-black px-3 py-1 text-slate-500">x{item.quantity}</span>
-                      )}
+                      <button onClick={() => updateQuantity(item.id, -1)} className="p-1.5 bg-white text-slate-400 hover:text-red-500 hover:shadow-sm rounded-lg transition-all">
+                        <Minus size={14} />
+                      </button>
+                      <span className="font-mono text-sm font-black min-w-[24px] text-center">{item.quantity}</span>
+                      <button onClick={() => updateQuantity(item.id, 1)} className="p-1.5 bg-white text-emerald-600 hover:text-emerald-700 hover:shadow-sm rounded-lg transition-all">
+                        <Plus size={14} />
+                      </button>
                     </div>
                   </div>
                 </motion.div>

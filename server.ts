@@ -177,9 +177,10 @@ app.get('/api/dev/db-status', async (req, res) => {
 });
 
 app.get('/api/admin/users', async (req, res) => {
-  console.log('[Admin] Fetching all users...');
+  const tenantId = (req as any).tenantId;
+  console.log(`[Admin] Fetching all users for tenant ${tenantId}...`);
   try {
-    const users = await User.find({}, '-password');
+    const users = await User.find({ tenantId }, '-password');
     res.json(users);
   } catch (err) {
     console.error('[Admin] User fetch failed:', err);
@@ -188,9 +189,10 @@ app.get('/api/admin/users', async (req, res) => {
 });
 
 app.post('/api/admin/users', async (req, res) => {
+  const tenantId = (req as any).tenantId;
   try {
     const hashedPassword = await bcrypt.hash(req.body.password || 'password@123', 10);
-    const user = new User({ ...req.body, password: hashedPassword });
+    const user = new User({ ...req.body, tenantId, password: hashedPassword });
     await user.save();
     res.json(user);
   } catch (err: any) {
@@ -204,12 +206,15 @@ app.post('/api/admin/users', async (req, res) => {
 });
 
 app.put('/api/admin/users/:id', async (req, res) => {
+  const tenantId = (req as any).tenantId;
   try {
     const updateData = { ...req.body };
     if (updateData.password) {
       updateData.password = await bcrypt.hash(updateData.password, 10);
+    } else {
+      delete updateData.password; // Don't overwrite with empty
     }
-    const user = await User.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    const user = await User.findOneAndUpdate({ _id: req.params.id, tenantId }, updateData, { new: true });
     res.json(user);
   } catch (err: any) {
     console.error('Failed to update user:', err);
@@ -222,8 +227,9 @@ app.put('/api/admin/users/:id', async (req, res) => {
 });
 
 app.delete('/api/admin/users/:id', async (req, res) => {
+  const tenantId = (req as any).tenantId;
   try {
-    await User.findByIdAndDelete(req.params.id);
+    await User.findOneAndDelete({ _id: req.params.id, tenantId });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete user' });

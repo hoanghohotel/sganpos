@@ -30,8 +30,12 @@ import {
 } from 'recharts';
 import { format, subDays, startOfMonth, endOfMonth, startOfDay, endOfDay, subMonths } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { useAuthStore } from '../store/authStore';
+import { ShieldAlert } from 'lucide-react';
 
 const DashboardPage = () => {
+  const { user } = useAuthStore();
+  const canViewReports = user?.role === 'ADMIN' || user?.permissions?.includes('REPORT_VIEW');
   const [filter, setFilter] = useState('today');
   const [dateRange, setDateRange] = useState({
     start: startOfDay(new Date()),
@@ -98,6 +102,18 @@ const DashboardPage = () => {
     return (
       <div className="h-full flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+      </div>
+    );
+  }
+
+  if (!canViewReports) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-500">
+        <div className="w-24 h-24 bg-red-50 rounded-[32px] flex items-center justify-center mb-6">
+          <ShieldAlert size={48} className="text-red-500 opacity-20" />
+        </div>
+        <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-2">Truy cập bị từ chối</h2>
+        <p className="max-w-md font-medium">Bạn không có quyền truy cập vào chức năng báo cáo & thống kê. Vui lòng liên hệ quản trị viên.</p>
       </div>
     );
   }

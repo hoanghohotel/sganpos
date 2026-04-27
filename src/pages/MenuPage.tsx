@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../lib/api';
-import { Coffee, Plus, Search, Upload, Download, Edit2, Trash2, X, Save, Image as ImageIcon } from 'lucide-react';
+import { Coffee, Plus, Search, Upload, Download, Edit2, Trash2, X, Save, Image as ImageIcon, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import * as XLSX from 'xlsx';
+import { useAuthStore } from '../store/authStore';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -19,6 +20,9 @@ interface Product {
 }
 
 const MenuPage = () => {
+  const { user } = useAuthStore();
+  const canManageMenu = user?.role === 'ADMIN' || user?.permissions?.includes('MENU_MANAGE');
+  
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('Tất cả');
@@ -149,6 +153,18 @@ const MenuPage = () => {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
+
+  if (!canManageMenu) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-500">
+        <div className="w-24 h-24 bg-red-50 rounded-[32px] flex items-center justify-center mb-6">
+          <ShieldAlert size={48} className="text-red-500 opacity-20" />
+        </div>
+        <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-2">Truy cập bị từ chối</h2>
+        <p className="max-w-md font-medium">Bạn không có quyền truy cập vào chức năng quản lý thực đơn. Vui lòng liên hệ quản trị viên.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 sm:p-8 h-full flex flex-col gap-6 overflow-hidden">

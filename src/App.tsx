@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
-import { Coffee, CookingPot, Settings, LayoutDashboard, QrCode, LogOut, UtensilsCrossed, History, Bell, Grid2X2 } from 'lucide-react';
+import { Coffee, CookingPot, Settings, LayoutDashboard, QrCode, LogOut, UtensilsCrossed, History, Bell, Grid2X2, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { cn } from './lib/utils';
@@ -18,6 +18,7 @@ import CustomerOrderPage from './pages/CustomerOrderPage';
 import QRManagerPage from './pages/QRManagerPage';
 import SettingsPage from './pages/SettingsPage';
 import ShiftListPage from './pages/ShiftListPage';
+import AdminPage from './pages/AdminPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 
@@ -117,11 +118,16 @@ const MainLayout = () => {
     { to: `${tenantPrefix}/pos`, icon: Coffee, label: 'Bán hàng' },
     { to: `${tenantPrefix}/shifts`, icon: History, label: 'Lịch sử ca' },
     { to: `${tenantPrefix}/kitchen`, icon: CookingPot, label: 'Bếp', badge: hasNewOrder },
-    { to: `${tenantPrefix}/menu`, icon: UtensilsCrossed, label: 'Thực đơn' },
-    { to: `${tenantPrefix}/tables`, icon: Grid2X2, label: 'Bàn' },
-    { to: `${tenantPrefix}/qr`, icon: QrCode, label: 'Mã QR' },
-    { to: `${tenantPrefix}/settings`, icon: Settings, label: 'Cài đặt' },
-  ];
+    { to: `${tenantPrefix}/menu`, icon: UtensilsCrossed, label: 'Thực đơn', permission: 'MENU_MANAGE' },
+    { to: `${tenantPrefix}/tables`, icon: Grid2X2, label: 'Bàn', permission: 'TABLE_MANAGE' },
+    { to: `${tenantPrefix}/qr`, icon: QrCode, label: 'Mã QR', permission: 'TABLE_MANAGE' },
+    { to: `${tenantPrefix}/admin`, icon: Users, label: 'Nhân sự', permission: 'USER_MANAGE' },
+    { to: `${tenantPrefix}/settings`, icon: Settings, label: 'Cài đặt', permission: 'SETTINGS_MANAGE' },
+  ].filter(item => {
+    if (!item.permission) return true;
+    if (user?.role === 'ADMIN') return true;
+    return user?.permissions?.includes(item.permission);
+  });
 
   return (
     <div className="flex h-screen bg-[#F8FAFC] text-slate-800 flex-col sm:flex-row">
@@ -265,15 +271,6 @@ const MainLayout = () => {
         </AnimatePresence>
         </div>
       </main>
-    </div>
-  );
-};
-
-const AdminPage = () => {
-  return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold font-sans tracking-tight mb-4">Quản lý Hệ thống</h1>
-      <p className="text-gray-500 italic serif">Quản lý menu và báo cáo.</p>
     </div>
   );
 };

@@ -7,6 +7,7 @@ interface User {
   email?: string;
   phone?: string;
   role: 'ADMIN' | 'STAFF';
+  permissions: string[];
 }
 
 interface Shift {
