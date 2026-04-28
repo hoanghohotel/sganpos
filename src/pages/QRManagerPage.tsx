@@ -19,17 +19,22 @@ const QRManagerPage = () => {
   const [tables, setTables] = useState<Table[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'ALL' | 'DINE_IN' | 'TAKEAWAY' | 'DELIVERY'>('DINE_IN');
+  const [settings, setSettings] = useState<any>(null);
 
   useEffect(() => {
-    fetchTables();
+    fetchData();
   }, []);
 
-  const fetchTables = async () => {
+  const fetchData = async () => {
     try {
-      const response = await api.get('/api/tables');
-      setTables(response.data);
+      const [tableRes, settingsRes] = await Promise.all([
+        api.get('/api/tables'),
+        api.get('/api/settings/public/brand')
+      ]);
+      setTables(tableRes.data);
+      setSettings(settingsRes.data);
     } catch (error) {
-      console.error('Lỗi khi lấy danh sách bàn:', error);
+      console.error('Lỗi khi lấy dữ liệu:', error);
     } finally {
       setLoading(false);
     }
@@ -114,7 +119,7 @@ const QRManagerPage = () => {
                 level="H"
                 includeMargin={true}
                 imageSettings={{
-                  src: "/logo.svg",
+                  src: settings?.logoUrl || "/logo.svg",
                   x: undefined,
                   y: undefined,
                   height: 30,

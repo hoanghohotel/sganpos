@@ -131,7 +131,7 @@ const CustomerOrderPage = () => {
       const [prodRes, tableRes, setRes, allTablesRes] = await Promise.all([
         api.get('/api/products'),
         api.get(`/api/tables/${tableId}`),
-        api.get('/api/settings'),
+        api.get('/api/settings/public/brand'),
         api.get('/api/tables')
       ]);
 

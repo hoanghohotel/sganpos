@@ -317,8 +317,32 @@ app.delete('/api/admin/users/:id', authenticate, async (req: AuthRequest, res) =
       }
     }
 
-    await User.findOneAndDelete({ _id: req.params.id, tenantId });
-    res.json({ success: true });
+    // Cascade delete if ADMIN deletes a MANAGER
+    if (currentUser.role === 'ADMIN' && targetUser.role === 'MANAGER') {
+      const purgeTenantId = targetUser.tenantId;
+      console.log(`[Admin] Purging tenant data for: ${purgeTenantId}`);
+      
+      try {
+        // Delete everything for this tenant
+        // We use check to make sure models are registered or we import them
+        await Promise.all([
+          mongoose.connection.collection('products').deleteMany({ tenantId: purgeTenantId }),
+          mongoose.connection.collection('orders').deleteMany({ tenantId: purgeTenantId }),
+          mongoose.connection.collection('tables').deleteMany({ tenantId: purgeTenantId }),
+          mongoose.connection.collection('shifts').deleteMany({ tenantId: purgeTenantId }),
+          mongoose.connection.collection('settings').deleteMany({ tenantId: purgeTenantId }),
+          mongoose.connection.collection('users').deleteMany({ tenantId: purgeTenantId, role: { $ne: 'ADMIN' } }) 
+        ]);
+        console.log(`[Admin] Tenant ${purgeTenantId} purged successful.`);
+      } catch (purgeErr) {
+        console.error('[Admin] Purge error:', purgeErr);
+        // Continue anyway to delete the manager
+      }
+    } else {
+      await User.findOneAndDelete({ _id: req.params.id, tenantId });
+    }
+
+    res.json({ success: true, message: 'User and tenant data deleted' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete user' });
   }
