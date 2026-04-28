@@ -142,27 +142,30 @@ const PrintPreview = ({ fields, settings }: { fields: PrintField[], settings: an
     <div 
       id="print-preview-content"
       className={cn(
-        "w-[300px] min-h-[500px] bg-white shadow-2xl p-6 transition-all duration-500 mx-auto border border-slate-100",
-        isRetro && "font-mono scale-[0.98] border-dashed border-slate-300 shadow-none",
-        isModern && "rounded-3xl shadow-emerald-200/20",
+        "w-[320px] min-h-[500px] bg-white shadow-2xl p-6 transition-all duration-500 mx-auto border-t-[10px] border-emerald-500 rounded-t-sm",
+        isRetro && "font-mono scale-[0.98] border-dashed border-slate-300 shadow-none border-t-slate-800",
+        isModern && "rounded-3xl shadow-emerald-200/20 border-none",
         isElegant && "border-double border-4 border-slate-900 shadow-none px-8",
         isMinimal && "border-none shadow-sm"
       )}
+      style={{
+        fontFamily: isRetro ? "'JetBrains Mono', monospace" : "'Inter', sans-serif"
+      }}
     >
-      <div className="flex flex-col gap-4 text-slate-800">
+      <div className="space-y-4">
         {fields.filter(f => f.enabled).map(field => {
           switch (field.id) {
             case 'logo':
               return settings.logoUrl ? (
                 <div key={field.id} className="flex justify-center">
-                  <img src={settings.logoUrl} alt="Logo" className="w-16 h-16 object-contain grayscale" />
+                  <img src={settings.logoUrl} alt="Logo" className="w-16 h-16 object-contain" />
                 </div>
               ) : null;
             case 'store-name':
               return (
                 <div key={field.id} className={cn(
                    "text-center font-black uppercase tracking-tight",
-                   isModern ? "text-xl text-emerald-600" : "text-lg",
+                   isModern ? "text-xl text-emerald-600" : "text-lg text-slate-900",
                    isElegant && "border-b-2 border-slate-900 pb-2 mb-2"
                 )}>
                   {settings.storeName || 'SAIGON AN COFFEE'}
@@ -176,7 +179,7 @@ const PrintPreview = ({ fields, settings }: { fields: PrintField[], settings: an
               );
             case 'hotline':
               return (
-                <div key={field.id} className="text-[10px] text-center font-bold">
+                <div key={field.id} className="text-[10px] text-center font-bold text-slate-700">
                   Hotline: {settings.hotline || '0123.456.789'}
                 </div>
               );
@@ -184,61 +187,58 @@ const PrintPreview = ({ fields, settings }: { fields: PrintField[], settings: an
             case 'sep-2':
               return (
                 <div key={field.id} className={cn(
-                  "border-t my-1",
-                  isRetro ? "border-dotted border-slate-400" : "border-slate-100"
+                  "border-t my-2",
+                  isRetro ? "border-dashed border-slate-300" : "border-slate-100"
                 )} />
               );
             case 'order-info':
               return (
-                <div key={field.id} className="space-y-1 text-xs">
-                  <div className="flex justify-between">
-                    <span className="font-bold">Mã đơn:</span>
-                    <span>#ORD-123456</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-bold">Bàn:</span>
-                    <span>Bàn 05</span>
-                  </div>
+                <div key={field.id} className="space-y-1 text-[10px] text-slate-600">
+                   <div className="text-center font-black text-slate-900 mb-2 uppercase tracking-widest italic">Hóa đơn thanh toán</div>
+                   <div className="flex justify-between"><span>Mã Đơn:</span><span className="font-bold text-slate-900">#ABC123</span></div>
+                   <div className="flex justify-between"><span>Bàn:</span><span className="font-bold text-slate-900">Bàn 05</span></div>
+                   <div className="flex justify-between"><span>Ngày:</span><span>{new Date().toLocaleString('vi-VN')}</span></div>
+                   <div className="flex justify-between"><span>Nhân viên:</span><span>Admin</span></div>
                 </div>
               );
             case 'items-list':
               return (
                 <div key={field.id} className="space-y-2 py-2">
-                  <div className="flex justify-between text-[10px] font-black uppercase text-slate-400">
-                    <span>Món</span>
-                    <span>T.Tiền</span>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs">
-                        <span>Cà phê sữa đá x2</span>
-                        <span>50k</span>
+                  {[1, 2].map((_, i) => (
+                    <div key={i} className="flex justify-between text-[11px] items-start gap-4">
+                      <div className="flex-1">
+                        <div className="font-bold text-slate-900">{i === 0 ? 'Cà phê sữa đá' : 'Bạc xỉu'}</div>
+                        {i === 0 && <div className="text-[9px] text-slate-400 italic font-medium">Ghi chú: Ít đá, nhiều sữa</div>}
+                      </div>
+                      <div className="text-slate-500">x{i + 1}</div>
+                      <div className="font-bold text-slate-900">{(35000 * (i + 1)).toLocaleString()}</div>
                     </div>
-                    <div className="flex justify-between text-xs">
-                        <span>Bạc xỉu x1</span>
-                        <span>25k</span>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               );
             case 'totals':
               return (
-                <div key={field.id} className="space-y-1 pt-2 border-t border-slate-100">
-                  <div className="flex justify-between text-xs">
+                <div key={field.id} className="space-y-1 pt-2 border-t border-slate-900 mt-4">
+                  <div className="flex justify-between text-[10px] text-slate-500">
                     <span>Tạm tính</span>
-                    <span>75k</span>
+                    <span>105.000</span>
                   </div>
-                  <div className="flex justify-between text-base font-black">
+                  <div className="flex justify-between text-[10px] text-slate-500">
+                    <span>Giảm giá</span>
+                    <span>-5.000</span>
+                  </div>
+                  <div className="flex justify-between text-base font-black text-slate-900 pt-2 border-t border-slate-100 mt-2">
                     <span>TỔNG CỘNG</span>
-                    <span className={isModern ? "text-emerald-600" : ""}>75k</span>
+                    <span className={isModern ? "text-emerald-600" : ""}>100.000đ</span>
                   </div>
                 </div>
               );
             case 'qr':
               return (
-                <div key={field.id} className="flex flex-col items-center gap-2 mt-4">
-                  <div className="text-[8px] font-black uppercase text-slate-400">Quét mã để thanh toán</div>
-                  <div className="w-32 h-32 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center grayscale overflow-hidden">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=example" alt="QR" className="w-24 h-24 opacity-50" />
+                <div key={field.id} className="flex flex-col items-center gap-2 py-4">
+                  <div className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Quét mã thanh toán</div>
+                  <div className="w-32 h-32 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center overflow-hidden">
+                    <img src="https://img.vietqr.io/image/970423-123456789-compact2.png?amount=100000&addInfo=TT%20BAN05" alt="QR" className="w-full h-full object-contain p-2" />
                   </div>
                 </div>
               );
@@ -251,7 +251,7 @@ const PrintPreview = ({ fields, settings }: { fields: PrintField[], settings: an
             default:
               if (field.isCustom) {
                 return (
-                  <div key={field.id} className="text-xs text-center py-1">
+                  <div key={field.id} className="text-[10px] text-center py-1 border-b border-slate-50 text-slate-500">
                     {field.value}
                   </div>
                 );
@@ -549,7 +549,7 @@ const SettingsPage = () => {
             activeTab === 'templates' ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
           )}
         >
-          <CreditCard size={16} />
+          <Layout size={16} />
           Mẫu in
         </button>
         <button
@@ -786,11 +786,11 @@ const SettingsPage = () => {
                  </button>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+              <div className="grid grid-cols-1 xl:grid-cols-[1fr,350px] gap-8 items-start">
                 {/* Designer Side */}
                 <div className="space-y-6">
                   {!isDesigning ? (
-                    <div className="grid grid-cols-1 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
                       {printTemplates.map((template) => (
                         <div 
                           key={template.id}
@@ -896,10 +896,10 @@ const SettingsPage = () => {
                 </div>
 
                 {/* Preview Side */}
-                <div className="sticky top-0 bg-slate-50 p-8 rounded-[40px] flex flex-col gap-6 items-center">
+                <div className="sticky top-6 bg-slate-900 p-8 rounded-[40px] flex flex-col gap-6 items-center shadow-2xl shadow-slate-900/20 order-last xl:order-none">
                   <div className="w-full flex items-center justify-between">
                     <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                      <Eye size={14} />
+                      <Eye size={14} className="text-emerald-500" />
                       Xem trước bản in
                     </div>
                     <button
@@ -913,11 +913,11 @@ const SettingsPage = () => {
                               <head>
                                 <title>In thử mẫu hóa đơn</title>
                                 <style>
-                                  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=JetBrains+Mono&display=swap');
+                                  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono&display=swap');
                                   body { font-family: 'Inter', sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; background: #f8fafc; }
                                   .print-wrapper { background: white; padding: 20px; width: 80mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
                                   ${settings.defaultPrintTemplate === 'retro' ? ".print-wrapper { font-family: 'JetBrains Mono', monospace; }" : ""}
-                                  .print-wrapper * { max-width: 100%; }
+                                  .print-wrapper * { max-width: 100%; box-sizing: border-box; }
                                   @media print {
                                     body { background: white; padding: 0; }
                                     .print-wrapper { box-shadow: none; width: 100%; border: none; padding: 0; }
@@ -934,17 +934,19 @@ const SettingsPage = () => {
                           printWindow.document.close();
                         }
                       }}
-                      className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg shadow-slate-200"
+                      className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20"
                     >
                       <Printer size={14} />
                       In thử
                     </button>
                   </div>
                   
-                  <PrintPreview fields={templateFields} settings={settings} />
+                  <div className="scale-[0.85] origin-top">
+                    <PrintPreview fields={templateFields} settings={settings} />
+                  </div>
 
-                  <div className="max-w-[280px] text-center italic text-[9px] text-slate-400 leading-relaxed font-medium">
-                    Lưu ý: Hình ảnh thực tế khi in ra từ máy in nhiệt có thể khác nhau tùy thuộc vào khổ giấy (58mm/80mm) và độ phân giải của máy.
+                  <div className="max-w-[280px] text-center italic text-[9px] text-slate-500 leading-relaxed font-medium">
+                    Lưu ý: Bạn nên sử dụng chế độ "In thử" để kiểm tra chính xác định dạng trên máy in thực tế.
                   </div>
                 </div>
               </div>
