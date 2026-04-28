@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
 import axios from 'axios';
-import { ShieldAlert, Save, Building2, CreditCard, Upload, CheckCircle2, AlertCircle, ChevronDown, Search, Globe, Link as LinkIcon, User, Plus, Move, Trash2, GripVertical, Type, List, Hash, Layout, Printer, Eye } from 'lucide-react';
+import { ShieldAlert, Save, Building2, CreditCard, Upload, CheckCircle2, AlertCircle, ChevronDown, Search, Globe, Link as LinkIcon, User, Plus, Move, Trash2, GripVertical, Type, List, Hash, Layout, Printer, Eye, Wifi } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -139,13 +139,16 @@ const PrintPreview = ({ fields, settings }: { fields: PrintField[], settings: an
   const isElegant = settings.defaultPrintTemplate === 'elegant';
 
   return (
-    <div className={cn(
-      "w-[300px] min-h-[500px] bg-white shadow-2xl p-6 transition-all duration-500 mx-auto border border-slate-100",
-      isRetro && "font-mono scale-[0.98] border-dashed border-slate-300 shadow-none",
-      isModern && "rounded-3xl shadow-emerald-200/20",
-      isElegant && "border-double border-4 border-slate-900 shadow-none px-8",
-      isMinimal && "border-none shadow-sm"
-    )}>
+    <div 
+      id="print-preview-content"
+      className={cn(
+        "w-[300px] min-h-[500px] bg-white shadow-2xl p-6 transition-all duration-500 mx-auto border border-slate-100",
+        isRetro && "font-mono scale-[0.98] border-dashed border-slate-300 shadow-none",
+        isModern && "rounded-3xl shadow-emerald-200/20",
+        isElegant && "border-double border-4 border-slate-900 shadow-none px-8",
+        isMinimal && "border-none shadow-sm"
+      )}
+    >
       <div className="flex flex-col gap-4 text-slate-800">
         {fields.filter(f => f.enabled).map(field => {
           switch (field.id) {
@@ -894,9 +897,48 @@ const SettingsPage = () => {
 
                 {/* Preview Side */}
                 <div className="sticky top-0 bg-slate-50 p-8 rounded-[40px] flex flex-col gap-6 items-center">
-                  <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                    <Eye size={14} />
-                    Xem trước bản in
+                  <div className="w-full flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      <Eye size={14} />
+                      Xem trước bản in
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const content = document.getElementById('print-preview-content')?.innerHTML;
+                        const printWindow = window.open('', '_blank');
+                        if (printWindow && content) {
+                          printWindow.document.write(`
+                            <html>
+                              <head>
+                                <title>In thử mẫu hóa đơn</title>
+                                <style>
+                                  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=JetBrains+Mono&display=swap');
+                                  body { font-family: 'Inter', sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; background: #f8fafc; }
+                                  .print-wrapper { background: white; padding: 20px; width: 80mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+                                  ${settings.defaultPrintTemplate === 'retro' ? ".print-wrapper { font-family: 'JetBrains Mono', monospace; }" : ""}
+                                  .print-wrapper * { max-width: 100%; }
+                                  @media print {
+                                    body { background: white; padding: 0; }
+                                    .print-wrapper { box-shadow: none; width: 100%; border: none; padding: 0; }
+                                  }
+                                </style>
+                              </head>
+                              <body onload="window.print(); window.close();">
+                                <div class="print-wrapper">
+                                  ${content}
+                                </div>
+                              </body>
+                            </html>
+                          `);
+                          printWindow.document.close();
+                        }
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg shadow-slate-200"
+                    >
+                      <Printer size={14} />
+                      In thử
+                    </button>
                   </div>
                   
                   <PrintPreview fields={templateFields} settings={settings} />
@@ -920,25 +962,88 @@ const SettingsPage = () => {
                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight mb-1">Kết nối máy in</h3>
                    <p className="text-xs text-slate-500">Quản lý máy in hóa đơn (LAN/USB/Browser).</p>
                  </div>
-                 <button
-                   type="button"
-                   onClick={() => {
-                     const newPrinters = [...(settings.printers || [])];
-                     newPrinters.push({
-                       id: Date.now().toString(),
-                       name: `Máy in ${newPrinters.length + 1}`,
-                       type: 'LAN',
-                       address: '192.168.1.100',
-                       role: 'RECEIPT',
-                       status: 'ONLINE'
-                     });
-                     setSettings({ ...settings, printers: newPrinters });
-                   }}
-                   className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-all shadow-sm"
-                 >
-                   <Plus size={14} />
-                   Thêm máy in
-                 </button>
+                 <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newPrinters = [...(settings.printers || [])];
+                        newPrinters.push({
+                          id: Date.now().toString(),
+                          name: `Máy in ${newPrinters.length + 1}`,
+                          type: 'LAN',
+                          address: '192.168.1.100',
+                          role: 'RECEIPT',
+                          status: 'ONLINE'
+                        });
+                        setSettings({ ...settings, printers: newPrinters });
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-all shadow-sm"
+                    >
+                      <Plus size={14} />
+                      Thêm thủ công
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          // @ts-ignore
+                          if (!navigator.usb) throw new Error('Not supported');
+                          // @ts-ignore
+                          const device = await navigator.usb.requestDevice({ filters: [] });
+                          if (device) {
+                            const newPrinters = [...(settings.printers || [])];
+                            newPrinters.push({
+                              id: device.serialNumber || Date.now().toString(),
+                              name: device.productName || `USB Printer ${device.vendorId}`,
+                              type: 'USB',
+                              role: 'RECEIPT',
+                              status: 'ONLINE',
+                              vendorId: device.vendorId,
+                              productId: device.productId
+                            });
+                            setSettings({ ...settings, printers: newPrinters });
+                          }
+                        } catch (err) {
+                           alert('Thiết bị không hỗ trợ quét USB hoặc bạn chưa cấp quyền.');
+                        }
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all shadow-sm"
+                    >
+                      <Printer size={14} />
+                      Quét USB
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          // @ts-ignore
+                          if (!navigator.bluetooth) throw new Error('Not supported');
+                          // @ts-ignore
+                          const device = await navigator.bluetooth.requestDevice({
+                            acceptAllDevices: true,
+                            optionalServices: ['00001101-0000-1000-8000-00805f9b34fb']
+                          });
+                          if (device) {
+                            const newPrinters = [...(settings.printers || [])];
+                            newPrinters.push({
+                              id: device.id,
+                              name: device.name || 'Bluetooth Printer',
+                              type: 'BLUETOOTH',
+                              role: 'RECEIPT',
+                              status: 'ONLINE'
+                            });
+                            setSettings({ ...settings, printers: newPrinters });
+                          }
+                        } catch (err) {
+                           alert('Thiết bị không hỗ trợ quét Bluetooth hoặc chưa bật Bluetooth.');
+                        }
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all shadow-sm"
+                    >
+                      <Wifi size={14} />
+                      Quét Bluetooth
+                    </button>
+                 </div>
               </div>
 
               <div className="space-y-4">
@@ -980,6 +1085,7 @@ const SettingsPage = () => {
                                   >
                                     <option value="LAN">LAN / WIFI</option>
                                     <option value="USB">USB</option>
+                                    <option value="BLUETOOTH">BLUETOOTH</option>
                                     <option value="BROWSER">TRÌNH DUYỆT</option>
                                   </select>
                                   {pr.type === 'LAN' && (
@@ -993,6 +1099,9 @@ const SettingsPage = () => {
                                       }}
                                       placeholder="192.168.1.100"
                                     />
+                                  )}
+                                  {pr.type === 'USB' && (
+                                    <span className="text-slate-400">ID: {pr.vendorId}:{pr.productId}</span>
                                   )}
                                   <select 
                                     className="bg-transparent border-none p-0 focus:ring-0 cursor-pointer hover:text-slate-900 transition-colors"
@@ -1048,12 +1157,21 @@ const SettingsPage = () => {
               <div className="p-6 bg-amber-50 rounded-2xl border border-amber-100 flex gap-4">
                  <AlertCircle size={20} className="text-amber-600 mt-1 shrink-0" />
                  <div>
-                    <h4 className="text-xs font-black text-amber-900 uppercase mb-1">Lưu ý kết nối</h4>
-                    <ul className="text-[10px] text-amber-700/80 font-medium space-y-1 list-disc ml-3">
-                       <li>Máy in LAN cần được cắm dây mạng và set IP tĩnh để đảm bảo ổn định.</li>
-                       <li>In qua USB yêu cầu cài đặt Driver máy in lên máy tính/POS sử dụng.</li>
-                       <li>Khoảng cách kết nối WIFI có thể ảnh hưởng đến tốc độ in ấn.</li>
-                    </ul>
+                    <h4 className="text-xs font-black text-amber-900 uppercase mb-1">Hướng dẫn kết nối theo thiết bị</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-3">
+                       <div className="space-y-1">
+                          <p className="text-[10px] font-black text-amber-800 uppercase">Máy tính (PC/Laptop)</p>
+                          <p className="text-[9px] text-amber-700/70 leading-relaxed">Sử dụng "Quét USB" để nhận diện máy in cắm trực tiếp. Cần cài Driver nếu in qua Browser.</p>
+                       </div>
+                       <div className="space-y-1">
+                          <p className="text-[10px] font-black text-amber-800 uppercase">Android</p>
+                          <p className="text-[9px] text-amber-700/70 leading-relaxed">Bật Bluetooth và vị trí. Sử dụng "Quét Bluetooth" để tìm máy in nhiệt di động.</p>
+                       </div>
+                       <div className="space-y-1">
+                          <p className="text-[10px] font-black text-amber-800 uppercase">iOS / iPad</p>
+                          <p className="text-[9px] text-amber-700/70 leading-relaxed">Ưu tiên máy in LAN/WIFI. Với Bluetooth, cần app hỗ trợ hoặc trình duyệt có Web Bluetooth.</p>
+                       </div>
+                    </div>
                  </div>
               </div>
             </motion.div>
