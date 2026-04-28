@@ -122,8 +122,8 @@ const DashboardPage = () => {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <Badge variant="outline" className="mb-2 uppercase tracking-widest font-black opacity-60">Thống kê vận hành</Badge>
-          <h1 className="text-4xl font-black tracking-tighter uppercase italic leading-none">Bảng điều khiển</h1>
-          <div className="flex items-center gap-2 text-muted-foreground mt-3 font-bold text-sm">
+          <h1 className="text-3xl font-black tracking-tighter uppercase italic leading-none">Bảng điều khiển</h1>
+          <div className="flex items-center gap-2 text-muted-foreground mt-3 font-bold text-xs">
             <CalendarIcon size={14} className="text-primary" />
             {format(dateRange.start, 'dd/MM/yyyy')} — {format(dateRange.end, 'dd/MM/yyyy')}
           </div>
@@ -168,16 +168,16 @@ const DashboardPage = () => {
                 {isLoading ? (
                   <Skeleton className="h-8 w-24 mb-1" />
                 ) : (
-                  <div className="text-2xl font-black tracking-tight mb-1">
+                  <div className="text-xl font-black tracking-tight mb-1">
                     {stat.isCurrency ? formatCurrency(stat.value) : stat.value.toLocaleString('vi-VN')}
                   </div>
                 )}
-                <div className="flex items-center gap-1.5">
-                  <span className={cn("text-[10px] font-black", stat.trend.startsWith('+') ? 'text-emerald-500' : stat.trend.startsWith('-') ? 'text-rose-500' : 'text-blue-500')}>
+                <div className="flex items-center gap-1.5 line-clamp-1">
+                  <span className={cn("text-xs font-black", stat.trend.startsWith('+') ? 'text-emerald-500' : stat.trend.startsWith('-') ? 'text-rose-500' : 'text-blue-500')}>
                     {stat.trend.startsWith('+') ? <ArrowUpRight className="inline h-3 w-3" /> : stat.trend.startsWith('-') ? <ArrowDownRight className="inline h-3 w-3" /> : null}
                     {stat.trend}
                   </span>
-                  <span className="text-[10px] font-bold text-muted-foreground italic">so với kỳ trước</span>
+                  <span className="text-xs font-bold text-muted-foreground italic truncate">so với kỳ trước</span>
                 </div>
               </CardContent>
             </Card>
@@ -196,7 +196,7 @@ const DashboardPage = () => {
                   <CardDescription className="font-bold text-xs uppercase tracking-widest opacity-60">Hiệu suất kinh doanh theo thời gian</CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 border-none font-black text-[10px]">REAL-TIME</Badge>
+                  <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 border-none font-black text-xs">REAL-TIME</Badge>
                 </div>
               </div>
             </CardHeader>
@@ -218,13 +218,13 @@ const DashboardPage = () => {
                         dataKey="_id" 
                         axisLine={false} 
                         tickLine={false} 
-                        tick={{ fontSize: 10, fontWeight: 700, fill: 'oklch(0.556 0 0)' }}
+                        tick={{ fontSize: 11, fontWeight: 700, fill: 'oklch(0.556 0 0)' }}
                         tickFormatter={(val) => format(new Date(val), 'dd/MM')}
                       />
                       <YAxis 
                         axisLine={false} 
                         tickLine={false} 
-                        tick={{ fontSize: 10, fontWeight: 700, fill: 'oklch(0.556 0 0)' }}
+                        tick={{ fontSize: 11, fontWeight: 700, fill: 'oklch(0.556 0 0)' }}
                         tickFormatter={(val) => `${(val / 1000).toLocaleString()}k`}
                       />
                       <Tooltip 
@@ -266,7 +266,7 @@ const DashboardPage = () => {
                 </div>
                 <div>
                   <CardTitle className="text-lg font-black tracking-tight italic uppercase">Thanh toán</CardTitle>
-                  <CardDescription className="text-[10px] font-black uppercase tracking-widest opacity-60">Cơ cấu nguồn thu</CardDescription>
+                  <CardDescription className="text-xs font-black uppercase tracking-widest opacity-60">Cơ cấu nguồn thu</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -317,7 +317,7 @@ const DashboardPage = () => {
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-black tracking-tight">{formatCurrency(method.revenue)}</p>
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase">{((method.revenue / Math.max(data.summary.total, 1)) * 100).toFixed(1)}%</p>
+                      <p className="text-xs font-bold text-muted-foreground uppercase">{((method.revenue / Math.max(data.summary.total, 1)) * 100).toFixed(1)}%</p>
                     </div>
                   </div>
                 ))}
@@ -345,7 +345,7 @@ const DashboardPage = () => {
                 </div>
                 <div>
                   <CardTitle className="text-lg font-black tracking-tight italic uppercase">Top sản phẩm</CardTitle>
-                  <CardDescription className="text-[10px] font-black uppercase tracking-widest opacity-60">Sản phẩm mang lại doanh thu cao nhất</CardDescription>
+                  <CardDescription className="text-xs font-black uppercase tracking-widest opacity-60">Sản phẩm mang lại doanh thu cao nhất</CardDescription>
                 </div>
               </div>
               <Badge variant="outline" className="rounded-lg font-black">TOP 5</Badge>
@@ -412,22 +412,22 @@ const DashboardPage = () => {
             </div>
 
             <CardHeader className="relative z-10">
-              <CardTitle className="text-2xl font-black tracking-tight italic uppercase text-emerald-400">Gợi ý vận hành</CardTitle>
-              <CardDescription className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">Phân tích Insight thông minh</CardDescription>
+              <CardTitle className="text-xl font-black tracking-tight italic uppercase text-emerald-400">Gợi ý vận hành</CardTitle>
+              <CardDescription className="text-slate-400 font-bold text-xs uppercase tracking-widest">Phân tích Insight thông minh</CardDescription>
             </CardHeader>
             
             <CardContent className="relative z-10 pt-4 space-y-10">
               <div className="grid grid-cols-2 gap-8">
                 <div className="space-y-6">
                   <div>
-                    <Badge className="bg-emerald-500/20 text-emerald-400 border-none text-[9px] px-2 py-0.5 mb-2 font-black">NHẬN XÉT</Badge>
+                    <Badge className="bg-emerald-500/20 text-emerald-400 border-none text-xs px-2 py-0.5 mb-2 font-black">NHẬN XÉT</Badge>
                     <p className="text-slate-200 font-medium text-sm leading-relaxed tracking-tight">
                       Hệ thống ghi nhận <span className="font-black text-white px-1.5 py-0.5 bg-emerald-600 rounded-lg">{data?.summary?.count || 0}</span> giao dịch thành công trong kỳ này. 
                     </p>
                   </div>
 
                   <div>
-                    <Badge className="bg-blue-500/20 text-blue-400 border-none text-[9px] px-2 py-0.5 mb-2 font-black">THANH TOÁN</Badge>
+                    <Badge className="bg-blue-500/20 text-blue-400 border-none text-xs px-2 py-0.5 mb-2 font-black">THANH TOÁN</Badge>
                     <p className="text-slate-200 font-medium text-sm leading-relaxed tracking-tight">
                       {data?.paymentMethods?.length > 0 ? (
                         `Kênh ${data.paymentMethods[0]?._id === 'TRANSFER' ? 'Chuyển khoản' : 'Tiền mặt'} đang chiếm ưu thế với ${(data.paymentMethods[0]?.count / Math.max(data.summary.count, 1) * 100).toFixed(0)}% lưu lượng.`
@@ -440,10 +440,10 @@ const DashboardPage = () => {
                   <div className="h-16 w-16 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 mb-4">
                     <CalendarIcon className="text-emerald-500" size={32} />
                   </div>
-                  <p className="text-white font-black text-5xl tracking-tighter tabular-nums mb-1">
+                  <p className="text-white font-black text-4xl tracking-tighter tabular-nums mb-1">
                     {isLoading ? "..." : (data?.summary?.count || 0)}
                   </p>
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Đơn hoàn tất</p>
+                  <p className="text-xs font-black text-slate-500 uppercase tracking-widest">Đơn hoàn tất</p>
                   <div className="mt-8 w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
                      <motion.div 
                         initial={{ width: 0 }}
@@ -452,7 +452,7 @@ const DashboardPage = () => {
                         className="h-full bg-emerald-500" 
                       />
                   </div>
-                  <p className="text-[9px] font-bold text-slate-500 mt-2 uppercase">75% chỉ tiêu tuần</p>
+                  <p className="text-xs font-bold text-slate-500 mt-2 uppercase">75% chỉ tiêu tuần</p>
                 </div>
               </div>
 

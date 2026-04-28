@@ -87,11 +87,11 @@ const AppLayout = () => {
           className="relative z-10 flex flex-col items-center"
         >
           <Logo size="xl" className="mb-8" />
-          <h1 className="text-4xl sm:text-7xl font-black text-foreground tracking-tight leading-tight mb-8">
+          <h1 className="text-4xl sm:text-6xl font-black text-foreground tracking-tight leading-tight mb-8">
             Quản lý vận hành <br/> 
             <span className="text-primary">với đẳng cấp mới</span>
           </h1>
-          <p className="text-muted-foreground text-lg sm:text-2xl font-medium max-w-xl mb-12 mx-auto leading-relaxed">
+          <p className="text-muted-foreground text-sm sm:text-lg font-medium max-w-xl mb-12 mx-auto leading-relaxed">
             Hệ sinh thái thông minh chuyên biệt cho chuỗi cà phê & nhà hàng hiện đại. 
             Tối ưu quy trình, bứt phá doanh thu.
           </p>
@@ -161,8 +161,8 @@ const AppLayout = () => {
         <Link to={`${tenantPrefix}/`} className="flex items-center gap-3 group">
           <Logo variant="icon" size="md" className="group-hover:scale-110 transition-transform" />
           <div className="flex flex-col">
-            <span className="font-black text-lg tracking-tight leading-none">SAIGON AN</span>
-            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Coffee & Tea</span>
+            <span className="font-black text-base tracking-tight leading-none">SAIGON AN</span>
+            <span className="text-xs uppercase tracking-widest text-muted-foreground font-bold">Coffee & Tea</span>
           </div>
         </Link>
       </div>
@@ -210,7 +210,7 @@ const AppLayout = () => {
           </div>
           <div className="flex flex-col min-w-0">
             <span className="font-bold text-sm truncate">{user?.fullName || user?.username}</span>
-            <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{user?.role}</span>
+            <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{user?.role}</span>
           </div>
           <Button 
             variant="ghost" 
@@ -251,7 +251,7 @@ const AppLayout = () => {
                 </SheetContent>
               </Sheet>
             )}
-            <h2 className="hidden sm:block font-extrabold text-xl lg:text-2xl tracking-tighter text-foreground/90">
+            <h2 className="hidden sm:block font-extrabold text-lg lg:text-xl tracking-tighter text-foreground/90">
               {navItems.find(item => item.to === location.pathname)?.label || 'Bảng điều khiển'}
             </h2>
             {location.pathname.includes('/kitchen') && hasNewOrder && (

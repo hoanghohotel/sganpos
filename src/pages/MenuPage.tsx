@@ -240,11 +240,11 @@ const MenuPage = () => {
           <table className="w-full text-left min-w-[600px]">
             <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
               <tr>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Hình ảnh</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tên món</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Danh mục</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Giá</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Thao tác</th>
+                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Hình ảnh</th>
+                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Tên món</th>
+                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Danh mục</th>
+                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-right">Giá</th>
+                <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-center">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -347,7 +347,7 @@ const MenuPage = () => {
                       ) : (
                         <>
                           <ImageIcon className="text-slate-300" />
-                          <span className="text-[10px] font-black text-slate-400 uppercase">Ảnh</span>
+                          <span className="text-xs font-black text-slate-400 uppercase">Ảnh</span>
                         </>
                       )}
                     </div>
@@ -355,7 +355,7 @@ const MenuPage = () => {
 
                     <div className="flex-1 flex flex-col gap-4">
                       <div>
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Tên món</label>
+                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1 block">Tên món</label>
                         <input 
                           type="text"
                           className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-bold"
@@ -364,7 +364,7 @@ const MenuPage = () => {
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Giá cơ bản (VNĐ)</label>
+                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1 block">Giá cơ bản (VNĐ)</label>
                         <input 
                           type="number"
                           className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-mono font-black"
@@ -376,7 +376,7 @@ const MenuPage = () => {
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Danh mục</label>
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1 block">Danh mục</label>
                     <input 
                       type="text"
                       className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-bold"

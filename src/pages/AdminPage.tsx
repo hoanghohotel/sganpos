@@ -225,7 +225,7 @@ const AdminPage = () => {
                 <h3 className="text-lg font-black text-slate-900 truncate uppercase tracking-tight">{user.name}</h3>
                 <div className="flex items-center gap-4 mt-2">
                   <span className={cn(
-                    "text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest",
+                    "text-xs font-black px-2.5 py-1 rounded-lg uppercase tracking-widest",
                     user.role === 'ADMIN' ? "bg-amber-100 text-amber-700" : 
                     user.role === 'MANAGER' ? "bg-emerald-100 text-emerald-700" :
                     "bg-slate-100 text-slate-600"
@@ -233,7 +233,7 @@ const AdminPage = () => {
                     {user.role}
                   </span>
                   {!user.isActive && (
-                    <span className="text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest bg-red-100 text-red-600">
+                    <span className="text-xs font-black px-2.5 py-1 rounded-lg uppercase tracking-widest bg-red-100 text-red-600">
                       Đã khóa
                     </span>
                   )}
@@ -256,7 +256,7 @@ const AdminPage = () => {
               </div>
 
               <div className="pt-4 border-t border-dashed border-slate-100">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
                   <Shield size={12} />
                   Quyền hạn ({user.permissions?.length || 0})
                 </p>
@@ -264,16 +264,16 @@ const AdminPage = () => {
                   {user.permissions?.map(p => {
                     const label = AVAILABLE_PERMISSIONS.find(ap => ap.id === p)?.label || p;
                     return (
-                      <span key={p} className="text-[9px] font-black bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md uppercase tracking-tight">
+                      <span key={p} className="text-xs font-black bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md uppercase tracking-tight">
                         {label}
                       </span>
                     );
                   })}
                   {(user.permissions?.length || 0) === 0 && user.role !== 'ADMIN' && (
-                    <span className="text-[9px] font-medium text-slate-400 italic">Chưa phân quyền</span>
+                    <span className="text-xs font-medium text-slate-400 italic">Chưa phân quyền</span>
                   )}
                   {user.role === 'ADMIN' && (user.permissions?.length || 0) === 0 && (
-                    <span className="text-[9px] font-black text-amber-600 uppercase tracking-tight bg-amber-50 px-2 py-0.5 rounded-md">Full Access</span>
+                    <span className="text-xs font-black text-amber-600 uppercase tracking-tight bg-amber-50 px-2 py-0.5 rounded-md">Full Access</span>
                   )}
                 </div>
               </div>
@@ -317,7 +317,7 @@ const AdminPage = () => {
               <form onSubmit={handleSave} className="flex-1 overflow-y-auto no-scrollbar p-8">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div className="col-span-full">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Họ và tên</label>
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 block">Họ và tên</label>
                     <div className="relative">
                       <Users className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                       <input
@@ -332,7 +332,7 @@ const AdminPage = () => {
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Email</label>
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 block">Email</label>
                     <div className="relative">
                       <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                       <input
@@ -346,7 +346,7 @@ const AdminPage = () => {
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Số điện thoại</label>
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 block">Số điện thoại</label>
                     <div className="relative">
                       <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                       <input
@@ -360,7 +360,7 @@ const AdminPage = () => {
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Mật khẩu {editingUser ? '(Để trống nếu không đổi)' : ''}</label>
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 block">Mật khẩu {editingUser ? '(Để trống nếu không đổi)' : ''}</label>
                     <div className="relative">
                       <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                       <input
@@ -375,7 +375,7 @@ const AdminPage = () => {
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Vai trò</label>
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 block">Vai trò</label>
                     <div className="flex p-1 bg-slate-50 rounded-2xl gap-1">
                       {(currentUser?.role === 'ADMIN' ? ['STAFF', 'MANAGER', 'ADMIN'] : ['STAFF']).map((r) => (
                         <button
@@ -383,7 +383,7 @@ const AdminPage = () => {
                           type="button"
                           onClick={() => setFormData({ ...formData, role: r as any })}
                           className={cn(
-                            "flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                            "flex-1 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
                             formData.role === r ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
                           )}
                         >
@@ -423,7 +423,7 @@ const AdminPage = () => {
                             <p className={cn("text-sm font-black uppercase tracking-tight", formData.permissions.includes(p.id) ? "text-emerald-900" : "text-slate-600")}>
                               {p.label}
                             </p>
-                            <p className="text-[10px] text-slate-400 font-medium leading-none mt-1">{p.description}</p>
+                            <p className="text-xs text-slate-400 font-medium leading-none mt-1">{p.description}</p>
                           </div>
                         </div>
                       </button>

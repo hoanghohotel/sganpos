@@ -133,7 +133,7 @@ const TablesPage = () => {
       <header className="flex justify-between items-end">
         <div>
           <h1 className="text-4xl font-black text-slate-900 tracking-tight mb-2">QUẢN LÝ BÀN</h1>
-          <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">
+          <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">
             {tables.length} bàn đang hoạt động
           </p>
         </div>
@@ -216,12 +216,12 @@ const TablesPage = () => {
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="text-xl font-black text-slate-900 group-hover:text-emerald-600 transition-colors uppercase tracking-tight">{table.name}</h3>
                     {table.status === 'OCCUPIED' && (
-                      <span className="px-2 py-0.5 bg-amber-100 text-amber-600 text-[8px] font-black uppercase rounded-full tracking-widest">Đang bận</span>
+                      <span className="px-2 py-0.5 bg-amber-100 text-amber-600 text-[10px] font-black uppercase rounded-full tracking-widest">Đang bận</span>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
                     <div className={cn("w-1.5 h-1.5 rounded-full", table.isActive ? "bg-emerald-500" : "bg-slate-300")} />
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                       {table.isActive ? (table.status === 'OCCUPIED' ? 'Đang phục vụ' : 'Đang trống') : 'Tạm ngưng'}
                     </span>
                   </div>
@@ -234,7 +234,7 @@ const TablesPage = () => {
         {loading && (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <div className="w-10 h-10 border-4 border-slate-100 border-t-emerald-500 rounded-full animate-spin" />
-            <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px]">Đang tải danh sách bàn...</p>
+            <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Đang tải danh sách bàn...</p>
           </div>
         )}
 
@@ -269,7 +269,7 @@ const TablesPage = () => {
               
               <form onSubmit={handleSave} className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Tên bàn</label>
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Tên bàn</label>
                   <input 
                     type="text"
                     required
@@ -334,7 +334,7 @@ const TablesPage = () => {
                 <QrCode size={32} />
               </div>
               <h2 className="text-2xl font-black text-slate-900 mb-2 uppercase tracking-tight">Mã QR Đặt món</h2>
-              <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mb-8">{showQrModal.name}</p>
+              <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mb-8">{showQrModal.name}</p>
 
               <div className="bg-white p-6 rounded-3xl border-2 border-slate-50 shadow-inner mb-8">
                 <QRCodeSVG 
@@ -394,11 +394,11 @@ const TablesPage = () => {
               className="relative w-full max-w-md bg-white rounded-[40px] p-10 shadow-2xl overflow-hidden"
             >
               <h2 className="text-3xl font-black text-slate-900 mb-2 uppercase tracking-tight">Tạo nhanh</h2>
-              <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mb-8">Thiết lập hàng loạt bàn/vị trí</p>
+              <p className="text-slate-400 font-bold uppercase tracking-widest text-xs mb-8">Thiết lập hàng loạt bàn/vị trí</p>
 
               <div className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Loại hình</label>
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Loại hình</label>
                   <div className="grid grid-cols-3 gap-2">
                     {[
                       { id: 'Table', label: 'Tại chỗ', prefix: 'Bàn' },
@@ -423,7 +423,7 @@ const TablesPage = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Số lượng</label>
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest px-1">Số lượng</label>
                   <div className="grid grid-cols-4 gap-2">
                     {[5, 10, 20, 30].map(count => (
                       <button

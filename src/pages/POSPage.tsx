@@ -88,7 +88,7 @@ const ProductCard: React.FC<{ product: Product, onAdd: () => void }> = ({ produc
         </div>
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
-        <span className="text-white text-[10px] font-bold uppercase tracking-widest flex items-center gap-1">
+        <span className="text-white text-xs font-bold uppercase tracking-widest flex items-center gap-1">
           <Plus size={12} /> Thêm nhanh
         </span>
       </div>
@@ -101,7 +101,7 @@ const ProductCard: React.FC<{ product: Product, onAdd: () => void }> = ({ produc
       <div className="flex items-center justify-between mt-auto pt-2 border-t border-slate-100 dark:border-slate-800">
         <span className="text-emerald-600 dark:text-emerald-400 font-extrabold text-sm sm:text-base font-mono">
           {product.basePrice.toLocaleString('vi-VN')}
-          <span className="text-[10px] ml-0.5">đ</span>
+          <span className="text-xs ml-0.5">đ</span>
         </span>
       </div>
     </div>
@@ -849,10 +849,10 @@ const POSPage = () => {
           <div>
             <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">Giỏ hàng</h2>
             <div className="flex items-center gap-2 mt-1">
-              <Badge variant="outline" className="text-[9px] h-4 px-1.5 font-black uppercase tracking-widest italic border-emerald-500/30 text-emerald-600 bg-emerald-500/5">
+              <Badge variant="outline" className="text-xs h-4 px-1.5 font-black uppercase tracking-widest italic border-emerald-500/30 text-emerald-600 bg-emerald-500/5">
                 {selectedTable?.name}
               </Badge>
-              {!isOnline && <Badge variant="destructive" className="text-[8px] h-4 px-1.5 uppercase font-black tracking-widest">Offline</Badge>}
+              {!isOnline && <Badge variant="destructive" className="text-[10px] h-4 px-1.5 uppercase font-black tracking-widest">Offline</Badge>}
             </div>
           </div>
         </div>
@@ -888,7 +888,7 @@ const POSPage = () => {
               <div className="w-20 h-20 bg-slate-50 dark:bg-slate-950 rounded-[32px] flex items-center justify-center mb-4">
                 <Coffee size={32} className="text-slate-300 dark:text-slate-700" />
               </div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-600">Bắt đầu chọn món ngay</p>
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-600">Bắt đầu chọn món ngay</p>
             </div>
           ) : (
             <div key="cart-list" className="flex flex-col gap-3 pb-4">
@@ -907,7 +907,7 @@ const POSPage = () => {
                   )}
                 >
                   {item.isSent && (
-                    <div className="absolute top-0 right-0 px-2 py-0.5 bg-emerald-500 text-[8px] font-black text-white uppercase tracking-widest rounded-bl-lg">
+                    <div className="absolute top-0 right-0 px-2 py-0.5 bg-emerald-500 text-[10px] font-black text-white uppercase tracking-widest rounded-bl-lg">
                       Sent to Kitchen
                     </div>
                   )}
@@ -915,11 +915,11 @@ const POSPage = () => {
                      <div className="flex-1">
                        <h4 className="text-xs font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight leading-tight mb-1">{item.name}</h4>
                        <div className="flex flex-wrap items-center gap-2">
-                         <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 font-mono">
+                         <span className="text-xs font-bold text-slate-400 dark:text-slate-500 font-mono">
                            {item.price.toLocaleString('vi-VN')}đ / món
                          </span>
                          {item.note && (
-                           <Badge variant="outline" className="h-4 px-1.5 text-[8px] border-emerald-500/20 text-emerald-600 bg-emerald-500/5 gap-1 font-bold">
+                           <Badge variant="outline" className="h-4 px-1.5 text-[10px] border-emerald-500/20 text-emerald-600 bg-emerald-500/5 gap-1 font-bold">
                              <MessageSquare size={8} /> {item.note}
                            </Badge>
                          )}
@@ -929,7 +929,7 @@ const POSPage = () => {
                         className="mt-2 flex items-center gap-1.5 py-1 px-2 group/note bg-slate-50 dark:bg-slate-800/50 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg transition-all"
                        >
                          <StickyNote size={10} className="text-slate-400 group-hover/note:text-emerald-500" />
-                         <span className="text-[9px] font-black text-slate-500 dark:text-slate-400 group-hover/note:text-emerald-600 uppercase tracking-widest">
+                         <span className="text-xs font-black text-slate-500 dark:text-slate-400 group-hover/note:text-emerald-600 uppercase tracking-widest">
                            {item.note ? 'Sửa chú thích' : 'Thêm chú thích'}
                          </span>
                        </button>
@@ -979,17 +979,17 @@ const POSPage = () => {
 
       <div className="p-6 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shadow-[0_-10px_30px_rgba(0,0,0,0.03)] dark:shadow-none space-y-4">
         <div className="space-y-2">
-          <div className="flex justify-between items-center text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+          <div className="flex justify-between items-center text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
             <span>Tạm tính</span>
             <span className="text-slate-700 dark:text-slate-300 font-mono italic">{subtotal.toLocaleString('vi-VN')}đ</span>
           </div>
           
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Giảm giá</span>
+              <span className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Giảm giá</span>
               <button 
                 onClick={() => setDiscountType(discountType === 'PERCENTAGE' ? 'FIXED' : 'PERCENTAGE')}
-                className="text-[8px] font-black bg-slate-100 dark:bg-slate-800 h-4 px-1.5 rounded uppercase tracking-tighter text-slate-500 border border-slate-200 dark:border-slate-700"
+                className="text-[10px] font-black bg-slate-100 dark:bg-slate-800 h-4 px-1.5 rounded uppercase tracking-tighter text-slate-500 border border-slate-200 dark:border-slate-700"
               >
                 {discountTypeFormatted}
               </button>
@@ -1003,14 +1003,14 @@ const POSPage = () => {
           </div>
 
           {taxRate > 0 && (
-            <div className="flex justify-between items-center text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+            <div className="flex justify-between items-center text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
               <span>VAT ({taxRate}%)</span>
               <span className="text-slate-700 dark:text-slate-300 font-mono italic">{taxAmount.toLocaleString('vi-VN')}đ</span>
             </div>
           )}
 
           <div className="flex justify-between items-end pt-3 mt-1 border-t border-dashed border-slate-200 dark:border-slate-800">
-            <span className="text-[11px] font-black text-slate-900 dark:text-white uppercase tracking-widest">Thành tiền</span>
+            <span className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-widest">Thành tiền</span>
             <div className="text-right">
               <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-tighter font-mono leading-none">
                 {total.toLocaleString('vi-VN')}
@@ -1026,7 +1026,7 @@ const POSPage = () => {
             variant="outline"
             onClick={handleSendToKitchen}
             className={cn(
-              "h-12 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all gap-2 border-slate-200 dark:border-slate-800",
+              "h-12 rounded-xl text-xs font-black uppercase tracking-widest transition-all gap-2 border-slate-200 dark:border-slate-800",
               cart.some(i => !i.isSent)
                 ? "bg-emerald-500 hover:bg-emerald-600 border-emerald-500 text-white"
                 : "bg-slate-50 dark:bg-slate-950 text-slate-400 opacity-60"
@@ -1038,7 +1038,7 @@ const POSPage = () => {
             disabled={cart.length === 0}
             variant="outline"
             onClick={handlePrintProvisional}
-            className="h-12 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-[10px] font-black uppercase tracking-widest gap-2"
+            className="h-12 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-black uppercase tracking-widest gap-2"
           >
             <Printer size={14} /> Tạm tính
           </Button>
@@ -1138,7 +1138,7 @@ const POSPage = () => {
                     </div>
                     <div className="text-center">
                       <span className="block text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-1">{t.label}</span>
-                      <span className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{t.sub}</span>
+                      <span className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{t.sub}</span>
                     </div>
 
                     <div className={cn(
@@ -1157,13 +1157,13 @@ const POSPage = () => {
                    <div className="w-12 h-12 rounded-full border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-400">
                      <Info size={18} />
                    </div>
-                   <span className="text-[10px] font-bold uppercase tracking-widest mt-2">{tables.length} Máy trạm</span>
+                   <span className="text-xs font-bold uppercase tracking-widest mt-2">{tables.length} Máy trạm</span>
                 </div>
                 <div className="flex flex-col items-center">
                    <div className="w-12 h-12 rounded-full border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-400">
                      <Utensils size={18} />
                    </div>
-                   <span className="text-[10px] font-bold uppercase tracking-widest mt-2">{products.length} Món ăn</span>
+                   <span className="text-xs font-bold uppercase tracking-widest mt-2">{products.length} Món ăn</span>
                 </div>
               </div>
             </motion.div>
@@ -1192,7 +1192,7 @@ const POSPage = () => {
                     <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic">
                       {orderType === 'DINE_IN' ? 'Chọn Bàn' : orderType === 'TAKEAWAY' ? 'Chọn Ô mang về' : 'Chọn Slot ship'}
                     </h2>
-                    <p className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Lựa chọn vị trí để bắt đầu đơn hàng</p>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Lựa chọn vị trí để bắt đầu đơn hàng</p>
                   </div>
                 </div>
 
@@ -1230,7 +1230,7 @@ const POSPage = () => {
                         )}
                       >
                         <div className={cn(
-                          "text-[9px] uppercase tracking-widest font-black px-2 py-0.5 rounded-full mb-1",
+                          "text-xs uppercase tracking-widest font-black px-2 py-0.5 rounded-full mb-1",
                           isOccupied
                             ? "bg-white/20 text-white"
                             : hasItems
@@ -1288,9 +1288,9 @@ const POSPage = () => {
                     <div className="flex-1 sm:flex-initial">
                       <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic">{selectedTable?.name}</h1>
                       <div className="flex items-center gap-2">
-                        <p className="text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest leading-none">{orderType?.replace('_', ' ')}</p>
+                        <p className="text-emerald-600 dark:text-emerald-400 text-xs font-black uppercase tracking-widest leading-none">{orderType?.replace('_', ' ')}</p>
                         <span className="text-slate-200 dark:text-slate-800 text-xs">|</span>
-                        <p className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest leading-none">Shift: {shift?.code}</p>
+                        <p className="text-slate-400 dark:text-slate-500 text-xs font-black uppercase tracking-widest leading-none">Shift: {shift?.code}</p>
                       </div>
                     </div>
                     {/* Cart Trigger for Mobile */}
@@ -1325,7 +1325,7 @@ const POSPage = () => {
                       key={`cat-${cat}-${index}`}
                       onClick={() => setSelectedCategory(cat)}
                       className={cn(
-                        "px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border shadow-sm",
+                        "px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap border shadow-sm",
                         selectedCategory === cat 
                           ? "bg-emerald-600 text-white border-emerald-600 shadow-emerald-500/10" 
                           : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700"
@@ -1345,7 +1345,7 @@ const POSPage = () => {
                       if (catProducts.length === 0) return null;
                       return (
                         <div key={`cat-group-${cat}`} className="mb-10">
-                          <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-[0.4em] mb-6 flex items-center gap-4">
+                          <h3 className="text-xs font-black text-slate-400 dark:text-slate-600 uppercase tracking-[0.4em] mb-6 flex items-center gap-4">
                             {cat}
                             <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800/50" />
                           </h3>
@@ -1441,7 +1441,7 @@ const POSPage = () => {
                     </div>
                     <div>
                       <p className="text-sm font-black text-slate-900 dark:text-white uppercase">Tiền mặt</p>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Thanh toán trực tiếp</p>
+                      <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Thanh toán trực tiếp</p>
                     </div>
                   </div>
                   <ChevronRight size={20} className="text-slate-300 group-hover:translate-x-1 transition-transform" />
@@ -1458,7 +1458,7 @@ const POSPage = () => {
                     </div>
                     <div>
                       <p className="text-sm font-black text-slate-900 dark:text-white uppercase">Chuyển khoản</p>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">VietQR Dynamic code</p>
+                      <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">VietQR Dynamic code</p>
                     </div>
                   </div>
                   <ChevronRight size={20} className="text-slate-300 group-hover:translate-x-1 transition-transform" />
@@ -1467,7 +1467,7 @@ const POSPage = () => {
 
               <div className="p-6 bg-emerald-600 rounded-[32px] shadow-lg shadow-emerald-500/20 flex justify-between items-center text-white">
                 <div>
-                  <span className="text-[10px] font-black uppercase tracking-widest opacity-80">Tổng tiền thu</span>
+                  <span className="text-xs font-black uppercase tracking-widest opacity-80">Tổng tiền thu</span>
                   <div className="text-3xl font-black font-mono tracking-tighter mt-1">
                     {total.toLocaleString('vi-VN')}đ
                   </div>
@@ -1499,7 +1499,7 @@ const POSPage = () => {
 
               <div className="w-full space-y-2 mb-8 text-left">
                 <div className="flex justify-between items-center p-4 bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl border border-emerald-100 dark:border-emerald-500/20">
-                  <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest italic">Order Key</span>
+                  <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest italic">Order Key</span>
                   <span className="text-sm font-black text-emerald-700 dark:text-emerald-300 tracking-widest">{orderCode}</span>
                 </div>
                 <div className="grid grid-cols-1 gap-2">
@@ -1528,7 +1528,7 @@ const POSPage = () => {
                   </>
                 )}
               </Button>
-              <p className="mt-4 text-[9px] text-slate-400 font-bold uppercase tracking-[0.2em] italic">Vui lòng kiểm tra biến động số dư trước</p>
+              <p className="mt-4 text-xs text-slate-400 font-bold uppercase tracking-[0.2em] italic">Vui lòng kiểm tra biến động số dư trước</p>
             </div>
           )}
         </DialogContent>
@@ -1587,7 +1587,7 @@ const POSPage = () => {
                   key={note}
                   onClick={() => setTempNote((prev) => (prev.includes(note) ? prev.replace(note, '').trim() : (prev + ' ' + note).trim()))}
                   className={cn(
-                    "p-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border",
+                    "p-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border",
                     tempNote.includes(note)
                       ? "bg-emerald-600 text-white border-emerald-600"
                       : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700"
@@ -1682,15 +1682,15 @@ const POSPage = () => {
                 <div className="bg-slate-50 dark:bg-slate-950 p-6 rounded-[32px] space-y-4 border border-slate-100 dark:border-slate-800 shadow-inner">
                   {shiftSummary && (
                     <div className="space-y-3 mb-6">
-                      <div className="flex justify-between items-center text-[10px]">
+                      <div className="flex justify-between items-center text-xs">
                         <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">Tiền đầu ca</span>
                         <span className="font-black text-slate-700 dark:text-slate-300 font-mono">{shiftSummary.openingBalance.toLocaleString('vi-VN')}đ</span>
                       </div>
-                      <div className="flex justify-between items-center text-[10px]">
+                      <div className="flex justify-between items-center text-xs">
                         <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">Doanh thu Tiền mặt</span>
                         <span className="font-black text-emerald-600 dark:text-emerald-400 font-mono">+{shiftSummary.cashSales.toLocaleString('vi-VN')}đ</span>
                       </div>
-                      <div className="flex justify-between items-center text-[10px]">
+                      <div className="flex justify-between items-center text-xs">
                         <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">Doanh thu CK</span>
                         <span className="font-black text-blue-600 dark:text-blue-400 font-mono">+{shiftSummary.transferSales.toLocaleString('vi-VN')}đ</span>
                       </div>
@@ -1723,14 +1723,14 @@ const POSPage = () => {
                       className="space-y-4 pt-2"
                     >
                       <div className="flex justify-between items-center p-4 bg-rose-50 dark:bg-rose-500/5 rounded-2xl border border-rose-100 dark:border-rose-500/20 italic">
-                        <span className="text-[10px] font-black text-rose-600 dark:text-rose-400 uppercase tracking-widest">Chênh lệch:</span>
+                        <span className="text-xs font-black text-rose-600 dark:text-rose-400 uppercase tracking-widest">Chênh lệch:</span>
                         <span className="text-lg font-black text-rose-600 dark:text-rose-400 font-mono">
                           {(closingBalance - shiftSummary.expectedBalance).toLocaleString('vi-VN')}đ
                         </span>
                       </div>
                       
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-rose-600 dark:text-rose-400 uppercase tracking-widest px-2">Giải trình (Bắt buộc)</label>
+                        <label className="text-xs font-black text-rose-600 dark:text-rose-400 uppercase tracking-widest px-2">Giải trình (Bắt buộc)</label>
                         <textarea 
                           value={shiftNotes}
                           onChange={(e) => setShiftNotes(e.target.value)}

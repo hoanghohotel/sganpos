@@ -185,7 +185,7 @@ const KitchenPage = () => {
             )}
           >
             {isNotificationsEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
-            <span className="text-[10px] font-black uppercase tracking-widest">
+            <span className="text-xs font-black uppercase tracking-widest">
               {isNotificationsEnabled ? 'Âm thanh: Bật' : 'Âm thanh: Tắt'}
             </span>
           </button>
@@ -207,17 +207,17 @@ const KitchenPage = () => {
           <div className="bg-slate-50 px-6 py-2 rounded-2xl border border-slate-100 flex items-center gap-4">
             <div className="flex flex-col text-center">
               <span className="text-2xl font-black text-rose-600 leading-none">{pendingCount}</span>
-              <span className="text-[10px] text-slate-400 uppercase font-black tracking-tighter">Mới</span>
+              <span className="text-xs text-slate-400 uppercase font-black tracking-tighter">Mới</span>
             </div>
             <div className="w-px h-8 bg-slate-200" />
             <div className="flex flex-col text-center">
               <span className="text-2xl font-black text-orange-600 leading-none">{preparingCount}</span>
-              <span className="text-[10px] text-slate-400 uppercase font-black tracking-tighter">Đang làm</span>
+              <span className="text-xs text-slate-400 uppercase font-black tracking-tighter">Đang làm</span>
             </div>
             <div className="w-px h-8 bg-slate-200" />
             <div className="flex flex-col text-center">
               <span className="text-2xl font-black text-emerald-600 leading-none">{orders.length}</span>
-              <span className="text-[10px] text-slate-400 uppercase font-black tracking-tighter">Tổng đơn</span>
+              <span className="text-xs text-slate-400 uppercase font-black tracking-tighter">Tổng đơn</span>
             </div>
           </div>
         </div>
@@ -260,12 +260,12 @@ const KitchenPage = () => {
                     <div className="p-5 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
                       <div>
                         <h3 className="font-black text-slate-900 uppercase tracking-tighter text-xl italic">{tableName}</h3>
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mt-1">
-                          {groupOrders.length} Yêu cầu • <Clock size={8} className="inline mb-0.5" /> {Math.floor((new Date().getTime() - new Date(oldestOrder.createdAt).getTime()) / 60000)}p
+                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest leading-none mt-1">
+                          {groupOrders.length} Yêu cầu • <Clock size={10} className="inline mb-0.5" /> {Math.floor((new Date().getTime() - new Date(oldestOrder.createdAt).getTime()) / 60000)}p
                         </p>
                       </div>
                       {isNew && (
-                        <div className="px-3 py-1 rounded-full bg-rose-500 text-white text-[9px] font-black uppercase tracking-widest animate-bounce">
+                        <div className="px-3 py-1 rounded-full bg-rose-500 text-white text-xs font-black uppercase tracking-widest animate-bounce">
                           Mới
                         </div>
                       )}
@@ -313,11 +313,11 @@ const KitchenPage = () => {
                                       isNew ? "text-rose-600 scale-105 origin-left" : ""
                                     )}>
                                       {item.name}
-                                      {isNew && <span className="ml-2 text-[8px] px-1.5 py-0.5 bg-rose-500 text-white rounded-md tracking-widest animate-pulse">MỚI</span>}
+                                      {isNew && <span className="ml-2 text-[10px] px-1.5 py-0.5 bg-rose-500 text-white rounded-md tracking-widest animate-pulse">MỚI</span>}
                                     </p>
                                     {item.notes && (
-                                      <p className="text-[9px] text-rose-500 font-bold mt-0.5 italic flex items-center gap-1">
-                                        <AlertCircle size={8} /> {item.notes}
+                                      <p className="text-xs text-rose-500 font-bold mt-0.5 italic flex items-center gap-1">
+                                        <AlertCircle size={10} /> {item.notes}
                                       </p>
                                     )}
                                   </div>
@@ -332,12 +332,12 @@ const KitchenPage = () => {
                       <div className="mt-4 space-y-2">
                         {groupOrders.map(order => (
                           <div key={order._id} className="flex items-center justify-between border-t border-slate-50 pt-2 first:border-0 first:pt-0">
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">#{order.orderNumber}</span>
+                            <span className="text-xs font-black text-slate-400 uppercase tracking-widest">#{order.orderNumber}</span>
                             <div className="flex gap-2">
                               {order.status === 'PENDING' && (
                                 <button
                                   onClick={() => updateStatus(order._id, 'PREPARING')}
-                                  className="px-3 py-1 bg-slate-900 text-white rounded-lg text-[8px] font-black uppercase tracking-widest"
+                                  className="px-3 py-1 bg-slate-900 text-white rounded-lg text-[10px] font-black uppercase tracking-widest"
                                 >
                                   Làm
                                 </button>
@@ -345,7 +345,7 @@ const KitchenPage = () => {
                               {(order.status === 'PREPARING' || order.status === 'PENDING') && (
                                 <button
                                   onClick={() => updateStatus(order._id, 'READY')}
-                                  className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-[8px] font-black uppercase tracking-widest"
+                                  className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-[10px] font-black uppercase tracking-widest"
                                 >
                                   Xong
                                 </button>
@@ -353,7 +353,7 @@ const KitchenPage = () => {
                               {order.status === 'READY' && (
                                 <button
                                   onClick={() => updateStatus(order._id, 'DELIVERED')}
-                                  className="px-3 py-1 bg-white border border-emerald-600 text-emerald-600 rounded-lg text-[8px] font-black uppercase tracking-widest"
+                                  className="px-3 py-1 bg-white border border-emerald-600 text-emerald-600 rounded-lg text-[10px] font-black uppercase tracking-widest"
                                 >
                                   Giao
                                 </button>
