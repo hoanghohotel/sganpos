@@ -16,23 +16,23 @@ import { get, set, del } from 'idb-keyval';
 import { cn } from '@/lib/utils';
 import { 
   Button 
-} from '@/components/ui/button';
+} from '@/components/ui/button.tsx';
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+} from '@/components/ui/card.tsx';
+import { Input } from '@/components/ui/input.tsx';
+import { Badge } from '@/components/ui/badge.tsx';
+import { ScrollArea } from '@/components/ui/scroll-area.tsx';
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from '@/components/ui/tabs';
+} from '@/components/ui/tabs.tsx';
 import {
   Dialog,
   DialogContent,
@@ -40,7 +40,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '@/components/ui/dialog.tsx';
 import { toast } from 'sonner';
 
 interface Product {
