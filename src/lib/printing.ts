@@ -199,15 +199,9 @@ export const generatePrintHTML = (order: PrintOrderData, settings: PrintSettings
                     <div style="width: 35px; text-align: center;">${item.quantity}</div>
                     <div style="width: 80px; text-align: right; font-weight: 700;">${(item.price * item.quantity).toLocaleString('vi-VN')}</div>
                   </div>
-                  ${order.items.map(item => `
-                    <div class="item-row" style="margin-bottom: 6px;">
-                      <div style="flex: 1; font-weight: 700;">${item.name}</div>
-                      <div style="width: 35px; text-align: center;">${item.quantity}</div>
-                      <div style="width: 80px; text-align: right; font-weight: 700;">${(item.price * item.quantity).toLocaleString('vi-VN')}</div>
-                    </div>
-                  `).join('')}
-                </div>
-              `;
+                `).join('')}
+              </div>
+            `;
             case 'totals':
               return `
                 <div class="totals" style="margin: 15px 0; padding-top: 5px; border-top: 1px solid #000;">
