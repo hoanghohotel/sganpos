@@ -14,6 +14,19 @@ export const generatePrintHTML = (order: PrintOrderData, settings: PrintSettings
     ? `https://img.vietqr.io/image/${settings.bankCode}-${settings.bankAccount}-compact2.png?amount=${order.total}&addInfo=${encodeURIComponent(`TT ${order.orderCode || ''} ${order.tableName || ''}`)}&accountName=${encodeURIComponent(settings.bankAccountHolder || '')}`
     : null;
 
+  const isXprinter = settings.brand === 'xprinter';
+  const isZywell = settings.brand === 'zywell' || settings.brand === 'xpos';
+  const isGprinter = settings.brand === 'gprinter';
+  
+  // High contrast for thermal printers
+  const thermalStyles = (isXprinter || isZywell || isGprinter) ? `
+    * { -webkit-print-color-adjust: exact !important; color-adjust: exact !important; }
+    body { padding: 0 !important; width: 100% !important; margin: 0 !important; }
+    .print-container { width: 100% !important; padding: 2mm !important; }
+    img { filter: grayscale(1) contrast(2); } /* Better for thermal */
+    .border-t { border-top-width: 2px !important; } /* Thicker lines for visibility */
+  ` : '';
+
   // Get staff name safely from auth store
   let staffName = '';
   try {
@@ -120,6 +133,7 @@ export const generatePrintHTML = (order: PrintOrderData, settings: PrintSettings
           size: ${settings.printWidth === '58mm' ? '58mm' : '80mm'} auto;
         }
       }
+      ${thermalStyles}
     </style>
   </head>
   <body>

@@ -16,6 +16,9 @@ const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptTemplateProps>(
     const isRetro = templateId === 'retro';
     const isElegant = templateId === 'elegant';
 
+    const isThermal = ['xprinter', 'zywell', 'xpos', 'gprinter'].includes(settings.brand || '');
+    const isXprinter = settings.brand === 'xprinter';
+
     const qrUrl = (order.paymentMethod === 'TRANSFER' || isProvisional) && settings.bankCode
       ? `https://img.vietqr.io/image/${settings.bankCode}-${settings.bankAccount}-compact2.png?amount=${order.total}&addInfo=${encodeURIComponent(`TT ${order.orderCode || ''} ${order.tableName || ''}`)}&accountName=${encodeURIComponent(settings.bankAccountHolder || '')}`
       : null;
@@ -52,17 +55,27 @@ const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptTemplateProps>(
         style={{
           width: printWidth,
           margin: '0 auto',
-          padding: isModern ? '30px' : isElegant ? '25px' : '20px',
+          padding: isThermal ? '5px' : (isModern ? '30px' : isElegant ? '25px' : '20px'),
           fontFamily: isRetro ? "'JetBrains Mono', monospace" : "'Inter', sans-serif",
           fontSize: isMinimal ? '11px' : '13px',
-          lineHeight: '1.4',
+          lineHeight: isThermal ? '1.2' : '1.4',
           color: '#000',
           backgroundColor: '#fff',
           borderRadius: isModern ? '20px' : '0',
           border: isElegant ? '4px double #000' : 'none',
-          boxSizing: 'border-box'
+          boxSizing: 'border-box',
+          imageRendering: isThermal ? 'pixelated' : 'auto'
         }}
       >
+        <style>
+          {`
+            @media print {
+              img { filter: grayscale(1) contrast(2) !important; }
+              ${isThermal ? '.item-row { font-weight: bold !important; }' : ''}
+              ${isXprinter ? 'body { width: 100% !important; margin: 0 !important; }' : ''}
+            }
+          `}
+        </style>
         {fields.filter(f => f.enabled).map((field, idx) => {
           switch (field.id) {
             case 'logo':

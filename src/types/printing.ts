@@ -28,6 +28,7 @@ export interface PrintSettings {
   bankAccountHolder?: string;
   defaultPrintTemplate?: string;
   printWidth?: string;
+  brand?: 'generic' | 'xprinter' | 'zywell' | 'xpos' | 'gprinter' | 'sunmi';
   templateFields?: Array<{
     id: string;
     type: string;

@@ -309,6 +309,7 @@ const SettingsPage = () => {
     customPath: '',
     taxRate: 0,
     defaultPrintTemplate: 'classic',
+    brand: 'generic',
     printers: [] as any[]
   });
 
@@ -996,10 +997,22 @@ const SettingsPage = () => {
             >
               <div className="flex justify-between items-center mb-6">
                  <div>
-                   <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight mb-1">Kết nối máy in</h3>
-                   <p className="text-xs text-slate-500">Quản lý máy in hóa đơn (LAN/USB/Browser).</p>
+                   <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight mb-1">Cấu hình máy in nhiệt</h3>
+                   <p className="text-xs text-slate-500">Hỗ trợ các dòng Xprinter, Zywell, Gprinter, Xpos...</p>
                  </div>
                  <div className="flex gap-2">
+                    <select 
+                      className="bg-slate-100 border-none rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-widest focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                      value={settings.brand || 'generic'}
+                      onChange={(e) => setSettings({ ...settings, brand: e.target.value as any })}
+                    >
+                      <option value="generic">Hãng: Tự động (Mặc định)</option>
+                      <option value="xprinter">Hãng: XPRINTER</option>
+                      <option value="zywell">Hãng: ZYWELL</option>
+                      <option value="xpos">Hãng: XPOS</option>
+                      <option value="gprinter">Hãng: GPRINTER</option>
+                      <option value="sunmi">Hãng: SUNMI</option>
+                    </select>
                     <button
                       type="button"
                       onClick={() => {
