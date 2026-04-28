@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { LogIn, UserPlus, Fingerprint, Globe, ArrowLeft } from 'lucide-react';
 import { getTenantPrefix, getTenantFromHostname } from '../lib/tenantUtils';
@@ -21,6 +21,7 @@ const LoginPage = () => {
   const [unverifiedTenantId, setUnverifiedTenantId] = useState('');
   const { login, user } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
   const tenantPrefix = getTenantPrefix();
   const currentTenantFromHost = getTenantFromHostname();
 
@@ -43,9 +44,15 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (user) {
-      navigate(`${tenantPrefix}/`);
+      const params = new URLSearchParams(location.search);
+      const redirectTo = params.get('redirect');
+      if (redirectTo) {
+        navigate(`${tenantPrefix}/${redirectTo}`);
+      } else {
+        navigate(`${tenantPrefix}/`);
+      }
     }
-  }, [user, navigate, tenantPrefix]);
+  }, [user, navigate, tenantPrefix, location.search]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,7 +77,13 @@ const LoginPage = () => {
       setError('');
       setShowResend(false);
       await login(identifier, password);
-      navigate(`${tenantPrefix}/`);
+      const params = new URLSearchParams(location.search);
+      const redirectTo = params.get('redirect');
+      if (redirectTo) {
+        navigate(`${tenantPrefix}/${redirectTo}`);
+      } else {
+        navigate(`${tenantPrefix}/`);
+      }
     } catch (err: any) {
       console.error('Login error:', err);
       if (err.response) {

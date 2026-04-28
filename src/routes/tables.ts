@@ -9,7 +9,7 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   try {
     const tenantId = getTenantId();
-    const tables = await Table.find({ tenantId }).sort({ name: 1 });
+    const tables = await Table.find({ tenantId }).sort({ name: 1 }).lean();
     res.json(tables);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch tables' });

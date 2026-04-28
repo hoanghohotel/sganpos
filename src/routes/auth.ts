@@ -2,6 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import { z } from 'zod';
 import User from '../models/User.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
 import { getTenantId } from '../lib/tenant.js';
@@ -10,10 +11,42 @@ import { sendVerificationEmail } from '../lib/mail.js';
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'default_secret';
 
+// SECURITY: Enforce strong JWT secret in production
+if (process.env.NODE_ENV === 'production' && (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32)) {
+  console.error('❌ CRITICAL SECURITY ERROR: JWT_SECRET must be at least 32 characters in production.');
+  // In a real production environment, we might want to shut down
+  // process.exit(1);
+}
+
+// Validation Schemas
+const registerSchema = z.object({
+  name: z.string().min(2, 'Tên phải có ít nhất 2 ký tự').max(50),
+  email: z.string().email('Email không hợp lệ').optional().or(z.literal('')),
+  phone: z.string().regex(/^[0-9+]{9,15}$/, 'Số điện thoại không hợp lệ').optional().or(z.literal('')),
+  password: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
+  tenantId: z.string().min(3, 'Mã cửa hàng không hợp lệ').optional()
+}).refine(data => data.email || data.phone, {
+  message: "Phải cung cấp email hoặc số điện thoại",
+  path: ["email"]
+});
+
+const loginSchema = z.object({
+  identifier: z.string().min(3, 'Định danh không hợp lệ'),
+  password: z.string().min(1, 'Mật khẩu là bắt buộc')
+});
+
 // Register
 router.post('/register', async (req: any, res) => {
   try {
-    const { name, email, phone, password, tenantId: bodyTenantId } = req.body;
+    const validation = registerSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({ 
+        error: validation.error.issues[0].message,
+        details: validation.error.issues 
+      });
+    }
+
+    const { name, email, phone, password, tenantId: bodyTenantId } = validation.data;
     const tenantId = bodyTenantId || getTenantId();
 
     console.log(`[Auth] Registration attempt for Name: ${name}, Email: ${email}, Phone: ${phone}, Tenant: ${tenantId}`);
@@ -141,8 +174,16 @@ router.get('/verify', async (req: any, res) => {
 // Login
 router.post('/login', async (req: any, res) => {
   try {
-    const { email, phone, identifier, password } = req.body;
-    const loginId = identifier || email || phone;
+    const validation = loginSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({ 
+        error: validation.error.issues[0].message,
+        details: validation.error.issues 
+      });
+    }
+
+    const { identifier, password } = validation.data;
+    const loginId = identifier;
     const tenantId = getTenantId();
 
     if (!loginId || !password) {
