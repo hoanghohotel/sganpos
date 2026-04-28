@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useSocket } from '../hooks/useSocket';
+import { toast } from 'sonner';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -253,9 +254,10 @@ const CustomerOrderPage = () => {
       
       // Refresh table status
       fetchData();
+      toast.success('Gửi món thành công!');
     } catch (error: any) {
       const errorMsg = error.response?.data?.error || 'Lỗi khi gửi yêu cầu gọi món';
-      alert(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setOrdering(false);
     }
@@ -695,12 +697,11 @@ const CustomerOrderPage = () => {
                         ));
                         
                         setShowActiveOrderModal(false);
-                        setOrderSuccess(true);
-                        setTimeout(() => setOrderSuccess(false), 3000);
+                        toast.success('Xác nhận thanh toán thành công!');
                         fetchData();
                       } catch (err) {
                         console.error('Failed to complete order:', err);
-                        alert('Lỗi khi xác nhận thanh toán');
+                        toast.error('Lỗi khi xác nhận thanh toán');
                       } finally {
                         setOrdering(false);
                       }

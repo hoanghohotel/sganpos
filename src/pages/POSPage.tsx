@@ -13,6 +13,7 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { printOrder } from '../lib/printing';
 import { get, set, del } from 'idb-keyval';
+import { cn } from '@/lib/utils';
 import { 
   Button 
 } from '../components/ui/button';
@@ -41,10 +42,6 @@ import {
   DialogTitle,
 } from '../components/ui/dialog';
 import { toast } from 'sonner';
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
 
 interface Product {
   _id: string;
@@ -460,9 +457,10 @@ const POSPage = () => {
       if (selectedTable.status === 'EMPTY') {
         setSelectedTable({ ...selectedTable, status: 'OCCUPIED' });
       }
+      toast.success('Đã gửi báo bếp thành công');
     } catch (error) {
       console.error('Failed to send to kitchen:', error);
-      alert('Lỗi khi báo bếp');
+      toast.error('Lỗi khi báo bếp');
     } finally {
       setOrdering(false);
     }
@@ -476,7 +474,7 @@ const POSPage = () => {
 
     // Check permission for sent items
     if (isSentItem && (user as any)?.role !== 'ADMIN' && (user as any)?.role !== 'MANAGER' && !(user as any)?.permissions?.includes('POS_EDIT')) {
-      alert('Bạn không có quyền sửa món đã gửi bếp!');
+      toast.error('Bạn không có quyền sửa món đã gửi bếp!');
       return;
     }
     
@@ -526,7 +524,7 @@ const POSPage = () => {
 
     // Check permission for sent items
     if (isSentItem && (user as any)?.role !== 'ADMIN' && (user as any)?.role !== 'MANAGER' && !(user as any)?.permissions?.includes('POS_DELETE')) {
-      alert('Bạn không có quyền xóa món đã gửi bếp!');
+      toast.error('Bạn không có quyền xóa món đã gửi bếp!');
       return;
     }
 
@@ -688,12 +686,13 @@ const POSPage = () => {
         resetFlow();
       }, 2000);
     } catch (error) {
-      alert('Lỗi khi tạo đơn hàng');
+      toast.error('Lỗi khi thanh toán');
       console.error(error);
     } finally {
       setOrdering(false);
     }
   };
+
 
   const getActiveTables = () => {
     return tables.filter(t => (tableCarts[t._id]?.length || 0) > 0);
@@ -786,8 +785,9 @@ const POSPage = () => {
       setShowCloseShiftModal(false);
       setShowShiftWarning(false);
       setShiftNotes('');
+      toast.success('Chốt ca thành công');
     } catch (error) {
-      alert('Lỗi khi chốt ca');
+      toast.error('Lỗi khi chốt ca');
     } finally {
       setClosing(false);
     }

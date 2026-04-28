@@ -30,6 +30,7 @@ import {
 } from 'recharts';
 import { format, subDays, startOfMonth, endOfMonth, startOfDay, endOfDay, subMonths } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/authStore';
 import { useReports } from '@/hooks/useReports';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,9 +40,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 
 const DashboardPage = () => {
-  function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs));
-  }
   const { user } = useAuthStore();
   const canViewReports = user?.role === 'ADMIN' || user?.role === 'MANAGER' || user?.permissions?.includes('REPORT_VIEW');
   const [filter, setFilter] = useState('today');

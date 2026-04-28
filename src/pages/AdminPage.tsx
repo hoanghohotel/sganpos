@@ -4,6 +4,7 @@ import { Users, UserPlus, Shield, Edit2, Trash2, Mail, Phone, Lock, Check, X, Sh
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 import { useAuthStore } from '../store/authStore';
+import { toast } from 'sonner';
 
 interface User {
   _id: string;
@@ -115,20 +116,22 @@ const AdminPage = () => {
   const handleDelete = async (id: string) => {
     const target = users.find(u => u._id === id);
     if (target?.role === 'ADMIN' && currentUser?.role !== 'ADMIN') {
-      alert('Bạn không có quyền xóa tài khoản ADMIN!');
+      toast.error('Bạn không có quyền xóa tài khoản ADMIN!');
       return;
     }
 
     if (id === currentUser?.id || id === (currentUser as any)._id) {
-       alert('Bạn không có quyền tự xóa chính mình!');
+       toast.error('Bạn không có quyền tự xóa chính mình!');
        return;
     }
     if (!window.confirm('Bạn có chắc chắn muốn xóa nhân viên này?')) return;
     try {
       await api.delete(`/api/admin/users/${id}`);
       fetchUsers();
+      toast.success('Xóa nhân viên thành công');
     } catch (err) {
       console.error('Failed to delete user:', err);
+      toast.error('Lỗi khi xóa nhân viên');
     }
   };
 

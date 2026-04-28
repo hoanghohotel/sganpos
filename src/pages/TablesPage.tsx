@@ -7,6 +7,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { useSocket } from '../hooks/useSocket';
 import { useAuthStore } from '../store/authStore';
 import { ShieldAlert } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface Table {
   _id: string;
@@ -70,7 +71,7 @@ const TablesPage = () => {
       setEditingTable(null);
       fetchTables();
     } catch (err) {
-      alert('Lỗi khi lưu bàn');
+      toast.error('Lỗi khi lưu bàn');
     }
   };
 
@@ -80,7 +81,7 @@ const TablesPage = () => {
       await api.delete(`/api/tables/${id}`);
       fetchTables();
     } catch (err) {
-      alert('Lỗi khi xóa bàn');
+      toast.error('Lỗi khi xóa bàn');
     }
   };
 
@@ -98,8 +99,9 @@ const TablesPage = () => {
       await Promise.all(promises);
       setShowQuickCreate(false);
       fetchTables();
+      toast.success('Tạo danh sách bàn thành công');
     } catch (err) {
-      alert('Lỗi khi tạo nhanh danh sách bàn');
+      toast.error('Lỗi khi tạo nhanh danh sách bàn');
     } finally {
       setCreating(false);
     }

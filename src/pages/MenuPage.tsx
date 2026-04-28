@@ -6,6 +6,7 @@ import * as XLSX from 'xlsx';
 import { useAuthStore } from '../store/authStore';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { toast } from 'sonner';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -90,18 +91,18 @@ const MenuPage = () => {
         .filter(item => item.name && item.name.trim() !== '');
 
       if (formattedData.length === 0) {
-        alert('Không tìm thấy dữ liệu hợp lệ trong file. Vui lòng kiểm tra tiêu đề cột (Tên sản phẩm, Danh mục, Giá cơ bản).');
+        toast.error('Không tìm thấy dữ liệu hợp lệ trong file. Vui lòng kiểm tra tiêu đề cột (Tên sản phẩm, Danh mục, Giá cơ bản).');
         return;
       }
 
       try {
         await api.post('/api/products', formattedData);
         fetchProducts();
-        alert(`Import thành công ${formattedData.length} sản phẩm!`);
+        toast.success(`Import thành công ${formattedData.length} sản phẩm!`);
       } catch (err: any) {
         console.error('Import failed:', err);
         const errorMsg = err.response?.data?.error || err.message || 'Lỗi không xác định';
-        alert(`Import thất bại: ${errorMsg}`);
+        toast.error(`Import thất bại: ${errorMsg}`);
       }
     };
     reader.readAsBinaryString(file);
@@ -110,7 +111,7 @@ const MenuPage = () => {
 
   const handleSaveProduct = async () => {
     if (!editingProduct?.name || !editingProduct?.basePrice) {
-      alert('Vui lòng điền đủ tên và giá');
+      toast.error('Vui lòng điền đủ tên và giá');
       return;
     }
 

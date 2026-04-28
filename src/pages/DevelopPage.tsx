@@ -9,6 +9,7 @@ import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuthStore } from '../store/authStore';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface LogEntry {
   timestamp: string;
@@ -82,8 +83,9 @@ const DevelopPage = () => {
       }
       setEditingUser(null);
       fetchData();
+      toast.success('Lưu thông tin nhân viên thành công');
     } catch (err: any) {
-      alert(`Save Error: ${err.response?.data?.error || err.message}`);
+      toast.error(`Lỗi: ${err.response?.data?.error || err.message}`);
     }
   };
 
@@ -92,8 +94,9 @@ const DevelopPage = () => {
     try {
       await api.delete(`/api/admin/users/${id}`);
       fetchData();
+      toast.success('Xóa nhân viên thành công');
     } catch (err) {
-      alert('Deletion Failed');
+      toast.error('Lỗi khi xóa nhân viên');
     }
   };
 
@@ -102,10 +105,10 @@ const DevelopPage = () => {
     setLoading(true);
     try {
       const res = await api.post('/api/dev/migrate');
-      alert(res.data.message);
+      toast.success(res.data.message);
       fetchData();
     } catch (err: any) {
-      alert(`Failed: ${err.message}`);
+      toast.error(`Lỗi: ${err.message}`);
     } finally {
       setLoading(false);
     }

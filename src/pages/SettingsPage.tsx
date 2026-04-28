@@ -29,6 +29,7 @@ import { restrictToVerticalAxis, restrictToWindowEdges } from '@dnd-kit/modifier
 import { useAuthStore } from '../store/authStore';
 import { getTenantFromHostname } from '../lib/tenantUtils';
 import { printOrder } from '../lib/printing';
+import { toast } from 'sonner';
 
 interface PrintField {
   id: string;
@@ -1060,7 +1061,10 @@ const SettingsPage = () => {
                           }
                         } catch (err) {
                            console.error(err);
-                           alert('KHÔNG TÌM THẤY MÁY IN USB:\n1. Nếu dùng Android/iOS: Trình duyệt bị hạn chế quyền USB.\n2. PC: Hãy đảm bảo máy in đã bật và cắm dây.\n3. Hãy thử "Thêm thủ công" nếu vẫn không quét được.');
+                           toast.error('KHÔNG TÌM THẤY MÁY IN USB', {
+                             description: '1. Kiểm tra quyền USB trình duyệt\n2. Đảm bảo máy in đã bật và cắm dây.\n3. Thử "Thêm thủ công" nếu vẫn không quét được.',
+                             duration: 10000
+                           });
                         }
                       }}
                       className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-100 transition-all shadow-sm"
@@ -1094,7 +1098,10 @@ const SettingsPage = () => {
                           }
                         } catch (err) {
                            console.error(err);
-                           alert('LỖI KẾT NỐI BLUETOOTH:\n1. Phải bật Vị trí (GPS) và Bluetooth.\n2. iPad/iPhone: Mặc định không hỗ trợ Bluetooth trên trình duyệt này.\n3. Thử quét lại hoặc kết nối LAN để ổn định nhất.');
+                           toast.error('LỖI KẾT NỐI BLUETOOTH', {
+                             description: '1. Phải bật Vị trí (GPS) và Bluetooth.\n2. iPad/iPhone: Mặc định không hỗ trợ Bluetooth trên trình duyệt này.\n3. Thử quét lại hoặc kết nối LAN để ổn định nhất.',
+                             duration: 10000
+                           });
                         }
                       }}
                       className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 transition-all shadow-sm"

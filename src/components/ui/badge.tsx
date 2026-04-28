@@ -31,17 +31,20 @@ function Badge({
   className,
   variant = "default",
   render,
+  asChild,
+  children,
   ...props
-}: useRender.ComponentProps<"span"> & VariantProps<typeof badgeVariants>) {
+}: useRender.ComponentProps<"span"> & VariantProps<typeof badgeVariants> & { asChild?: boolean }) {
   return useRender({
     defaultTagName: "span",
     props: mergeProps<"span">(
       {
         className: cn(badgeVariants({ variant }), className),
+        children: asChild ? undefined : children,
       },
-      props
+      props as any
     ),
-    render,
+    render: asChild ? children : render,
     state: {
       slot: "badge",
       variant,

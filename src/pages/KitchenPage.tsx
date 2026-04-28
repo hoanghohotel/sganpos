@@ -2,13 +2,8 @@ import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
 import { CookingPot, CheckCircle, Clock, ChefHat, AlertCircle, Bell, Volume2, VolumeX } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
 import { useSocket } from '../hooks/useSocket';
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+import { cn } from '@/lib/utils';
 
 interface OrderItem {
   productId: string;
