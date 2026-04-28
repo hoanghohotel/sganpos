@@ -8,7 +8,7 @@ import { getTenantPrefix, getTenantFromHostname, getTenantIdFromPath } from '@/l
 import { useSocket } from '@/hooks/useSocket';
 import Logo from '@/components/Logo';
 import { ModeToggle } from '@/components/mode-toggle';
-import { Button } from '@/components/ui/button.tsx';
+import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -16,10 +16,10 @@ import {
   DropdownMenuLabel, 
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu.tsx';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet.tsx';
-import { ScrollArea } from '@/components/ui/scroll-area.tsx';
-import { Badge } from '@/components/ui/badge.tsx';
+} from '@/components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ShiftGuard from '@/components/ShiftGuard';
 import DashboardPage from '@/pages/DashboardPage';
