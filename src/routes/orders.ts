@@ -81,11 +81,33 @@ router.get('/reports', authenticate, async (req, res) => {
 });
 
 // GET /api/orders - List orders for the tenant (Auth required)
+// PERFORMANCE FIX: Added pagination to prevent loading all orders at once
 router.get('/', authenticate, async (req, res) => {
   try {
     const tenantId = getTenantId();
-    const orders = await Order.find({ tenantId }).sort({ createdAt: -1 });
-    res.json(orders);
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.min(100, parseInt(req.query.limit as string) || 50);
+    const skip = (page - 1) * limit;
+
+    // Get total count for pagination
+    const total = await Order.countDocuments({ tenantId });
+    
+    // Use .lean() for read-only queries to improve performance
+    const orders = await Order.find({ tenantId })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    res.json({
+      data: orders,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch orders' });
   }
