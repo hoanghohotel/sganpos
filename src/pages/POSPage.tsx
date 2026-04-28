@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
 import axios from 'axios';
-import { ShoppingCart, Plus, Minus, Trash2, Coffee, CheckCircle2, Banknote, CreditCard, X, ChevronRight, LogOut, CircleDollarSign, ChevronLeft, Printer, StickyNote, MessageSquare, Eye } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Trash2, Coffee, CheckCircle2, Banknote, CreditCard, X, ChevronRight, LogOut, CircleDollarSign, ChevronLeft, Printer, StickyNote, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuthStore } from '../store/authStore';
 import { useSocket } from '../hooks/useSocket';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { printOrder, printPreview } from '../lib/printing';
+import { printOrder } from '../lib/printing';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -43,19 +43,19 @@ const ProductCard: React.FC<{ product: Product, onAdd: () => void }> = ({ produc
     whileHover={{ scale: 1.02 }}
     whileTap={{ scale: 0.98 }}
     onClick={onAdd}
-    className="group card-interactive text-left flex flex-col justify-between h-40 sm:h-44"
+    className="group bg-white p-2.5 sm:p-4 rounded-2xl border border-slate-100 shadow-sm hover:border-emerald-200 hover:shadow-emerald-100/20 transition-all text-left flex flex-col justify-between h-40 sm:h-44"
   >
     <div className="flex flex-col h-full">
-      <div className="w-full h-20 sm:h-24 bg-slate-100 rounded-lg mb-3 flex items-center justify-center group-hover:bg-emerald-50 transition-colors overflow-hidden shrink-0">
+      <div className="w-full h-20 sm:h-24 bg-slate-50 rounded-xl mb-2 sm:mb-3 flex items-center justify-center group-hover:bg-emerald-50 transition-colors overflow-hidden shrink-0">
         {product.image ? (
           <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
         ) : (
-          <Coffee className="text-slate-300 group-hover:text-emerald-400 transition-colors" size={24} />
+          <Coffee className="text-slate-300 group-hover:text-emerald-300 transition-colors" size={24} />
         )}
       </div>
       <div className="flex flex-col justify-between flex-1">
-        <h3 className="font-semibold text-slate-900 leading-tight group-hover:text-emerald-600 transition-colors line-clamp-2 text-xs uppercase tracking-tight">{product.name}</h3>
-        <span className="text-emerald-600 font-bold text-sm font-mono mt-1">
+        <h3 className="font-bold text-slate-900 leading-tight group-hover:text-emerald-600 transition-colors line-clamp-2 text-[11px] sm:text-xs uppercase tracking-tighter font-sans">{product.name}</h3>
+        <span className="text-emerald-600 font-extrabold text-[12px] sm:text-sm font-mono mt-1">
           {product.basePrice.toLocaleString('vi-VN')}đ
         </span>
       </div>
@@ -315,26 +315,6 @@ const POSPage = () => {
     if (cart.length === 0) return;
     
     printOrder({
-      tableName: selectedTable?.name || 'Mang về',
-      items: cart.map(item => ({
-        productId: item.id,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity
-      })),
-      subtotal,
-      taxRate,
-      taxAmount,
-      discountAmount,
-      total,
-      orderType: orderType || undefined
-    }, settings, true);
-  };
-
-  const handlePreviewProvisional = () => {
-    if (cart.length === 0) return;
-    
-    printPreview({
       tableName: selectedTable?.name || 'Mang về',
       items: cart.map(item => ({
         productId: item.id,
@@ -955,19 +935,11 @@ const POSPage = () => {
           </button>
           <button
             disabled={cart.length === 0}
-            onClick={handlePreviewProvisional}
-            className="py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-2 shadow-sm"
-          >
-            <Eye size={14} />
-            <span>Xem trước</span>
-          </button>
-          <button
-            disabled={cart.length === 0}
             onClick={handlePrintProvisional}
             className="py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-2 shadow-sm"
           >
             <Printer size={14} />
-            <span>In tạm tính</span>
+            <span>Tạm tính</span>
           </button>
         </div>
 
@@ -1147,7 +1119,7 @@ const POSPage = () => {
                       placeholder="Tìm món..." 
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="input-base input-focus pl-10" 
+                      className="bg-white border border-slate-200 rounded-xl px-10 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm" 
                     />
                     <ShoppingCart className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                   </div>

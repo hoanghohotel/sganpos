@@ -199,135 +199,54 @@ export const generatePrintHTML = (order: PrintOrderData, settings: PrintSettings
                     <div style="width: 35px; text-align: center;">${item.quantity}</div>
                     <div style="width: 80px; text-align: right; font-weight: 700;">${(item.price * item.quantity).toLocaleString('vi-VN')}</div>
                   </div>
-                `).join('')}
-              </div>
-            `;
-          case 'totals':
-            return `
-              <div class="totals" style="margin: 15px 0; padding-top: 5px; border-top: 1px solid #000;">
-                <div class="flex justify-between text-xs" style="margin-bottom: 2px;"><span>Tạm tính:</span><span>${order.subtotal.toLocaleString('vi-VN')}đ</span></div>
-                ${(order.discountAmount || 0) > 0 ? `<div class="flex justify-between text-xs" style="margin-bottom: 2px;"><span>Giảm giá:</span><span>-${(order.discountAmount || 0).toLocaleString('vi-VN')}đ</span></div>` : ''}
-                ${(order.taxAmount || 0) > 0 ? `<div class="flex justify-between text-xs" style="margin-bottom: 2px;"><span>Thuế (${order.taxRate}%):</span><span>${(order.taxAmount || 0).toLocaleString('vi-VN')}đ</span></div>` : ''}
-                <div class="flex justify-between font-black text-xl border-t mt-3 pt-3 total-row"><span>TỔNG CỘNG:</span><span>${order.total.toLocaleString('vi-VN')}đ</span></div>
-              </div>
-            `;
-          case 'qr':
-            return qrUrl ? `
-              <div class="text-center" style="margin: 15px 0;">
-                <div class="text-xs font-black uppercase mb-1">${isProvisional ? 'QUÉT MÃ THANH TOÁN' : 'MÃ QR GIAO DỊCH'}</div>
-                <img src="${qrUrl}" class="qr-img" alt="QR Code" />
-              </div>
-            ` : '';
-          case 'footer':
-            return `<div class="text-center text-xs italic" style="margin-top: 15px; border-top: 1px dashed #eee; padding-top: 10px;">${field.value || 'Cảm ơn và hẹn gặp lại!'}</div>`;
-          default:
-            if (field.isCustom) {
-              return `<div class="text-center text-xs py-1">${field.value}</div>`;
-            }
-            return '';
-        }
-      }).join('')}
-    </div>
-  </body>
-</html>`;
+                  ${order.items.map(item => `
+                    <div class="item-row" style="margin-bottom: 6px;">
+                      <div style="flex: 1; font-weight: 700;">${item.name}</div>
+                      <div style="width: 35px; text-align: center;">${item.quantity}</div>
+                      <div style="width: 80px; text-align: right; font-weight: 700;">${(item.price * item.quantity).toLocaleString('vi-VN')}</div>
+                    </div>
+                  `).join('')}
+                </div>
+              `;
+            case 'totals':
+              return `
+                <div class="totals" style="margin: 15px 0; padding-top: 5px; border-top: 1px solid #000;">
+                  <div class="flex justify-between text-xs" style="margin-bottom: 2px;"><span>Tạm tính:</span><span>${order.subtotal.toLocaleString('vi-VN')}đ</span></div>
+                  ${(order.discountAmount || 0) > 0 ? `<div class="flex justify-between text-xs" style="margin-bottom: 2px;"><span>Giảm giá:</span><span>-${(order.discountAmount || 0).toLocaleString('vi-VN')}đ</span></div>` : ''}
+                  ${(order.taxAmount || 0) > 0 ? `<div class="flex justify-between text-xs" style="margin-bottom: 2px;"><span>Thuế (${order.taxRate}%):</span><span>${(order.taxAmount || 0).toLocaleString('vi-VN')}đ</span></div>` : ''}
+                  <div class="flex justify-between font-black text-xl border-t mt-3 pt-3 total-row"><span>TỔNG CỘNG:</span><span>${order.total.toLocaleString('vi-VN')}đ</span></div>
+                </div>
+              `;
+            case 'qr':
+              return qrUrl ? `
+                <div class="text-center" style="margin: 15px 0;">
+                  <div class="text-xs font-black uppercase mb-1">${isProvisional ? 'QUÉT MÃ THANH TOÁN' : 'MÃ QR GIAO DỊCH'}</div>
+                  <img src="${qrUrl}" class="qr-img" />
+                </div>
+              ` : '';
+            case 'footer':
+              return `<div class="text-center text-xs italic" style="margin-top: 15px; border-top: 1px dashed #eee; padding-top: 10px;">${field.value || 'Cảm ơn và hẹn gặp lại!'}</div>`;
+            default:
+              if (field.isCustom) {
+                return `<div class="text-center text-xs py-1">${field.value}</div>`;
+              }
+              return '';
+          }
+        }).join('')}
+        <script>window.print(); setTimeout(() => window.close(), 1000);</script>
+      </body>
+    </html>
+  `;
 };
 
 export const printOrder = (order: PrintOrderData, settings: PrintSettings, isProvisional: boolean = false) => {
-  try {
-    const printWindow = window.open('', '_blank');
-    
-    if (!printWindow) {
-      alert('Vui lòng cho phép trình duyệt mở tab mới để in. Kiểm tra popup blocker.');
-      return;
-    }
-
-    const html = generatePrintHTML(order, settings, isProvisional);
-    
-    // Viết HTML vào cửa sổ in
-    printWindow.document.open();
-    printWindow.document.write(html);
-    printWindow.document.close();
-    
-    // Chờ tài liệu tải xong rồi bật dialog in
-    printWindow.onload = () => {
-      setTimeout(() => {
-        printWindow.focus();
-        printWindow.print();
-      }, 300);
-    };
-    
-    // Fallback: Nếu onload không được gọi
-    setTimeout(() => {
-      if (printWindow && !printWindow.closed) {
-        printWindow.focus();
-        printWindow.print();
-      }
-    }, 1000);
-    
-  } catch (error) {
-    console.error('Lỗi in ấn:', error);
-    alert('Có lỗi xảy ra khi in. Chi tiết: ' + (error instanceof Error ? error.message : String(error)));
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert('Vui lòng cho phép trình duyệt mở tab mới để in.');
+    return;
   }
-};
 
-export const printPreview = (order: PrintOrderData, settings: PrintSettings, isProvisional: boolean = false) => {
-  try {
-    const previewWindow = window.open('', '_blank');
-    
-    if (!previewWindow) {
-      alert('Vui lòng cho phép trình duyệt mở tab mới để xem trước. Kiểm tra popup blocker.');
-      return;
-    }
-
-    const html = generatePrintHTML(order, settings, isProvisional);
-    
-    // Viết HTML vào cửa sổ xem trước
-    previewWindow.document.open();
-    previewWindow.document.write(html);
-    previewWindow.document.close();
-    
-    // Focus cửa sổ xem trước
-    previewWindow.onload = () => {
-      previewWindow.focus();
-    };
-    
-  } catch (error) {
-    console.error('Lỗi xem trước:', error);
-    alert('Có lỗi xảy ra khi xem trước. Chi tiết: ' + (error instanceof Error ? error.message : String(error)));
-  }
-};
-
-// Xuất hàm helper để lấy thông tin in ấn
-export const getPrintSettings = (): PrintSettings => {
-  try {
-    const authState = useAuthStore.getState();
-    const user = authState?.user;
-    
-    // Lấy settings từ localStorage hoặc từ server
-    const settingsStr = localStorage.getItem('printSettings');
-    const savedSettings = settingsStr ? JSON.parse(settingsStr) : {};
-    
-    return {
-      storeName: savedSettings.storeName || 'SAIGON AN COFFEE',
-      address: savedSettings.address || '',
-      hotline: savedSettings.hotline || '',
-      logoUrl: savedSettings.logoUrl || '',
-      bankCode: savedSettings.bankCode || '',
-      bankAccount: savedSettings.bankAccount || '',
-      bankAccountHolder: savedSettings.bankAccountHolder || '',
-      defaultPrintTemplate: savedSettings.defaultPrintTemplate || 'classic',
-      printWidth: savedSettings.printWidth || '80mm',
-      templateFields: savedSettings.templateFields || []
-    };
-  } catch (error) {
-    console.error('Lỗi lấy cài đặt in:', error);
-    return {
-      storeName: 'SAIGON AN COFFEE',
-      address: '',
-      hotline: '',
-      logoUrl: '',
-      defaultPrintTemplate: 'classic',
-      printWidth: '80mm'
-    };
-  }
+  const html = generatePrintHTML(order, settings, isProvisional);
+  printWindow.document.write(html);
+  printWindow.document.close();
 };
