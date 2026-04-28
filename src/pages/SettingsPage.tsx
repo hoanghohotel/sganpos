@@ -140,6 +140,11 @@ const PrintPreview = ({ fields, settings }: { fields: PrintField[], settings: an
   const isMinimal = templateId === 'minimal';
   const isRetro = templateId === 'retro';
   const isElegant = templateId === 'elegant';
+  const isEco = templateId === 'eco';
+  const isTech = templateId === 'tech';
+  const isVoucher = templateId === 'voucher';
+  const isBakery = templateId === 'bakery';
+  const isBento = templateId === 'bento';
 
   // Debug: If fields are empty, show a message
   if (!fields || fields.length === 0) {
@@ -158,10 +163,15 @@ const PrintPreview = ({ fields, settings }: { fields: PrintField[], settings: an
         isRetro && "font-mono scale-[0.98] border-dashed border-slate-300 shadow-none border-t-slate-800",
         isModern && "rounded-[40px] shadow-emerald-200/20 border-none",
         isElegant && "border-double border-4 border-slate-900 shadow-none px-8",
-        isMinimal && "border-none shadow-sm scale-[0.95]"
+        isMinimal && "border-none shadow-sm scale-[0.95]",
+        isEco && "border-l-[12px] border-emerald-500 border-t-0 rounded-none",
+        isTech && "border-4 border-slate-900 rounded-none shadow-none font-mono",
+        isVoucher && "border-2 border-dashed border-slate-400 rounded-3xl",
+        isBakery && "border-none shadow-lg shadow-orange-100",
+        isBento && "border-2 border-slate-100 shadow-none"
       )}
       style={{
-        fontFamily: isRetro ? "'JetBrains Mono', monospace" : "'Inter', sans-serif"
+        fontFamily: (isRetro || isTech) ? "'JetBrains Mono', monospace" : (isBakery ? "'Charm', cursive" : "'Inter', sans-serif")
       }}
     >
       <div className="space-y-4">
@@ -170,18 +180,19 @@ const PrintPreview = ({ fields, settings }: { fields: PrintField[], settings: an
             case 'logo':
               return settings?.logoUrl ? (
                 <div key={field.id} className="flex justify-center mb-4">
-                  <img src={settings.logoUrl} alt="Logo" className="w-20 h-20 object-contain" />
+                  <img src={settings.logoUrl} alt="Logo" className={cn("w-20 h-20 object-contain", isModern && "rounded-2xl")} />
                 </div>
               ) : null;
             case 'store-name':
               return (
                 <div key={field.id} className={cn(
                    "text-center font-black uppercase tracking-tight",
-                   isModern ? "text-2xl text-emerald-600" : "text-xl text-slate-900",
+                   (isModern || isEco) ? "text-2xl text-emerald-600" : "text-xl text-slate-900",
                    isElegant && "border-b-2 border-slate-900 pb-2 mb-2",
-                   isMinimal && "text-base font-bold"
+                   isMinimal && "text-base font-bold",
+                   isTech && "bg-slate-900 text-white p-2"
                 )}>
-                  {settings?.storeName || 'SAIGON AN COFFEE'}
+                  {settings?.storeName || 'POSAPP STORE'}
                 </div>
               );
             case 'address':
@@ -338,7 +349,12 @@ const SettingsPage = () => {
     { id: 'modern', name: 'Hiện đại', description: 'Thiết kế tinh tế, font chữ hiện đại.' },
     { id: 'minimal', name: 'Tối giản', description: 'Tập trung vào thông tin quan trọng nhất.' },
     { id: 'retro', name: 'Phóng khoáng', description: 'Phong cách máy in nhiệt cũ, cá tính.' },
-    { id: 'elegant', name: 'Sang trọng', description: 'Bố cục cân đối, phù hợp nhà hàng cao cấp.' }
+    { id: 'elegant', name: 'Sang trọng', description: 'Bố cục cân đối, phù hợp nhà hàng cao cấp.' },
+    { id: 'eco', name: 'Thiên nhiên', description: 'Màu xanh lá nhẹ nhàng, thân thiện.' },
+    { id: 'tech', name: 'Công nghệ', description: 'Đậm chất kỹ thuật, high-contrast.' },
+    { id: 'voucher', name: 'Mẫu Voucher', description: 'Dành cho các phiếu giảm giá hoặc quà tặng.' },
+    { id: 'bakery', name: 'Tiệm bánh', description: 'Nét chữ uốn lượn, ấm áp.' },
+    { id: 'bento', name: 'Kiểu Nhật', description: 'Gọn gàng, phân chia rõ ràng từng phần.' }
   ];
 
   const [templateFields, setTemplateFields] = useState<PrintField[]>([

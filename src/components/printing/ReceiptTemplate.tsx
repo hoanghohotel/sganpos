@@ -16,6 +16,11 @@ const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptTemplateProps>(
     const isMinimal = templateId === 'minimal';
     const isRetro = templateId === 'retro';
     const isElegant = templateId === 'elegant';
+    const isEco = templateId === 'eco';
+    const isTech = templateId === 'tech';
+    const isVoucher = templateId === 'voucher';
+    const isBakery = templateId === 'bakery';
+    const isBento = templateId === 'bento';
 
     const isThermal = ['xprinter', 'zywell', 'xpos', 'gprinter'].includes(settings.brand || '');
     const isXprinter = settings.brand === 'xprinter';
@@ -25,6 +30,7 @@ const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptTemplateProps>(
     const printStyles = (
       <style>
         {`
+          @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Charm:wght@400;700&family=Comfortaa:wght@400;700&family=JetBrains+Mono:wght@400;800&family=Playfair+Display:ital,wght@0,900;1,900&display=swap');
           @media print {
             html, body { 
               margin: 0 !important; 
@@ -32,6 +38,9 @@ const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptTemplateProps>(
               height: auto !important;
               overflow: visible !important;
               background: white !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+              font-family: 'Poppins', sans-serif;
             }
             img { filter: grayscale(1) contrast(2) !important; }
             .no-print { display: none !important; }
@@ -50,7 +59,7 @@ const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptTemplateProps>(
     );
 
     // If it's a thermal printer and we want high-fidelity thermal layout
-    if (isThermal && settings.defaultPrintTemplate === 'classic') {
+    if (isThermal && templateId === 'classic') {
       return (
         <div ref={ref} className="thermal-receipt-root" style={{ width: printWidth, margin: '0 auto', background: '#fff' }}>
            {printStyles}
@@ -87,32 +96,39 @@ const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptTemplateProps>(
       { id: 'footer', type: 'text', label: 'Chân trang', value: 'Cảm ơn và hẹn gặp lại!', enabled: true }
     ];
 
+    const getTemplateStyle = () => {
+      const base = {
+        width: printWidth,
+        margin: '0 auto',
+        backgroundColor: '#fff',
+        boxSizing: 'border-box' as const,
+        overflow: 'visible',
+        color: '#000',
+        lineHeight: '1.4'
+      };
+
+      if (isModern) return { ...base, padding: '30px', fontFamily: "'Comfortaa', sans-serif", borderRadius: '25px', fontSize: '13px' };
+      if (isMinimal) return { ...base, padding: '10px', fontFamily: "'Inter', sans-serif", fontSize: '11px', lineHeight: '1.2' };
+      if (isRetro) return { ...base, padding: '15px', fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', border: '1px dashed #000' };
+      if (isElegant) return { ...base, padding: '25px', fontFamily: "'Playfair Display', serif", fontSize: '13px', border: '4px double #000' };
+      if (isEco) return { ...base, padding: '20px', fontFamily: "'Inter', sans-serif", fontSize: '13px', borderLeft: '10px solid #059669' };
+      if (isTech) return { ...base, padding: '20px', fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', backgroundColor: '#fff', border: '2px solid #000' };
+      if (isVoucher) return { ...base, padding: '25px', border: '2px dashed #000', borderRadius: '15px' };
+      if (isBakery) return { ...base, padding: '20px', fontFamily: "'Charm', cursive", fontSize: '15px' };
+      if (isBento) return { ...base, padding: '20px', fontSize: '12px' };
+      
+      return { ...base, padding: '20px', fontFamily: "'Inter', sans-serif", fontSize: '13px' };
+    };
+
     return (
-      <div 
-        ref={ref} 
-        style={{
-          width: printWidth,
-          margin: '0 auto',
-          padding: isThermal ? '5px' : (isModern ? '30px' : isElegant ? '25px' : '20px'),
-          fontFamily: isRetro ? "'JetBrains Mono', monospace" : "'Inter', sans-serif",
-          fontSize: isMinimal ? '11px' : '13px',
-          lineHeight: isThermal ? '1.2' : '1.4',
-          color: '#000',
-          backgroundColor: '#fff',
-          borderRadius: isModern ? '20px' : '0',
-          border: isElegant ? '4px double #000' : 'none',
-          boxSizing: 'border-box',
-          imageRendering: isThermal ? 'pixelated' : 'auto',
-          overflow: 'visible'
-        }}
-      >
+      <div ref={ref} style={getTemplateStyle()}>
         {printStyles}
         {fields.filter(f => f.enabled).map((field, idx) => {
           switch (field.id) {
             case 'logo':
               return settings.logoUrl ? (
-                <div key={field.id} style={{ textAlign: 'center', marginBottom: '15px' }}>
-                  <img src={settings.logoUrl} style={{ width: '80px', height: '80px', objectFit: 'contain' }} alt="Logo" />
+                <div key={field.id} style={{ textAlign: 'center', marginBottom: isModern ? '20px' : '15px' }}>
+                  <img src={settings.logoUrl} style={{ width: '80px', height: '80px', objectFit: 'contain', borderRadius: isModern ? '20px' : '0' }} alt="Logo" />
                 </div>
               ) : null;
             case 'store-name':
@@ -123,27 +139,27 @@ const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptTemplateProps>(
                     textAlign: 'center', 
                     fontWeight: 900, 
                     textTransform: 'uppercase',
-                    fontSize: isModern ? '24px' : '18px',
-                    color: isModern ? '#059669' : '#000',
-                    borderBottom: isElegant ? '2px solid #000' : 'none',
-                    paddingBottom: isElegant ? '10px' : '0',
-                    marginBottom: isElegant ? '15px' : '0',
-                    letterSpacing: isRetro ? '2px' : isElegant ? '1px' : 'normal'
+                    fontSize: isModern ? '26px' : isTech ? '22px' : '20px',
+                    color: isModern || isEco ? '#059669' : '#000',
+                    letterSpacing: isRetro || isTech ? '2px' : 'normal',
+                    padding: isTech ? '10px' : '0',
+                    border: isTech ? '2px solid #000' : 'none',
+                    marginBottom: isTech ? '15px' : '0'
                   }}
                 >
-                  {settings.storeName || 'SAIGON AN COFFEE'}
+                  {settings.storeName || 'POSAPP STORE'}
                 </div>
               );
             case 'address':
               return (
-                <div key={field.id} style={{ textAlign: 'center', fontSize: '10px', marginTop: '4px', color: '#444' }}>
+                <div key={field.id} style={{ textAlign: 'center', fontSize: '11px', marginTop: '4px', opacity: 0.8, fontStyle: isBakery ? 'italic' : 'normal' }}>
                   {settings.address || ''}
                 </div>
               );
             case 'hotline':
               return (
-                <div key={field.id} style={{ textAlign: 'center', fontSize: '10px', fontWeight: 700, marginTop: '2px' }}>
-                  Hotline: {settings.hotline || ''}
+                <div key={field.id} style={{ textAlign: 'center', fontSize: '11px', fontWeight: 700, marginTop: '2px' }}>
+                  {isTech && '> '}Hotline: {settings.hotline || ''}
                 </div>
               );
             case 'sep-1':
@@ -152,77 +168,120 @@ const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptTemplateProps>(
                 <div 
                   key={`${field.id}-${idx}`} 
                   style={{ 
-                    borderTop: isRetro ? '1px dashed #000' : isMinimal ? '1px solid #eee' : '1px solid #000',
-                    margin: '16px 0'
+                    borderTop: isRetro || isVoucher ? '2px dashed #000' : isTech ? '4px solid #000' : '1px solid #eee',
+                    margin: isMinimal ? '10px 0' : '16px 0',
+                    position: 'relative'
                   }} 
-                />
+                >
+                  {isVoucher && (
+                    <>
+                      <div style={{ position: 'absolute', left: '-35px', top: '-10px', width: '20px', height: '20px', background: '#fff', borderRadius: '50%', border: '2px dashed #000' }} />
+                      <div style={{ position: 'absolute', right: '-35px', top: '-10px', width: '20px', height: '20px', background: '#fff', borderRadius: '50%', border: '2px dashed #000' }} />
+                    </>
+                  )}
+                </div>
               );
             case 'order-info':
               return (
-                <div key={field.id} style={{ margin: '15px 0', fontSize: '10px' }}>
-                  <div style={{ textAlign: 'center', fontWeight: 900, marginBottom: '12px', fontSize: '12px', fontStyle: 'italic', borderBottom: '1px solid #eee', paddingBottom: '5px' }}>
+                <div key={field.id} style={{ margin: '15px 0' }}>
+                  <div style={{ 
+                    textAlign: 'center', 
+                    fontWeight: 900, 
+                    marginBottom: '12px', 
+                    fontSize: isModern ? '14px' : '12px',
+                    backgroundColor: isModern ? '#ecfdf5' : isTech ? '#000' : 'transparent',
+                    color: isModern ? '#059669' : isTech ? '#fff' : '#000',
+                    padding: isModern || isTech ? '8px' : '0',
+                    borderRadius: isModern ? '12px' : '0'
+                  }}>
                     {isProvisional ? 'PHIẾU TẠM TÍNH' : 'HÓA ĐƠN THANH TOÁN'}
                   </div>
-                  {order.orderCode && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-                      <span>Mã Đơn:</span>
-                      <b style={{ fontWeight: 900 }}>#{order.orderCode}</b>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11px' }}>
+                    {order.orderCode && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>Mã đơn:</span>
+                        <b style={{ fontWeight: 900 }}>#{order.orderCode}</b>
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>Vị trí:</span>
+                      <b style={{ fontWeight: 900 }}>{order.tableName || 'Mang về'}</b>
                     </div>
-                  )}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-                    <span>Bàn:</span>
-                    <b style={{ fontWeight: 900 }}>{order.tableName || 'Mang về'}</b>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-                    <span>Ngày:</span>
-                    <span>{dateStr}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-                    <span>Nhân viên:</span>
-                    <span>{staffName}</span>
-                  </div>
-                  {order.paymentMethod && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px', paddingTop: '4px', borderTop: '1px dotted #ccc' }}>
-                      <span>PTTT:</span>
-                      <b>{order.paymentMethod === 'CASH' ? 'Tiền mặt' : 'Chuyển khoản'}</b>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>Thời gian:</span>
+                      <span>{dateStr}</span>
                     </div>
-                  )}
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>Phục vụ:</span>
+                      <span>{staffName}</span>
+                    </div>
+                    {order.paymentMethod && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px', borderTop: '1px dotted #ccc', paddingTop: '4px' }}>
+                        <span>Thanh toán:</span>
+                        <b>{order.paymentMethod === 'CASH' ? 'Tiền mặt' : 'Chuyển khoản'}</b>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             case 'items-list':
               return (
-                <div key={field.id} style={{ margin: '15px 0', padding: 0 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '10px', borderBottom: '1.5px solid #000', paddingBottom: '4px', marginBottom: '8px' }}>
-                    <div style={{ flex: 1 }}>Tên món</div>
+                <div key={field.id} style={{ margin: '15px 0' }}>
+                  <div style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    fontWeight: 900, 
+                    fontSize: '11px', 
+                    borderBottom: isTech ? '2px solid #000' : '1.5px solid #000', 
+                    paddingBottom: '6px', 
+                    marginBottom: '10px',
+                    textTransform: 'uppercase'
+                  }}>
+                    <div style={{ flex: 1 }}>Sản phẩm</div>
                     <div style={{ width: '40px', textAlign: 'center' }}>SL</div>
                     <div style={{ width: '90px', textAlign: 'right' }}>Thành tiền</div>
                   </div>
                   {order.items.map((item, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '12px', borderBottom: isModern ? '1px solid #f1f5f9' : 'none', paddingBottom: isModern ? '6px' : '0', pageBreakInside: 'avoid' }}>
-                      <div style={{ flex: 1, fontWeight: 700, paddingRight: '5px' }}>{item.name}</div>
+                    <div 
+                      key={i} 
+                      style={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        marginBottom: '8px', 
+                        fontSize: isBento ? '14px' : '12px',
+                        borderBottom: isModern ? '1px solid #f1f5f9' : (isBento ? '1px solid #eee' : 'none'),
+                        paddingBottom: isModern || isBento ? '8px' : '0',
+                        pageBreakInside: 'avoid'
+                      }}
+                    >
+                      <div style={{ flex: 1, fontWeight: 700, paddingRight: '5px' }}>
+                        {isTech && '[ ] '}{item.name}
+                      </div>
                       <div style={{ width: '40px', textAlign: 'center' }}>{item.quantity}</div>
-                      <div style={{ width: '90px', textAlign: 'right', fontWeight: 700 }}>{(item.price * item.quantity).toLocaleString('vi-VN')}</div>
+                      <div style={{ width: '90px', textAlign: 'right', fontWeight: 900 }}>
+                        {(item.price * item.quantity).toLocaleString('vi-VN')}
+                      </div>
                     </div>
                   ))}
                 </div>
               );
             case 'totals':
               return (
-                <div key={field.id} style={{ margin: '15px 0', paddingTop: '5px', borderTop: '1px solid #000' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', marginBottom: '2px' }}>
+                <div key={field.id} style={{ margin: '15px 0', borderTop: isTech ? '2px solid #000' : '1px solid #eee', paddingTop: '10px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '4px' }}>
                     <span>Tạm tính:</span>
-                    <span>{order.subtotal.toLocaleString('vi-VN')}đ</span>
+                    <span>{order.subtotal.toLocaleString('vi-VN')}</span>
                   </div>
                   {(order.discountAmount || 0) > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', marginBottom: '2px' }}>
-                      <span>Giảm giá:</span>
-                      <span>-{(order.discountAmount || 0).toLocaleString('vi-VN')}đ</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '4px', color: '#dc2626' }}>
+                      <span>Chiết khấu:</span>
+                      <span>-{(order.discountAmount || 0).toLocaleString('vi-VN')}</span>
                     </div>
                   )}
                   {(order.taxAmount || 0) > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', marginBottom: '2px' }}>
-                      <span>Thuế ({order.taxRate}%):</span>
-                      <span>{(order.taxAmount || 0).toLocaleString('vi-VN')}đ</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '4px' }}>
+                      <span>VAT ({order.taxRate}%):</span>
+                      <span>{(order.taxAmount || 0).toLocaleString('vi-VN')}</span>
                     </div>
                   )}
                   <div 
@@ -230,37 +289,52 @@ const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptTemplateProps>(
                       display: 'flex', 
                       justifyContent: 'space-between', 
                       fontWeight: 900, 
-                      fontSize: '20px', 
-                      borderTop: isMinimal ? '1px solid #eee' : '1px solid #000', 
-                      marginTop: '12px', 
-                      paddingTop: '12px',
-                      color: isModern ? '#059669' : '#000'
+                      fontSize: '22px', 
+                      borderTop: isTech ? '4px double #000' : '2px solid #000', 
+                      marginTop: '10px', 
+                      paddingTop: '10px',
+                      color: isModern || isEco ? '#059669' : '#000',
+                      letterSpacing: isTech ? '-1px' : 'normal'
                     }}
                   >
-                    <span>TỔNG CỘNG:</span>
-                    <span>{order.total.toLocaleString('vi-VN')}đ</span>
+                    <span>TỔNG:</span>
+                    <span>{order.total.toLocaleString('vi-VN')}</span>
                   </div>
                 </div>
               );
             case 'qr':
               return qrUrl ? (
-                <div key={field.id} style={{ textAlign: 'center', margin: '15px 0' }}>
-                  <div style={{ fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', marginBottom: '4px' }}>
-                    {isProvisional ? 'QUÉT MÃ THANH TOÁN' : 'MÃ QR GIAO DỊCH'}
+                <div key={field.id} style={{ 
+                  textAlign: 'center', 
+                  margin: '20px 0',
+                  padding: isModern ? '15px' : '0',
+                  backgroundColor: isModern ? '#f8fafc' : 'transparent',
+                  borderRadius: '20px'
+                }}>
+                  <div style={{ fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', marginBottom: '8px', color: isTech ? '#fff' : '#000', backgroundColor: isTech ? '#000' : 'transparent', display: isTech ? 'inline-block' : 'block', padding: isTech ? '4px 12px' : '0' }}>
+                    {isProvisional ? 'QUÉT ĐỂ THANH TOÁN' : 'MÃ TRA CỨU'}
                   </div>
-                  <img src={qrUrl} style={{ width: '140px', height: 'auto', margin: '10px auto', display: 'block', maxWidth: '100%' }} alt="QR Code" />
+                  <img src={qrUrl} style={{ width: isModern ? '160px' : '140px', height: 'auto', margin: '10px auto', display: 'block', maxWidth: '100%', filter: 'contrast(1.2)' }} alt="QR Code" />
                 </div>
               ) : null;
             case 'footer':
               return (
-                <div key={field.id} style={{ textAlign: 'center', fontSize: '10px', fontStyle: 'italic', marginTop: '15px', borderTop: '1px dashed #eee', paddingTop: '10px' }}>
-                  {field.value || 'Cảm ơn và hẹn gặp lại!'}
+                <div key={field.id} style={{ 
+                  textAlign: 'center', 
+                  fontSize: '11px', 
+                  fontStyle: 'italic', 
+                  marginTop: '20px', 
+                  paddingTop: '15px',
+                  borderTop: isRetro ? '1px dashed #ccc' : '1px solid #f1f5f9'
+                }}>
+                  {field.value || 'CẢM ƠN QUÝ KHÁCH. HẸN GẶP LẠI!'}
+                  {isTech && <div style={{ fontSize: '10px', marginTop: '10px', opacity: 0.5 }}>SYSTEM_OK_CHECKED</div>}
                 </div>
               );
             default:
               if (field.isCustom) {
                 return (
-                  <div key={idx} style={{ textAlign: 'center', fontSize: '10px', padding: '4px 0' }}>
+                  <div key={idx} style={{ textAlign: 'center', fontSize: '11px', padding: '5px 0', opacity: 0.8 }}>
                     {field.value}
                   </div>
                 );

@@ -9,6 +9,11 @@ export const generatePrintHTML = (order: PrintOrderData, settings: PrintSettings
   const isMinimal = templateId === 'minimal';
   const isRetro = templateId === 'retro';
   const isElegant = templateId === 'elegant';
+  const isEco = templateId === 'eco';
+  const isTech = templateId === 'tech';
+  const isVoucher = templateId === 'voucher';
+  const isBakery = templateId === 'bakery';
+  const isBento = templateId === 'bento';
 
   const qrUrl = (order.paymentMethod === 'TRANSFER' || isProvisional) && settings.bankCode
     ? `https://img.vietqr.io/image/${settings.bankCode}-${settings.bankAccount}-compact2.png?amount=${order.total}&addInfo=${encodeURIComponent(`TT ${order.orderCode || ''} ${order.tableName || ''}`)}&accountName=${encodeURIComponent(settings.bankAccountHolder || '')}`
@@ -38,7 +43,7 @@ export const generatePrintHTML = (order: PrintOrderData, settings: PrintSettings
   
   const dateStr = order.createdAt ? new Date(order.createdAt).toLocaleString('vi-VN') : new Date().toLocaleString('vi-VN');
 
-  const fields = settings.templateFields || [
+  const fields = settings.templateFields && settings.templateFields.length > 0 ? settings.templateFields : [
     { id: 'logo', type: 'image', label: 'Logo cửa hàng', value: '', enabled: true },
     { id: 'store-name', type: 'text', label: 'Tên cửa hàng', value: '', enabled: true },
     { id: 'address', type: 'text', label: 'Địa chỉ', value: '', enabled: true },
@@ -59,7 +64,7 @@ export const generatePrintHTML = (order: PrintOrderData, settings: PrintSettings
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${isProvisional ? 'Phiếu Tạm Tính' : 'Hóa Đơn Thanh Toán'}</title>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Charm:wght@400;700&family=Comfortaa:wght@400;700&family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;800&family=Playfair+Display:ital,wght@0,900;1,900&display=swap');
       
       * {
         margin: 0;
@@ -68,14 +73,19 @@ export const generatePrintHTML = (order: PrintOrderData, settings: PrintSettings
       }
       
       body { 
-        font-family: ${isRetro ? "'JetBrains Mono', monospace" : "'Inter', sans-serif"}; 
-        padding: 20px; 
-        line-height: 1.4; 
-        font-size: 13px; 
-        width: 80mm;
+        font-family: ${isRetro || isTech ? "'JetBrains Mono', monospace" : (isBakery ? "'Charm', cursive" : (isModern ? "'Comfortaa', sans-serif" : (isElegant ? "'Playfair Display', serif" : "'Inter', sans-serif")))}; 
+        padding: ${isModern ? '30px' : (isMinimal ? '10px' : (isElegant ? '25px' : '20px'))}; 
+        line-height: ${isMinimal ? '1.2' : '1.4'}; 
+        font-size: ${isMinimal ? '11px' : '13px'}; 
+        width: ${settings.printWidth === '58mm' ? '58mm' : '80mm'};
         margin: 0 auto;
         color: #000;
         background: white;
+        ${isElegant ? 'border: 4px double #000;' : ''}
+        ${isModern ? 'border-radius: 25px;' : ''}
+        ${isEco ? 'border-left: 10px solid #059669;' : ''}
+        ${isTech ? 'border: 2px solid #000;' : ''}
+        ${isVoucher ? 'border: 2px dashed #000; border-radius: 15px;' : ''}
       }
       
       .text-center { text-align: center; }
@@ -87,8 +97,7 @@ export const generatePrintHTML = (order: PrintOrderData, settings: PrintSettings
       .text-sm { font-size: 12px; }
       .text-lg { font-size: 18px; }
       .text-xl { font-size: 24px; }
-      .border-t { border-top: 1px solid #000; }
-      .border-double { border-top: 3px double #000; }
+      .border-t { border-top: 1px solid #eee; }
       .my-2 { margin-top: 8px; margin-bottom: 8px; }
       .my-4 { margin-top: 16px; margin-bottom: 16px; }
       .flex { display: flex; }
@@ -98,31 +107,26 @@ export const generatePrintHTML = (order: PrintOrderData, settings: PrintSettings
       .gap-2 { gap: 8px; }
       .qr-img { width: 140px; height: auto; margin: 10px auto; display: block; max-width: 100%; }
       .item-row { display: flex; justify-content: space-between; margin: 4px 0; }
-      .page-break { page-break-after: always; }
       
       ${isModern ? `
-        body { padding: 30px; border-radius: 20px; font-family: 'Inter', sans-serif; }
-        .item-row { border-bottom: 1px solid #f1f5f9; padding: 6px 0; }
-        .store-name { color: #059669; }
+        .store-name { color: #059669; font-size: 26px; }
+        .order-title { background: #ecfdf5; color: #059669; padding: 8px; border-radius: 12px; }
+        .item-row { border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; }
         .total-row { color: #059669; }
       ` : ''}
       
-      ${isRetro ? `
-        body { font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.5px; }
-        .border-t { border-top: 1px dashed #000; }
-        .uppercase { letter-spacing: 2px; }
+      ${isRetro || isTech ? `
+        .border-t { border-top: 2px dashed #000; }
+        ${isTech ? `
+          .store-name { border: 2px solid #000; padding: 10px; font-size: 22px; margin-bottom: 15px; }
+          .order-title { background: #000; color: #fff; padding: 8px; }
+          .border-t { border-top: 4px solid #000; }
+          .total-row { border-top: 4px double #000; }
+        ` : ''}
       ` : ''}
       
-      ${isElegant ? `
-        body { border: 4px double #000; padding: 25px; font-family: 'Inter', sans-serif; }
-        .store-name { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
-        .uppercase { letter-spacing: 1px; }
-      ` : ''}
-
-      ${isMinimal ? `
-        body { font-family: 'Inter', sans-serif; font-size: 11px; }
-        .font-black { font-weight: 700; }
-        .border-t { border-top: 1px solid #eee; }
+      ${isBento ? `
+        .item-row { border-bottom: 1px solid #eee; padding-bottom: 8px; font-size: 14px; }
       ` : ''}
 
       @media print {
@@ -141,38 +145,40 @@ export const generatePrintHTML = (order: PrintOrderData, settings: PrintSettings
       ${fields.filter(f => f.enabled).map(field => {
         switch (field.id) {
           case 'logo':
-            return settings.logoUrl ? `<div class="text-center"><img src="${settings.logoUrl}" style="width: 80px; height: 80px; object-fit: contain; margin-bottom: 15px;" alt="Logo" /></div>` : '';
+            return settings.logoUrl ? `<div class="text-center"><img src="${settings.logoUrl}" style="width: 80px; height: 80px; object-fit: contain; margin-bottom: 15px; ${isModern ? 'border-radius: 20px;' : ''}" alt="Logo" /></div>` : '';
           case 'store-name':
-            return `<div class="text-center font-black uppercase store-name ${isModern ? 'text-xl' : 'text-lg'}">${settings.storeName || 'SAIGON AN COFFEE'}</div>`;
+            return `<div class="text-center font-black uppercase store-name ${isModern ? 'text-xl' : 'text-lg'}">${settings.storeName || 'POSAPP STORE'}</div>`;
           case 'address':
-            return `<div class="text-center text-xs" style="margin-top: 4px; color: #444;">${settings.address || ''}</div>`;
+            return `<div class="text-center text-xs" style="margin-top: 4px; color: #444; opacity: 0.8;">${settings.address || ''}</div>`;
           case 'hotline':
-            return `<div class="text-center text-xs font-bold" style="margin-top: 2px;">Hotline: ${settings.hotline || ''}</div>`;
+            return `<div class="text-center text-xs font-bold" style="margin-top: 2px;">${isTech ? '> ' : ''}Hotline: ${settings.hotline || ''}</div>`;
           case 'sep-1':
           case 'sep-2':
-            return `<div class="border-t my-4" ${isRetro ? 'style="border-top-style: dashed;"' : ''}></div>`;
+            return `<div class="border-t my-4" style="${isRetro ? 'border-top-style: dashed;' : ''}${isTech ? 'border-top-width: 4px; border-top-style: solid;' : ''}"></div>`;
           case 'order-info':
             return `
               <div class="order-info text-xs" style="margin: 15px 0;">
-                <div class="text-center font-black mb-3 text-sm italic" style="border-bottom: 1px solid #eee; padding-bottom: 5px;">${isProvisional ? 'PHIẾU TẠM TÍNH' : 'HÓA ĐƠN THANH TOÁN'}</div>
-                ${order.orderCode ? `<div class="flex justify-between" style="margin-bottom: 2px;"><span>Mã Đơn:</span><b class="font-black">#${order.orderCode}</b></div>` : ''}
-                <div class="flex justify-between" style="margin-bottom: 2px;"><span>Bàn:</span><b class="font-black">${order.tableName || 'Mang về'}</b></div>
-                <div class="flex justify-between" style="margin-bottom: 2px;"><span>Ngày:</span><span>${dateStr}</span></div>
-                <div class="flex justify-between" style="margin-bottom: 2px;"><span>Nhân viên:</span><span>${staffName}</span></div>
-                ${order.paymentMethod ? `<div class="flex justify-between" style="margin-top: 4px; padding-top: 4px; border-top: 1px dotted #ccc;"><span>PTTT:</span><b>${order.paymentMethod === 'CASH' ? 'Tiền mặt' : 'Chuyển khoản'}</b></div>` : ''}
+                <div class="text-center font-black mb-3 text-sm italic order-title" style="border-bottom: 1px solid #eee; padding-bottom: 5px;">${isProvisional ? 'PHIẾU TẠM TÍNH' : 'HÓA ĐƠN THANH TOÁN'}</div>
+                <div class="flex-col gap-2">
+                  ${order.orderCode ? `<div class="flex justify-between"><span>Mã Đơn:</span><b class="font-black">#${order.orderCode}</b></div>` : ''}
+                  <div class="flex justify-between"><span>Bàn:</span><b class="font-black">${order.tableName || 'Mang về'}</b></div>
+                  <div class="flex justify-between"><span>Ngày:</span><span>${dateStr}</span></div>
+                  <div class="flex justify-between"><span>Nhân viên:</span><span>${staffName}</span></div>
+                  ${order.paymentMethod ? `<div class="flex justify-between" style="margin-top: 4px; padding-top: 4px; border-top: 1px dotted #ccc;"><span>PTTT:</span><b>${order.paymentMethod === 'CASH' ? 'Tiền mặt' : 'Chuyển khoản'}</b></div>` : ''}
+                </div>
               </div>
             `;
           case 'items-list':
             return `
               <div class="items" style="margin: 15px 0;">
-                <div class="item-row font-bold text-xs" style="border-bottom: 1px solid #000; padding-bottom: 4px; margin-bottom: 8px;">
+                <div class="item-row font-black text-xs" style="border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 10px; text-transform: uppercase;">
                   <div style="flex: 1;">Tên món</div>
                   <div style="width: 35px; text-align: center;">SL</div>
                   <div style="width: 80px; text-align: right;">Thành tiền</div>
                 </div>
                 ${order.items.map(item => `
-                  <div class="item-row" style="margin-bottom: 6px;">
-                    <div style="flex: 1; font-weight: 700;">${item.name}</div>
+                  <div class="item-row" style="margin-bottom: 8px;">
+                    <div style="flex: 1; font-weight: 700;">${isTech ? '[ ] ' : ''}${item.name}</div>
                     <div style="width: 35px; text-align: center;">${item.quantity}</div>
                     <div style="width: 80px; text-align: right; font-weight: 700;">${(item.price * item.quantity).toLocaleString('vi-VN')}</div>
                   </div>
@@ -181,33 +187,33 @@ export const generatePrintHTML = (order: PrintOrderData, settings: PrintSettings
             `;
             case 'totals':
               return `
-                <div class="totals" style="margin: 15px 0; padding-top: 5px; border-top: 1px solid #000;">
-                  <div class="flex justify-between text-xs" style="margin-bottom: 2px;"><span>Tạm tính:</span><span>${order.subtotal.toLocaleString('vi-VN')}đ</span></div>
-                  ${(order.discountAmount || 0) > 0 ? `<div class="flex justify-between text-xs" style="margin-bottom: 2px;"><span>Giảm giá:</span><span>-${(order.discountAmount || 0).toLocaleString('vi-VN')}đ</span></div>` : ''}
-                  ${(order.taxAmount || 0) > 0 ? `<div class="flex justify-between text-xs" style="margin-bottom: 2px;"><span>Thuế (${order.taxRate}%):</span><span>${(order.taxAmount || 0).toLocaleString('vi-VN')}đ</span></div>` : ''}
-                  <div class="flex justify-between font-black text-xl border-t mt-3 pt-3 total-row"><span>TỔNG CỘNG:</span><span>${order.total.toLocaleString('vi-VN')}đ</span></div>
+                <div class="totals" style="margin: 15px 0; padding-top: 10px; border-top: 1px solid #eee;">
+                  <div class="flex justify-between text-xs" style="margin-bottom: 4px;"><span>Tạm tính:</span><span>${order.subtotal.toLocaleString('vi-VN')}</span></div>
+                  ${(order.discountAmount || 0) > 0 ? `<div class="flex justify-between text-xs" style="margin-bottom: 4px; color: #dc2626;"><span>Giảm giá:</span><span>-${(order.discountAmount || 0).toLocaleString('vi-VN')}</span></div>` : ''}
+                  ${(order.taxAmount || 0) > 0 ? `<div class="flex justify-between text-xs" style="margin-bottom: 4px;"><span>Thuế (${order.taxRate}%):</span><span>${(order.taxAmount || 0).toLocaleString('vi-VN')}</span></div>` : ''}
+                  <div class="flex justify-between font-black text-xl border-t mt-3 pt-3 total-row"><span>TỔNG CỘNG:</span><span>${order.total.toLocaleString('vi-VN')}</span></div>
                 </div>
               `;
             case 'qr':
               return qrUrl ? `
                 <div class="text-center" style="margin: 15px 0;">
-                  <div class="text-xs font-black uppercase mb-1">${isProvisional ? 'QUÉT MÃ THANH TOÁN' : 'MÃ QR GIAO DỊCH'}</div>
+                  <div class="text-xs font-black uppercase mb-1" style="${isTech ? 'background: #000; color: #fff; padding: 4px;' : ''}">${isProvisional ? 'QUÉT MÃ THANH TOÁN' : 'MÃ QR GIAO DỊCH'}</div>
                   <img src="${qrUrl}" class="qr-img" />
                 </div>
               ` : '';
             case 'footer':
-              return `<div class="text-center text-xs italic" style="margin-top: 15px; border-top: 1px dashed #eee; padding-top: 10px;">${field.value || 'Cảm ơn và hẹn gặp lại!'}</div>`;
+              return `<div class="text-center text-xs italic" style="margin-top: 15px; border-top: 1px dashed #eee; padding-top: 10px;">${field.value || 'CẢM ƠN QUÝ KHÁCH. HẸN GẶP LẠI!'}</div>`;
             default:
               if (field.isCustom) {
-                return `<div class="text-center text-xs py-1">${field.value}</div>`;
+                return `<div class="text-center text-xs py-1" style="opacity: 0.8;">${field.value}</div>`;
               }
               return '';
           }
         }).join('')}
         <script>window.print(); setTimeout(() => window.close(), 1000);</script>
-      </body>
-    </html>
-  `;
+      </div>
+    </body>
+  </html>`;
 };
 
 export const printOrder = (order: PrintOrderData, settings: PrintSettings, isProvisional: boolean = false) => {

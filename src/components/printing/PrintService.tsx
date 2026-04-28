@@ -42,34 +42,39 @@ const PrintService: React.FC = () => {
       <style>
         {`
           @media print {
-            /* Reset body/html for printing */
-            html, body {
-              height: initial !important;
-              overflow: initial !important;
-              position: initial !important;
+            .no-print { display: none !important; }
+            body { 
               background: white !important;
+              visibility: hidden;
             }
-            /* Hide everything except print container */
-            body > *:not(.app-print-container) {
-              display: none !important;
+            .app-print-container, .app-print-container * {
+              visibility: visible !important;
             }
             .app-print-container {
               display: block !important;
-              position: relative !important;
-              width: 100% !important;
+              position: absolute !important;
+              left: 0 !important;
+              top: 0 !important;
+              width: ${printData.settings?.printWidth === '58mm' ? '58mm' : '80mm'} !important;
               margin: 0 !important;
               padding: 0 !important;
+              background: white !important;
+            }
+            /* Remove margins from @page to avoid extra space */
+            @page {
+              margin: 0;
             }
           }
         `}
       </style>
-      <div className="app-print-container" style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}>
-        <ReceiptTemplate 
-          ref={contentRef} 
-          order={printData.order} 
-          settings={printData.settings} 
-          isProvisional={printData.isProvisional} 
-        />
+      <div className="app-print-container" style={{ position: 'fixed', top: '-10000px', left: '-10000px', opacity: 0, pointerEvents: 'none', zIndex: -1 }}>
+        <div ref={contentRef}>
+          <ReceiptTemplate 
+            order={printData.order} 
+            settings={printData.settings} 
+            isProvisional={printData.isProvisional} 
+          />
+        </div>
       </div>
     </>
   );
