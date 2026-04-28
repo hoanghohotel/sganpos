@@ -979,10 +979,11 @@ const POSPage = () => {
   }
 
   return (
-    <div className="flex h-full overflow-hidden bg-[#F8FAFC]">
-      {/* Main Content Area */}
-      <div className="flex-1 p-8 overflow-auto">
-        <AnimatePresence mode="wait">
+    <div className="flex h-full overflow-hidden bg-[#F8FAFC] justify-center">
+      <div className="flex w-full max-w-[1920px] h-full overflow-hidden bg-white lg:bg-transparent shadow-2xl lg:shadow-none">
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col overflow-hidden relative">
+          <AnimatePresence mode="wait">
           {/* STEP 1: Select Order Type */}
           {step === 'TYPE' && (
             <motion.div 
@@ -990,7 +991,7 @@ const POSPage = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="h-full flex flex-col justify-center max-w-4xl mx-auto"
+              className="h-full flex flex-col justify-center max-w-4xl mx-auto p-8"
             >
               <h2 className="text-4xl font-black text-slate-900 mb-12 text-center tracking-tighter">Bắt đầu đơn hàng mới</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -1023,7 +1024,7 @@ const POSPage = () => {
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -50 }}
-              className="h-full flex flex-col"
+              className="h-full flex flex-col p-4 sm:p-8 overflow-auto"
             >
               <div className="flex items-center gap-4 mb-10">
                 <button onClick={() => setStep('TYPE')} className="p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50">
@@ -1144,7 +1145,7 @@ const POSPage = () => {
                 </div>
               </header>
 
-              <div className="flex-1 overflow-auto pb-8 scrollbar-hide">
+              <div className="flex-1 overflow-auto px-4 sm:px-8 pb-8 scrollbar-hide">
                 {selectedCategory === 'Tất cả' && !searchQuery ? (
                   categories.filter(c => c !== 'Tất cả').map((cat) => {
                     const catProducts = products.filter(p => p.category === cat);
@@ -1638,6 +1639,7 @@ const POSPage = () => {
           </div>
         )}
       </AnimatePresence>
+      </div>
     </div>
   );
 };

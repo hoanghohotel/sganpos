@@ -64,15 +64,26 @@ const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptTemplateProps>(
           borderRadius: isModern ? '20px' : '0',
           border: isElegant ? '4px double #000' : 'none',
           boxSizing: 'border-box',
-          imageRendering: isThermal ? 'pixelated' : 'auto'
+          imageRendering: isThermal ? 'pixelated' : 'auto',
+          overflow: 'visible'
         }}
       >
         <style>
           {`
             @media print {
+              html, body { 
+                margin: 0 !important; 
+                padding: 0 !important; 
+                height: auto !important;
+                overflow: visible !important;
+              }
               img { filter: grayscale(1) contrast(2) !important; }
               ${isThermal ? '.item-row { font-weight: bold !important; }' : ''}
               ${isXprinter ? 'body { width: 100% !important; margin: 0 !important; }' : ''}
+              @page {
+                margin: 0;
+                size: ${printWidth} auto;
+              }
             }
           `}
         </style>
@@ -160,17 +171,17 @@ const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptTemplateProps>(
               );
             case 'items-list':
               return (
-                <div key={field.id} style={{ margin: '15px 0' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '10px', borderBottom: '1px solid #000', paddingBottom: '4px', marginBottom: '8px' }}>
+                <div key={field.id} style={{ margin: '15px 0', padding: 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '10px', borderBottom: '1.5px solid #000', paddingBottom: '4px', marginBottom: '8px' }}>
                     <div style={{ flex: 1 }}>Tên món</div>
-                    <div style={{ width: '35px', textAlign: 'center' }}>SL</div>
-                    <div style={{ width: '80px', textAlign: 'right' }}>Thành tiền</div>
+                    <div style={{ width: '40px', textAlign: 'center' }}>SL</div>
+                    <div style={{ width: '90px', textAlign: 'right' }}>Thành tiền</div>
                   </div>
                   {order.items.map((item, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '12px', borderBottom: isModern ? '1px solid #f1f5f9' : 'none', paddingBottom: isModern ? '6px' : '0' }}>
-                      <div style={{ flex: 1, fontWeight: 700 }}>{item.name}</div>
-                      <div style={{ width: '35px', textAlign: 'center' }}>{item.quantity}</div>
-                      <div style={{ width: '80px', textAlign: 'right', fontWeight: 700 }}>{(item.price * item.quantity).toLocaleString('vi-VN')}</div>
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '12px', borderBottom: isModern ? '1px solid #f1f5f9' : 'none', paddingBottom: isModern ? '6px' : '0', pageBreakInside: 'avoid' }}>
+                      <div style={{ flex: 1, fontWeight: 700, paddingRight: '5px' }}>{item.name}</div>
+                      <div style={{ width: '40px', textAlign: 'center' }}>{item.quantity}</div>
+                      <div style={{ width: '90px', textAlign: 'right', fontWeight: 700 }}>{(item.price * item.quantity).toLocaleString('vi-VN')}</div>
                     </div>
                   ))}
                 </div>
