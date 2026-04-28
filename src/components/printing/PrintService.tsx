@@ -25,24 +25,53 @@ const PrintService: React.FC = () => {
     return () => window.removeEventListener(PRINT_EVENT, listener);
   }, []);
 
-  // Trigger print once data is set and component is rendered
+  // Trigger print with delay and cleanup
   useEffect(() => {
     if (printData && contentRef.current) {
-      handlePrint();
+      const timer = setTimeout(() => {
+        handlePrint();
+      }, 500); // 500ms delay to ensure rendering is complete
+      return () => clearTimeout(timer);
     }
   }, [printData, handlePrint]);
 
   if (!printData) return null;
 
   return (
-    <div style={{ display: 'none' }}>
-      <ReceiptTemplate 
-        ref={contentRef} 
-        order={printData.order} 
-        settings={printData.settings} 
-        isProvisional={printData.isProvisional} 
-      />
-    </div>
+    <>
+      <style>
+        {`
+          @media print {
+            /* Reset body/html for printing */
+            html, body {
+              height: initial !important;
+              overflow: initial !important;
+              position: initial !important;
+              background: white !important;
+            }
+            /* Hide everything except print container */
+            body > *:not(.app-print-container) {
+              display: none !important;
+            }
+            .app-print-container {
+              display: block !important;
+              position: relative !important;
+              width: 100% !important;
+              margin: 0 !important;
+              padding: 0 !important;
+            }
+          }
+        `}
+      </style>
+      <div className="app-print-container" style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}>
+        <ReceiptTemplate 
+          ref={contentRef} 
+          order={printData.order} 
+          settings={printData.settings} 
+          isProvisional={printData.isProvisional} 
+        />
+      </div>
+    </>
   );
 };
 
