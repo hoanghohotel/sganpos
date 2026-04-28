@@ -120,7 +120,8 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', database: 'connected' });
 });
 
-app.post('/api/dev/migrate', async (req, res) => {
+app.post('/api/dev/migrate', authenticate, async (req: AuthRequest, res) => {
+  if (req.user?.role !== 'ADMIN') return res.status(403).json({ error: 'Admin only' });
   try {
     await runMigration();
     res.json({ success: true, message: 'Migration/Seed completed successfully' });
@@ -138,13 +139,15 @@ app.use('/api/settings', settingsRoutes);
 
 import { authenticate, AuthRequest } from './src/middleware/auth.js';
 
-// --- Development & Admin APIs ---
-app.get('/api/dev/logs', (req, res) => {
+// --- Development & Admin APIs (ADMIN ONLY) ---
+app.get('/api/dev/logs', authenticate, (req: AuthRequest, res) => {
+  if (req.user?.role !== 'ADMIN') return res.status(403).json({ error: 'Admin only' });
   console.log('[Dev] Fetching logs...');
   res.json(systemLogs.slice().reverse());
 });
 
-app.get('/api/dev/db-status', async (req, res) => {
+app.get('/api/dev/db-status', authenticate, async (req: AuthRequest, res) => {
+  if (req.user?.role !== 'ADMIN') return res.status(403).json({ error: 'Admin only' });
   console.log('[Dev] Checking DB status...');
   try {
     const state = mongoose.connection.readyState;
@@ -186,17 +189,11 @@ app.get('/api/admin/users', authenticate, async (req: AuthRequest, res) => {
   try {
     let query: any = { tenantId };
     
-    if (user.role === 'MANAGER') {
-      query.managerId = user._id.toString();
-      query.role = 'STAFF'; // Managers only see their own staff
-    } else if (user.role === 'ADMIN') {
-      // Admin sees everyone in tenant
-    } else if (user.permissions?.includes('USER_MANAGE')) {
-      // If a staff has USER_MANAGE permission, we might want to restrict them too
-      // or maybe they see everyone if they have this permission?
-      // Based on the request, let's treat them like MANAGER if they aren't ADMIN
-      query.managerId = user._id.toString();
+    if (user.role === 'MANAGER' || user.permissions?.includes('USER_MANAGE')) {
+      // Managers (SaaS Customers) see all staff in their tenant
       query.role = 'STAFF';
+    } else if (user.role === 'ADMIN') {
+      // System Admins see everyone in the tenant
     } else {
       return res.status(403).json({ error: 'Permission denied' });
     }
@@ -254,11 +251,19 @@ app.put('/api/admin/users/:id', authenticate, async (req: AuthRequest, res) => {
         return res.status(403).json({ error: 'Bạn không có quyền sửa tài khoản ADMIN' });
       }
 
-      const isAllowedRole = currentUser.role === 'MANAGER' || currentUser.permissions?.includes('USER_MANAGE');
-      const isOwner = targetUser.managerId === currentUser._id.toString();
+      const isManager = currentUser.role === 'MANAGER';
+      const hasStaffManagePermission = currentUser.permissions?.includes('USER_MANAGE');
+      const isTargetStaff = targetUser.role === 'STAFF';
+      const isCreator = targetUser.managerId === currentUser._id.toString();
 
-      if (!isAllowedRole || !isOwner) {
-        return res.status(403).json({ error: 'Bạn không có quyền sửa nhân viên này' });
+      // Managers can manage any staff in tenant. Staff with permission can only manage staff they created (or all staff? let's stick to all staff if permission granted)
+      if (!(isManager || hasStaffManagePermission) || !isTargetStaff) {
+         // Special case: if manager trying to edit another manager, we might block it unless they are the same person?
+         if (isManager && targetUser.role === 'MANAGER' && targetUser._id.toString() === currentUser._id.toString()) {
+           // Allow self edit
+         } else {
+           return res.status(403).json({ error: 'Bạn không có quyền sửa tài khoản này' });
+         }
       }
       
       // Manager/Staff cannot escalate privileges or change manager
@@ -303,11 +308,12 @@ app.delete('/api/admin/users/:id', authenticate, async (req: AuthRequest, res) =
         return res.status(403).json({ error: 'Bạn không có quyền xóa tài khoản ADMIN' });
       }
 
-      const isAllowedRole = currentUser.role === 'MANAGER' || currentUser.permissions?.includes('USER_MANAGE');
-      const isOwner = targetUser.managerId === currentUser._id.toString();
+      const isManager = currentUser.role === 'MANAGER';
+      const hasStaffManagePermission = currentUser.permissions?.includes('USER_MANAGE');
+      const isTargetStaff = targetUser.role === 'STAFF';
 
-      if (!isAllowedRole || !isOwner) {
-        return res.status(403).json({ error: 'Bạn không có quyền xóa nhân viên này' });
+      if (!(isManager || hasStaffManagePermission) || !isTargetStaff) {
+         return res.status(403).json({ error: 'Bạn không có quyền xóa tài khoản này (Chỉ có thể xóa STAFF)' });
       }
     }
 

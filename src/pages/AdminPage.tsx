@@ -199,7 +199,7 @@ const AdminPage = () => {
                   <Users size={24} />
                 </div>
                 <div className="flex items-center gap-1">
-                  {(currentUser?.role === 'ADMIN' || user.managerId === (currentUser as any)?._id?.toString()) && (
+                  {(currentUser?.role === 'ADMIN' || (currentUser?.role === 'MANAGER' && user.role === 'STAFF')) && (
                     <>
                       <button 
                         onClick={() => handleOpenModal(user)}

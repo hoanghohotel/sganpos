@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Users, Activity, Terminal, Lock, Trash2, Edit2, Plus, Database, Wifi, Loader2, Search } from 'lucide-react';
+import { 
+  Shield, Users, Activity, Terminal, Lock, Trash2, Edit2, 
+  Plus, Database, Wifi, Loader2, Search, Cpu, Globe,
+  Server, AlertTriangle, CheckCircle2, ChevronRight
+} from 'lucide-react';
 import api from '../lib/api';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuthStore } from '../store/authStore';
+import { useNavigate } from 'react-router-dom';
 
 interface LogEntry {
   timestamp: string;
@@ -19,369 +24,336 @@ interface User {
   name: string;
   email?: string;
   phone?: string;
-  role: string;
+  role: 'ADMIN' | 'MANAGER' | 'STAFF';
   tenantId: string;
+  createdAt: string;
 }
 
 const DevelopPage = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('dev_portal_auth') === 'true';
-  });
-  const { user: authUser, checkAuth, isLoading } = useAuthStore();
-  const [credentials, setCredentials] = useState({ email: '', password: '' });
-  const [activeTab, setActiveTab] = useState<'users' | 'logs' | 'db'>('users');
+  const { user: authUser, isLoading: isAuthLoading } = useAuthStore();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'logs' | 'system'>('overview');
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [dbStatus, setDbStatus] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [editingUser, setEditingUser] = useState<Partial<User> & { password?: string } | null>(null);
 
-  // Auto-auth if already logged in as system admin
+  // Security Check: Strictly for ADMIN
   useEffect(() => {
-    if (!isLoading && authUser?.email === 'admin@sganpos.vn') {
-      setIsAuthenticated(true);
-      localStorage.setItem('dev_portal_auth', 'true');
+    if (!isAuthLoading && (!authUser || authUser.role !== 'ADMIN')) {
+      // Keep them on the page but show Forbidden or redirect
     }
-  }, [authUser, isLoading]);
+  }, [authUser, isAuthLoading]);
 
-  // Periodic data fetch if authenticated
   useEffect(() => {
-    if (isAuthenticated && !isLoading) {
+    if (authUser?.role === 'ADMIN') {
       fetchData();
     }
-  }, [isAuthenticated, isLoading]);
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      // Step 1: Client side check for developer portal access
-      if (credentials.email === 'admin@sganpos.vn' && credentials.password === 'admin@123') {
-        // Step 2: Attempt real backend login to get session token/cookie
-        try {
-          const res = await api.post('/api/auth/login', credentials);
-          if (res.data.token) {
-            localStorage.setItem('token', res.data.token);
-            console.log('Login success: Backend token stored');
-            // Refresh auth store to sync global user state
-            await checkAuth();
-          }
-        } catch (authErr: any) {
-          console.error('Backend auth failed:', authErr);
-          let errorMsg = 'Unknown error';
-          if (authErr.response?.data) {
-            errorMsg = authErr.response.data.error || authErr.response.data.message || JSON.stringify(authErr.response.data);
-          } else {
-            errorMsg = authErr.message;
-          }
-          alert(`Backend Auth Error: ${errorMsg}. Terminal will still open but admin APIs may fail.`);
-        }
-        
-        setIsAuthenticated(true);
-        localStorage.setItem('dev_portal_auth', 'true');
-      } else {
-        alert('Sai tài khoản hoặc mật khẩu hệ quản trị!');
-      }
-    } catch (err) {
-      alert('Lỗi khởi tạo truy cập');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [authUser]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const results = await Promise.allSettled([
+      const [uRes, lRes, dbRes] = await Promise.all([
         api.get('/api/admin/users'),
         api.get('/api/dev/logs'),
         api.get('/api/dev/db-status')
       ]);
       
-      if (results[0].status === 'fulfilled' && Array.isArray(results[0].value.data)) {
-        setUsers(results[0].value.data);
-      }
-      if (results[1].status === 'fulfilled' && Array.isArray(results[1].value.data)) {
-        setLogs(results[1].value.data);
-      }
-      if (results[2].status === 'fulfilled') setDbStatus(results[2].value.data);
-      
-      const failures = results.filter(r => r.status === 'rejected');
-      if (failures.length > 0) {
-        console.warn('Some dev data failed to fetch', failures);
-      }
-    } catch (err: any) {
-      console.error('Failed to fetch dev data');
-      // Only terminate if we're not in the middle of a global auth check
-      if (err.response?.status === 401 && !isLoading) {
-        handleTerminate();
-      }
+      setUsers(uRes.data);
+      setLogs(lRes.data.slice(0, 50));
+      setDbStatus(dbRes.data);
+    } catch (err) {
+      console.error('System Data Fetch Failure');
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      const interval = setInterval(() => {
-        if (activeTab === 'logs') {
-          api.get('/api/dev/logs').then(res => {
-            if (Array.isArray(res.data)) {
-              setLogs(res.data);
-            }
-          });
-        }
-      }, 5000);
-      return () => clearInterval(interval);
-    }
-  }, [isAuthenticated, activeTab]);
-
-  const handleTerminate = () => {
-    setIsAuthenticated(false);
-    localStorage.removeItem('dev_portal_auth');
   };
 
   const handleSaveUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingUser?.name || (!editingUser?.email && !editingUser?.phone)) {
-      alert('Vui lòng nhập tên và ít nhất 1 định danh (Email hoặc Số điện thoại)');
-      return;
-    }
+    if (!editingUser) return;
     try {
       if (editingUser._id) {
         await api.put(`/api/admin/users/${editingUser._id}`, editingUser);
       } else {
-        // When creating through admin, we often need to call a specific endpoint or use register
-        // But /api/admin/users is specifically for the dev portal list
-        await api.post('/api/auth/register', {
-          name: editingUser.name,
-          email: editingUser.email,
-          phone: editingUser.phone,
-          password: editingUser.password || '123456',
-          tenantId: editingUser.tenantId || 'demo'
-        });
+        await api.post('/api/admin/users', editingUser);
       }
       setEditingUser(null);
       fetchData();
     } catch (err: any) {
-      console.error('Save user failed:', err);
-      let msg = 'Lỗi không xác định';
-      if (err.response?.data) {
-        if (typeof err.response.data === 'string') {
-          msg = err.response.data;
-        } else {
-          msg = err.response.data.error || err.response.data.message || JSON.stringify(err.response.data);
-        }
-      } else {
-        msg = err.message;
-      }
-      alert(`Lỗi khi lưu người dùng: ${msg}`);
+      alert(`Save Error: ${err.response?.data?.error || err.message}`);
     }
   };
 
   const handleDeleteUser = async (id: string) => {
-    if (!confirm('Xóa người dùng này?')) return;
+    if (!confirm('Destroy this user instance?')) return;
     try {
       await api.delete(`/api/admin/users/${id}`);
       fetchData();
     } catch (err) {
-      alert('Lỗi khi xóa người dùng');
+      alert('Deletion Failed');
     }
   };
 
-  const handleSeedData = async () => {
-    if (!confirm('Run database migration/seed? This will update schema and add missing data for demo tenant.')) return;
+  const runMigration = async () => {
+    if (!confirm('Initiate System Migration?')) return;
     setLoading(true);
     try {
       const res = await api.post('/api/dev/migrate');
-      alert(res.data.message || 'Migration complete!');
+      alert(res.data.message);
       fetchData();
     } catch (err: any) {
-      console.error('Migration failed:', err);
-      const msg = err.response?.data?.error || err.message || 'Unknown error';
-      alert(`Migration failed: ${msg}`);
+      alert(`Failed: ${err.message}`);
     } finally {
       setLoading(false);
     }
   };
 
-  if (!isAuthenticated) {
+  if (isAuthLoading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><Loader2 className="animate-spin text-emerald-500" /></div>;
+
+  if (!authUser || authUser.role !== 'ADMIN') {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 font-mono">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-10 shadow-2xl"
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-20 h-20 bg-rose-500/10 text-rose-500 rounded-3xl flex items-center justify-center mb-6 border border-rose-500/20">
+          <Lock size={40} />
+        </div>
+        <h1 className="text-3xl font-black text-white mb-2 uppercase tracking-tight">Access Restricted</h1>
+        <p className="text-slate-500 max-w-md font-medium text-sm leading-relaxed mb-8">
+          This portal is reserved for System Administrators. Your current role ({authUser?.role || 'Guest'}) does not have clearance.
+        </p>
+        <button 
+          onClick={() => navigate('/')}
+          className="px-8 h-12 bg-white text-slate-950 rounded-xl font-bold uppercase tracking-widest hover:bg-slate-200 transition-all"
         >
-          <div className="flex justify-center mb-8">
-            <div className="w-16 h-16 bg-emerald-500/10 text-emerald-500 rounded-2xl flex items-center justify-center border border-emerald-500/20">
-              <Shield size={32} />
-            </div>
-          </div>
-          <h1 className="text-2xl font-black text-white text-center mb-2 uppercase tracking-tighter">DEVELOPER ACCESS</h1>
-          <p className="text-slate-500 text-center text-xs mb-8 uppercase tracking-widest font-bold">Authorized Personnel Only</p>
-          
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-1">
-              <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest px-1">Admin Email</label>
-              <input 
-                type="email"
-                required
-                placeholder="admin@sganpos.vn"
-                className="w-full h-12 bg-slate-800 border border-slate-700 rounded-xl px-4 text-white focus:outline-none focus:border-emerald-500 transition-all font-bold"
-                value={credentials.email}
-                onChange={e => setCredentials({ ...credentials, email: e.target.value })}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest px-1">Access Key</label>
-              <input 
-                type="password"
-                required
-                className="w-full h-12 bg-slate-800 border border-slate-700 rounded-xl px-4 text-white focus:outline-none focus:border-emerald-500 transition-all font-bold tracking-widest"
-                value={credentials.password}
-                onChange={e => setCredentials({ ...credentials, password: e.target.value })}
-              />
-            </div>
-            <button className="w-full h-14 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-black uppercase tracking-widest transition-all mt-6 shadow-lg shadow-emerald-900/20 active:scale-95">
-              INITIATE LOGIN
-            </button>
-          </form>
-        </motion.div>
+          Return to Base
+        </button>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-300 font-mono flex">
-      {/* Sidebar */}
-      <div className="w-64 border-r border-slate-900 flex flex-col p-6 gap-8">
-        <div className="flex items-center gap-3 text-white">
-          <Terminal size={24} className="text-emerald-500" />
-          <span className="font-black tracking-tighter text-xl">SGAN-OS DEV</span>
+      {/* Sidebar Control */}
+      <div className="w-72 border-r border-slate-900 flex flex-col p-8 gap-10">
+        <div className="flex items-center gap-4 text-white">
+          <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-slate-950">
+            <Terminal size={22} />
+          </div>
+          <div>
+            <span className="font-black tracking-tighter text-xl block leading-none">CORE-OS</span>
+            <span className="text-[10px] text-emerald-500 font-black uppercase tracking-[0.2em] mt-1">Dev Portal</span>
+          </div>
         </div>
 
         <nav className="flex flex-col gap-2">
           {[
-            { id: 'users', icon: Users, label: 'User Admin' },
-            { id: 'logs', icon: Activity, label: 'Live Logs' },
-            { id: 'db', icon: Database, label: 'DB Health' }
+            { id: 'overview', icon: Cpu, label: 'Overview' },
+            { id: 'users', icon: Users, label: 'Account Core' },
+            { id: 'logs', icon: Activity, label: 'Event Stream' },
+            { id: 'system', icon: Server, label: 'System Opts' }
           ].map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
               className={cn(
-                "flex items-center gap-3 p-3 rounded-xl transition-all font-bold text-sm uppercase tracking-widest",
+                "group flex items-center justify-between p-4 rounded-2xl transition-all font-bold text-[11px] uppercase tracking-widest border",
                 activeTab === tab.id 
-                  ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20" 
-                  : "text-slate-500 hover:text-white hover:bg-slate-900"
+                  ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" 
+                  : "text-slate-500 border-transparent hover:text-white hover:bg-slate-900"
               )}
             >
-              <tab.icon size={18} />
-              {tab.label}
+              <div className="flex items-center gap-3">
+                <tab.icon size={18} />
+                {tab.label}
+              </div>
+              <ChevronRight size={14} className={cn("opacity-0 transition-all", activeTab === tab.id && "opacity-100 translate-x-1")} />
             </button>
           ))}
         </nav>
 
-        <div className="mt-auto pt-6 border-t border-slate-900">
-          <button 
-            onClick={handleTerminate}
-            className="flex items-center gap-3 p-3 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all w-full font-bold uppercase tracking-widest text-xs"
-          >
-            <Lock size={16} />
-            Terminate
-          </button>
+        <div className="mt-auto space-y-4">
+          <div className="p-4 bg-slate-900/50 rounded-2xl border border-slate-800">
+            <p className="text-[10px] text-slate-500 font-bold uppercase mb-2">Authenticated As</p>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center font-black">
+                {authUser.name[0]}
+              </div>
+              <div className="flex-1 truncate">
+                <p className="text-xs font-black text-white truncate">{authUser.name}</p>
+                <p className="text-[9px] text-emerald-500 font-bold tracking-widest">MASTER ADMIN</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto p-10">
-        <header className="flex justify-between items-center mb-10">
+      {/* Primary Workspace */}
+      <div className="flex-1 overflow-auto p-12 custom-scrollbar">
+        <header className="flex justify-between items-center mb-12">
           <div>
-            <h1 className="text-4xl font-black text-white tracking-tighter uppercase">{activeTab}</h1>
-            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">System Development Control Panel</p>
+            <h1 className="text-5xl font-black text-white tracking-tight uppercase leading-none">{activeTab}</h1>
+            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-3 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              Real-time System Oversight Active
+            </p>
           </div>
           <button 
             onClick={fetchData}
             disabled={loading}
-            className="p-3 bg-slate-900 rounded-xl hover:bg-slate-800 transition-all text-slate-400 disabled:opacity-50"
+            className="flex items-center gap-3 px-6 h-12 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-all text-slate-400 disabled:opacity-50 font-bold uppercase text-[10px] tracking-widest"
           >
-            <Loader2 className={cn("w-6 h-6", loading && "animate-spin")} />
+            <Loader2 className={cn("w-4 h-4", loading && "animate-spin")} />
+            Sync Hardware
           </button>
         </header>
 
-        {activeTab === 'users' && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center bg-slate-900/50 p-6 rounded-3xl border border-slate-800">
-              <div className="flex items-center gap-6">
-                <div className="text-center">
-                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Total Users</p>
-                  <p className="text-2xl font-black text-white">{users.length}</p>
+        {activeTab === 'overview' && (
+          <div className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-slate-900 p-8 rounded-[40px] border border-slate-800">
+                <div className="w-12 h-12 bg-blue-500/10 text-blue-500 rounded-2xl flex items-center justify-center mb-6 border border-blue-500/20">
+                  <Database size={24} />
                 </div>
-                <div className="w-px h-10 bg-slate-800" />
-                <div className="text-center">
-                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Active Orgs</p>
-                  <p className="text-2xl font-black text-white">{new Set(users.map(u => u.tenantId)).size}</p>
+                <h3 className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Database Pulse</h3>
+                <p className="text-3xl font-black text-white mb-4 lowercase">{dbStatus?.status || 'OFFLINE'}</p>
+                <div className="flex items-center gap-2 text-[10px] font-bold">
+                  {dbStatus?.queryTest === 'Success' ? (
+                    <span className="text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 uppercase">Latency Stable</span>
+                  ) : (
+                    <span className="text-rose-500 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20 uppercase">Interrupted</span>
+                  )}
                 </div>
               </div>
+
+              <div className="bg-slate-900 p-8 rounded-[40px] border border-slate-800">
+                <div className="w-12 h-12 bg-emerald-500/10 text-emerald-500 rounded-2xl flex items-center justify-center mb-6 border border-emerald-500/20">
+                  <Users size={24} />
+                </div>
+                <h3 className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">User Ecosystem</h3>
+                <p className="text-3xl font-black text-white mb-4">{users.length} <span className="text-lg text-slate-500 font-medium whitespace-nowrap">ENTITIES</span></p>
+                <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest flex items-center gap-2">
+                  <Globe size={12} className="text-blue-400" />
+                  Across {new Set(users.map(u => u.tenantId)).size} Active Tenants
+                </div>
+              </div>
+
+              <div className="bg-slate-900 p-8 rounded-[40px] border border-slate-800">
+                <div className="w-12 h-12 bg-purple-500/10 text-purple-500 rounded-2xl flex items-center justify-center mb-6 border border-purple-500/20">
+                  <Activity size={24} />
+                </div>
+                <h3 className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">Compute Load</h3>
+                <p className="text-3xl font-black text-white mb-4">V3.1.2 <span className="text-lg text-slate-500 font-medium">STABLE</span></p>
+                <div className="flex items-center gap-2 text-[10px] font-black text-purple-400 uppercase">
+                  Runtime: Nodejs 20.x
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="bg-slate-900/50 p-10 rounded-[50px] border border-slate-900">
+                <h2 className="text-xl font-black text-white mb-8 uppercase tracking-tight flex items-center gap-3">
+                  <Wifi size={20} className="text-emerald-500" />
+                  Cluster Telemetry
+                </h2>
+                <div className="space-y-4">
+                  {[
+                    { label: 'Cloud Provider', value: dbStatus?.atlas ? 'MongoDB Atlas (GCP)' : 'Local Hardware' },
+                    { label: 'Cluster Host', value: dbStatus?.host || 'Unknown', secret: false },
+                    { label: 'Primary DB', value: dbStatus?.dbName || 'N/A' },
+                    { label: 'Region', value: 'Singapore (asia-southeast1)' }
+                  ].map((stat, i) => (
+                    <div key={i} className="flex justify-between items-center p-5 bg-slate-950/50 border border-slate-900 rounded-3xl">
+                      <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{stat.label}</span>
+                      <span className={cn("text-xs font-bold text-white max-w-[200px] truncate")}>{stat.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-slate-900/50 p-10 rounded-[50px] border border-slate-900 flex flex-col items-center justify-center text-center">
+                <div className="w-16 h-16 bg-emerald-500/10 text-emerald-500 rounded-[2rem] flex items-center justify-center mb-6 border border-emerald-500/20">
+                  <CheckCircle2 size={32} />
+                </div>
+                <h3 className="text-2xl font-black text-white mb-2 tracking-tight uppercase">System Integrity</h3>
+                <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-10 max-w-[250px]">
+                  All maintenance triggers and security protocols are active.
+                </p>
+                <button 
+                  onClick={runMigration}
+                  className="w-full h-16 bg-emerald-600 hover:bg-emerald-500 text-white rounded-[2rem] font-black uppercase tracking-widest transition-all shadow-xl shadow-emerald-950/30"
+                >
+                  Force Data Migration
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'users' && (
+          <div className="space-y-8">
+            <div className="flex justify-between items-center">
+              <div className="relative flex-1 max-w-md group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500 transition-colors" size={18} />
+                <input 
+                  type="text" 
+                  placeholder="Filter by UUID or Identity..."
+                  className="w-full h-14 bg-slate-900 border border-slate-800 rounded-2xl pl-12 pr-6 text-white focus:outline-none focus:border-emerald-500 transition-all font-bold text-sm"
+                />
+              </div>
               <button 
-                onClick={() => setEditingUser({ name: '', email: '', role: 'STAFF', tenantId: 'demo' })}
-                className="h-12 px-6 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg shadow-emerald-900/20"
+                onClick={() => setEditingUser({ name: '', role: 'STAFF', tenantId: authUser.tenantId })}
+                className="h-14 px-8 bg-white text-slate-950 rounded-2xl font-black uppercase tracking-widest flex items-center gap-3 hover:scale-105 active:scale-95 transition-all"
               >
-                <Plus size={18} />
-                Create Instance
+                <Plus size={20} />
+                Provision User
               </button>
             </div>
 
-            <div className="bg-slate-900/30 rounded-3xl border border-slate-900 overflow-hidden">
+            <div className="bg-slate-900/40 rounded-[40px] border border-slate-900 overflow-hidden">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="border-b border-slate-900">
-                    <th className="p-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Name & Entity</th>
-                    <th className="p-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Contact Info</th>
-                    <th className="p-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-left">Tenant ID</th>
-                    <th className="p-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Access Role</th>
-                    <th className="p-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Operations</th>
+                  <tr className="bg-slate-950/50 border-b border-slate-900">
+                    <th className="p-8 text-[10px] font-black text-slate-500 uppercase tracking-widest">Entity</th>
+                    <th className="p-8 text-[10px] font-black text-slate-500 uppercase tracking-widest">Clearance</th>
+                    <th className="p-8 text-[10px] font-black text-slate-500 uppercase tracking-widest">Created Threshold</th>
+                    <th className="p-8 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {users.map(user => (
-                    <tr key={user._id} className="border-b border-slate-900/50 hover:bg-slate-900/20 transition-colors">
-                      <td className="p-6">
-                        <div className="font-bold text-white uppercase">{user.name}</div>
-                        <div className="text-[10px] text-slate-500 mt-1">UUID: {user._id} | Org: {user.tenantId}</div>
+                <tbody className="divide-y divide-slate-900/50">
+                  {users.map(u => (
+                    <tr key={u._id} className="hover:bg-slate-900/40 transition-colors group">
+                      <td className="p-8">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center font-black text-white border border-slate-700">
+                            {u.name[0]}
+                          </div>
+                          <div>
+                            <div className="font-bold text-white text-sm uppercase">{u.name}</div>
+                            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-tighter mt-1">{u._id} | {u.tenantId}</div>
+                          </div>
+                        </div>
                       </td>
-                      <td className="p-6">
-                        <div className="text-slate-400 font-medium">{user.email || '—'}</div>
-                        <div className="text-[10px] text-slate-600 mt-0.5">{user.phone || '—'}</div>
-                      </td>
-                      <td className="p-6">
-                        <span className="font-mono text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20 uppercase">
-                          {user.tenantId}
-                        </span>
-                      </td>
-                      <td className="p-6">
+                      <td className="p-8">
                         <span className={cn(
-                          "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter",
-                          user.role === 'ADMIN' ? "bg-purple-500/10 text-purple-400 border border-purple-500/20" : 
-                          user.role === 'MANAGER' ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" :
-                          "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                          "px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border transition-all",
+                          u.role === 'ADMIN' ? "bg-purple-500/10 text-purple-400 border-purple-500/20" : 
+                          u.role === 'MANAGER' ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
+                          "bg-blue-500/10 text-blue-400 border-blue-500/20"
                         )}>
-                          {user.role}
+                          {u.role}
                         </span>
                       </td>
-                      <td className="p-6">
-                        <div className="flex justify-end gap-2">
-                          <button 
-                            className="p-2 text-slate-500 hover:text-white transition-colors"
-                            onClick={() => setEditingUser(user)}
-                          >
+                      <td className="p-8 text-xs font-bold text-slate-500 tabular-nums">
+                        {new Date(u.createdAt).toLocaleString()}
+                      </td>
+                      <td className="p-8">
+                        <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => setEditingUser(u)} className="p-3 bg-slate-800 rounded-xl text-slate-400 hover:text-white transition-colors border border-slate-700">
                             <Edit2 size={16} />
                           </button>
-                          <button 
-                            className="p-2 text-slate-500 hover:text-rose-500 transition-colors"
-                            onClick={() => handleDeleteUser(user._id)}
-                          >
+                          <button onClick={() => handleDeleteUser(u._id)} className="p-3 bg-rose-500/10 rounded-xl text-rose-500 hover:bg-rose-500/20 transition-colors border border-rose-500/20">
                             <Trash2 size={16} />
                           </button>
                         </div>
@@ -391,195 +363,109 @@ const DevelopPage = () => {
                 </tbody>
               </table>
             </div>
-
-            {/* User Edit Modal */}
-            <AnimatePresence>
-              {editingUser && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                  <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    onClick={() => setEditingUser(null)}
-                    className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
-                  />
-                  <motion.div 
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    className="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-[40px] p-10 shadow-2xl"
-                  >
-                    <h2 className="text-3xl font-black text-white mb-8 tracking-tighter uppercase">
-                      {editingUser._id ? 'Update Entity' : 'New User Instance'}
-                    </h2>
-                    <form onSubmit={handleSaveUser} className="space-y-6">
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Full Name</label>
-                        <input 
-                          type="text" required
-                          className="w-full h-12 bg-slate-800 border border-slate-700 rounded-xl px-4 text-white focus:border-emerald-500 transition-all font-bold"
-                          value={editingUser.name || ''}
-                          onChange={e => setEditingUser({ ...editingUser, name: e.target.value })}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Email</label>
-                          <input 
-                            type="email"
-                            className="w-full h-12 bg-slate-800 border border-slate-700 rounded-xl px-4 text-white focus:border-emerald-500 transition-all font-bold"
-                            value={editingUser.email || ''}
-                            onChange={e => setEditingUser({ ...editingUser, email: e.target.value })}
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Phone</label>
-                          <input 
-                            type="tel"
-                            className="w-full h-12 bg-slate-800 border border-slate-700 rounded-xl px-4 text-white focus:border-emerald-500 transition-all font-bold"
-                            value={editingUser.phone || ''}
-                            onChange={e => setEditingUser({ ...editingUser, phone: e.target.value })}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Role</label>
-                          <select 
-                            className="w-full h-12 bg-slate-800 border border-slate-700 rounded-xl px-4 text-white focus:border-emerald-500 transition-all font-bold"
-                            value={editingUser.role || 'STAFF'}
-                            onChange={e => setEditingUser({ ...editingUser, role: e.target.value as any })}
-                          >
-                            <option value="STAFF">STAFF</option>
-                            <option value="MANAGER">MANAGER</option>
-                            <option value="ADMIN">ADMIN</option>
-                          </select>
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Password</label>
-                          <input 
-                            type="text" 
-                            placeholder={editingUser._id ? "(Unchanged)" : "123456"}
-                            className="w-full h-12 bg-slate-800 border border-slate-700 rounded-xl px-4 text-white focus:border-emerald-500 transition-all font-bold"
-                            value={editingUser.password || ''}
-                            onChange={e => setEditingUser({ ...editingUser, password: e.target.value })}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Tenant ID</label>
-                        <input 
-                          type="text" required
-                          className="w-full h-12 bg-slate-800 border border-slate-700 rounded-xl px-4 text-white focus:border-emerald-500 transition-all font-bold"
-                          value={editingUser.tenantId || 'demo'}
-                          onChange={e => setEditingUser({ ...editingUser, tenantId: e.target.value })}
-                        />
-                      </div>
-
-                      <div className="flex gap-4 pt-6">
-                        <button type="button" onClick={() => setEditingUser(null)} className="flex-1 h-14 text-slate-500 font-bold uppercase">Cancel</button>
-                        <button type="submit" className="flex-[2] h-14 bg-emerald-600 rounded-2xl text-white font-black uppercase tracking-widest">Commit Changes</button>
-                      </div>
-                    </form>
-                  </motion.div>
-                </div>
-              )}
-            </AnimatePresence>
           </div>
         )}
 
         {activeTab === 'logs' && (
-          <div className="space-y-4">
-            <div className="bg-slate-900/90 rounded-2xl border border-slate-800 p-6 overflow-hidden font-mono text-xs">
-              <div className="flex flex-col gap-1">
-                {logs.map((log, i) => (
-                  <div key={i} className="flex gap-4 p-2 hover:bg-slate-800 rounded transition-colors group">
-                    <span className="text-slate-600 whitespace-nowrap">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
-                    <span className={cn(
-                      "font-black min-w-[60px]",
-                      log.method === 'GET' ? 'text-blue-400' : 
-                      log.method === 'POST' ? 'text-emerald-400' :
-                      log.method === 'PUT' ? 'text-amber-400' : 'text-rose-400'
-                    )}>{log.method}</span>
-                    <span className="text-slate-400">{log.status}</span>
-                    <span className="text-white flex-1 truncate">{log.path}</span>
-                    <span className="text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">{log.duration} • {log.ip}</span>
-                  </div>
-                ))}
-              </div>
+          <div className="bg-slate-900 rounded-[40px] border border-slate-800 p-10 font-mono text-[11px] leading-relaxed">
+            <div className="flex flex-col gap-2">
+              {logs.length > 0 ? logs.map((log, i) => (
+                <div key={i} className="flex gap-6 p-3 hover:bg-slate-950 rounded-xl transition-all border border-transparent hover:border-slate-800 group">
+                  <span className="text-slate-600 font-bold tabular-nums">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
+                  <span className={cn(
+                    "font-black w-20 text-center rounded px-2 py-0.5 uppercase tracking-widest",
+                    log.method === 'GET' ? 'bg-blue-500/10 text-blue-400' : 
+                    log.method === 'POST' ? 'bg-emerald-500/10 text-emerald-400' :
+                    log.method === 'PUT' ? 'bg-amber-500/10 text-amber-400' : 'bg-rose-500/10 text-rose-400'
+                  )}>{log.method}</span>
+                  <span className={cn(
+                    "font-black tabular-nums",
+                    log.status >= 200 && log.status < 300 ? "text-emerald-500" : "text-rose-500"
+                  )}>{log.status}</span>
+                  <span className="text-white flex-1 truncate font-medium">{log.path}</span>
+                  <span className="text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">{log.duration} • {log.ip}</span>
+                </div>
+              )) : (
+                <div className="h-64 flex flex-col items-center justify-center text-slate-600 uppercase font-black tracking-widest animate-pulse">
+                  <Activity size={40} className="mb-4" />
+                  Awaiting Packet Stream
+                </div>
+              )}
             </div>
           </div>
         )}
 
-        {activeTab === 'db' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-slate-900 border border-slate-800 p-10 rounded-[40px]">
-              <div className="w-16 h-16 bg-blue-500/10 text-blue-500 rounded-3xl flex items-center justify-center mb-8 border border-blue-500/20">
-                <Database size={32} />
-              </div>
-              <h3 className="text-2xl font-black text-white mb-4 uppercase tracking-tighter">Connection Pulse</h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center p-4 bg-slate-950 rounded-2xl border border-slate-800">
-                  <span className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Status</span>
-                  <div className="flex items-center gap-2">
-                    <div className={cn("w-2 h-2 rounded-full", dbStatus?.status === 'Connected' ? "bg-emerald-500" : "bg-rose-500 animate-pulse")} />
-                    <span className="text-white font-black">{dbStatus?.status || 'Unknown'}</span>
-                  </div>
-                </div>
-                <div className="flex justify-between items-center p-4 bg-slate-950 rounded-2xl border border-slate-800">
-                  <span className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Query Pulse</span>
-                  <span className={cn(
-                    "font-black truncate max-w-[150px]",
-                    dbStatus?.queryTest === 'Success' ? "text-emerald-500" : "text-rose-500"
-                  )}>
-                    {dbStatus?.queryTest || 'Pending'}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center p-4 bg-slate-950 rounded-2xl border border-slate-800">
-                  <span className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Atlas Verified</span>
-                  <span className={cn("font-black", dbStatus?.atlas ? "text-emerald-500" : "text-amber-500")}>
-                    {dbStatus?.atlas ? 'YES (Cloud)' : 'NO (Local)'}
-                  </span>
-                </div>
-                {dbStatus?.host && (
-                  <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Host</span>
-                      <span className="text-white font-bold text-[10px] truncate max-w-[200px]">{dbStatus.host}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">DB Name</span>
-                      <span className="text-white font-bold text-[10px]">{dbStatus.dbName}</span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">URI (Masked)</span>
-                      <code className="text-[9px] text-slate-400 bg-slate-900 p-2 rounded block break-all">{dbStatus.uri}</code>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div >
-            <div className="bg-slate-900 border border-slate-800 p-10 rounded-[40px] flex flex-col items-center justify-center text-center">
-               <div className="w-16 h-16 bg-emerald-500/10 text-emerald-500 rounded-3xl flex items-center justify-center mb-8 border border-emerald-500/20">
-                 <Wifi size={32} />
+        {activeTab === 'system' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+             <div className="bg-slate-900 p-12 rounded-[50px] border border-slate-800">
+               <h3 className="text-2xl font-black text-rose-500 mb-6 uppercase tracking-tight">Danger Zone</h3>
+               <p className="text-slate-500 text-sm mb-10 font-medium">Critical system operations. Use with caution as these may interrupt service.</p>
+               <div className="space-y-4">
+                 <button className="w-full h-16 bg-rose-500/10 text-rose-500 border border-rose-500/20 rounded-3xl font-black uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all">Flush Logs Memory</button>
+                 <button onClick={runMigration} className="w-full h-16 bg-slate-950 border border-rose-500/20 text-rose-500 rounded-3xl font-black uppercase tracking-widest hover:border-rose-500 transition-all">Deep Schema Rebuild</button>
                </div>
-               <h3 className="text-2xl font-black text-white mb-2 tracking-tighter uppercase">Atlas Status</h3>
-               <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-6">Cluster Health & Performance</p>
-               <div className="text-emerald-500 font-black animate-pulse uppercase tracking-[0.2em] mb-8">All Systems Nominal</div>
-               <button 
-                onClick={handleSeedData}
-                disabled={loading}
-                className="w-full h-14 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold uppercase tracking-widest transition-all disabled:opacity-50"
-               >
-                 {loading ? 'Processing...' : 'Seed / Migrate Data'}
-               </button>
-            </div>
+             </div>
+             <div className="bg-emerald-600 p-12 rounded-[50px] text-slate-950 flex flex-col justify-center">
+               <Shield size={64} className="mb-8" />
+               <h3 className="text-4xl font-black mb-4 uppercase tracking-tighter">System Locked</h3>
+               <p className="text-emerald-950/70 font-black uppercase tracking-widest text-xs mb-8">
+                 Security Protocols Active: RBAC Level 4 <br/>
+                 Environment: {process.env.NODE_ENV || 'Production'}
+               </p>
+               <div className="bg-emerald-950/20 p-6 rounded-3xl border border-emerald-950/10">
+                 <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-2">Build Identifier</p>
+                 <p className="text-xl font-bold font-mono">SG-AN-POS-2024.04.28</p>
+               </div>
+             </div>
           </div>
         )}
       </div>
+
+      {/* User Provisioning Modal */}
+      <AnimatePresence>
+        {editingUser && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setEditingUser(null)} className="absolute inset-0 bg-slate-950/90 backdrop-blur-xl" />
+            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-[50px] p-12 shadow-2xl">
+              <div className="flex justify-between items-center mb-10">
+                <h2 className="text-4xl font-black text-white tracking-tighter uppercase">{editingUser._id ? 'Update Entity' : 'New Provision'}</h2>
+                <button onClick={() => setEditingUser(null)} className="p-3 text-slate-500 hover:text-white transition-colors"><Lock size={24} /></button>
+              </div>
+              <form onSubmit={handleSaveUser} className="space-y-8">
+                <div className="grid grid-cols-2 gap-8">
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Master Name</label>
+                    <input type="text" required value={editingUser.name || ''} onChange={e => setEditingUser({ ...editingUser, name: e.target.value })} className="w-full h-16 bg-slate-950 border border-slate-800 rounded-3xl px-6 text-white focus:border-emerald-500 transition-all font-bold"/>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Access Role</label>
+                    <select value={editingUser.role || 'STAFF'} onChange={e => setEditingUser({ ...editingUser, role: e.target.value as any })} className="w-full h-16 bg-slate-950 border border-slate-800 rounded-3xl px-6 text-white focus:border-emerald-500 transition-all font-bold">
+                       <option value="STAFF">FIELD STAFF</option>
+                       <option value="MANAGER">DEPARTMENT MANAGER</option>
+                       <option value="ADMIN">MASTER ADMIN</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-8">
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Communication Email</label>
+                    <input type="email" value={editingUser.email || ''} onChange={e => setEditingUser({ ...editingUser, email: e.target.value })} className="w-full h-16 bg-slate-950 border border-slate-800 rounded-3xl px-6 text-white focus:border-emerald-500 transition-all font-bold"/>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Primary Contact</label>
+                    <input type="tel" value={editingUser.phone || ''} onChange={e => setEditingUser({ ...editingUser, phone: e.target.value })} className="w-full h-16 bg-slate-950 border border-slate-800 rounded-3xl px-6 text-white focus:border-emerald-500 transition-all font-bold"/>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Tenant Identifier</label>
+                  <input type="text" value={editingUser.tenantId || ''} onChange={e => setEditingUser({ ...editingUser, tenantId: e.target.value })} className="w-full h-16 bg-slate-950 border border-slate-800 rounded-3xl px-6 text-white focus:border-emerald-500 transition-all font-bold"/>
+                </div>
+                <button type="submit" className="w-full h-20 bg-emerald-600 text-white rounded-[2.5rem] font-black uppercase tracking-widest text-lg shadow-2xl shadow-emerald-950/50 hover:scale-[1.02] active:scale-95 transition-all">Submit Protocol Change</button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

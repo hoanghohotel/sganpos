@@ -8,6 +8,7 @@ interface User {
   phone?: string;
   role: 'ADMIN' | 'MANAGER' | 'STAFF';
   permissions: string[];
+  tenantId: string;
 }
 
 interface Shift {
