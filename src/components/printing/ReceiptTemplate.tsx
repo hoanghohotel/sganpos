@@ -1,6 +1,7 @@
 import React, { forwardRef } from 'react';
 import { PrintOrderData, PrintSettings } from '../../lib/printing';
 import { useAuthStore } from '../../store/authStore';
+import ThermalReceiptLayout from './ThermalReceiptLayout';
 
 interface ReceiptTemplateProps {
   order: PrintOrderData;
@@ -18,6 +19,15 @@ const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptTemplateProps>(
 
     const isThermal = ['xprinter', 'zywell', 'xpos', 'gprinter'].includes(settings.brand || '');
     const isXprinter = settings.brand === 'xprinter';
+
+    // If it's a thermal printer and we want high-fidelity thermal layout
+    if (isThermal && settings.defaultPrintTemplate === 'classic') {
+      return (
+        <div ref={ref} className="thermal-receipt-root" style={{ width: settings.printWidth === '58mm' ? '58mm' : '80mm', margin: '0 auto', background: '#fff' }}>
+           <ThermalReceiptLayout order={order} settings={settings} isProvisional={isProvisional} />
+        </div>
+      );
+    }
 
     const qrUrl = (order.paymentMethod === 'TRANSFER' || isProvisional) && settings.bankCode
       ? `https://img.vietqr.io/image/${settings.bankCode}-${settings.bankAccount}-compact2.png?amount=${order.total}&addInfo=${encodeURIComponent(`TT ${order.orderCode || ''} ${order.tableName || ''}`)}&accountName=${encodeURIComponent(settings.bankAccountHolder || '')}`

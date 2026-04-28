@@ -1,8 +1,14 @@
 import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
 import { SpeedInsights } from "@vercel/speed-insights/react"
+import { Buffer } from 'buffer';
 import App from './App.tsx';
 import './index.css';
+
+// Fix for react-thermal-printer Buffer error
+if (typeof window !== 'undefined') {
+  window.Buffer = window.Buffer || Buffer;
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
