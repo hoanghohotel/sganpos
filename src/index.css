@@ -1,11 +1,72 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  /* Modern Clean Color Palette */
+  --color-primary: #10b981;      /* Emerald-600 for accent */
+  --color-primary-light: #d1fae5; /* Emerald-100 */
+  --color-primary-hover: #059669; /* Emerald-700 */
+  
+  --color-bg-primary: #ffffff;     /* White backgrounds */
+  --color-bg-secondary: #f8fafc;   /* Slate-50 for secondary */
+  --color-bg-tertiary: #f1f5f9;    /* Slate-100 */
+  
+  --color-border: #e2e8f0;         /* Slate-200 */
+  --color-text-primary: #1e293b;   /* Slate-800 */
+  --color-text-secondary: #64748b; /* Slate-500 */
+  --color-text-tertiary: #94a3b8;  /* Slate-400 */
+  
+  --color-success: #10b981;        /* Green */
+  --color-warning: #f59e0b;        /* Amber */
+  --color-danger: #ef4444;         /* Red */
+  --color-info: #3b82f6;           /* Blue */
+  
+  /* Shadows - Modern subtle approach */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
+/* Global Styles */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-slate-50 text-slate-800 antialiased;
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+/* Typography Hierarchy */
+h1 {
+  @apply text-3xl font-bold text-slate-900 tracking-tight;
+}
+
+h2 {
+  @apply text-2xl font-bold text-slate-900 tracking-tight;
+}
+
+h3 {
+  @apply text-xl font-semibold text-slate-900;
+}
+
+h4 {
+  @apply text-lg font-semibold text-slate-800;
+}
+
+h5 {
+  @apply text-base font-semibold text-slate-800;
+}
+
+p {
+  @apply text-slate-700 leading-relaxed;
+}
+
+/* Utility Classes */
 @utility no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -14,32 +75,97 @@
   }
 }
 
-/* Custom background for the app */
-body {
-  @apply bg-[#F8FAFC] text-slate-800;
+@utility glass-effect {
+  @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-lg;
+}
+
+@utility glass-effect-dark {
+  @apply bg-slate-900/80 backdrop-blur-md border border-white/10 shadow-lg;
+}
+
+@utility card-base {
+  @apply bg-white rounded-lg border border-slate-200 p-6 shadow-sm;
+}
+
+@utility card-interactive {
+  @apply bg-white rounded-lg border border-slate-200 p-6 shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-200 cursor-pointer;
+}
+
+@utility input-base {
+  @apply w-full h-12 px-4 rounded-lg border border-slate-200 bg-white text-slate-900 placeholder-slate-400 transition-colors duration-200;
+  font-size: 0.95rem;
+}
+
+@utility input-focus {
+  @apply focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100;
+}
+
+@utility button-base {
+  @apply h-12 px-6 rounded-lg font-medium transition-all duration-200 inline-flex items-center justify-center gap-2 whitespace-nowrap;
+}
+
+@utility button-primary {
+  @apply button-base bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+@utility button-secondary {
+  @apply button-base bg-slate-100 text-slate-900 hover:bg-slate-200 active:bg-slate-300 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+@utility button-ghost {
+  @apply button-base text-slate-700 hover:bg-slate-100 active:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+@utility button-danger {
+  @apply button-base bg-red-600 text-white hover:bg-red-700 active:bg-red-800 disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+@utility badge-base {
+  @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium;
+}
+
+@utility badge-success {
+  @apply badge-base bg-emerald-100 text-emerald-700;
+}
+
+@utility badge-warning {
+  @apply badge-base bg-amber-100 text-amber-700;
+}
+
+@utility badge-danger {
+  @apply badge-base bg-red-100 text-red-700;
+}
+
+@utility badge-info {
+  @apply badge-base bg-blue-100 text-blue-700;
 }
 
 /* Professional Custom Scrollbars */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(203, 213, 225, 0.4) transparent;
-}
-
-*::-webkit-scrollbar {
+::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
-*::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
   background: transparent;
 }
 
-*::-webkit-scrollbar-thumb {
-  background-color: rgba(203, 213, 225, 0.4);
+::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.3);
   border-radius: 20px;
   border: 1px solid transparent;
 }
 
-*::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(148, 163, 184, 0.6);
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(148, 163, 184, 0.5);
+}
+
+/* Selection styling */
+::selection {
+  @apply bg-emerald-100 text-slate-900;
+}
+
+/* Smooth transitions everywhere */
+* {
+  @apply transition-colors duration-150;
 }
