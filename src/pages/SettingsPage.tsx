@@ -1209,7 +1209,26 @@ const SettingsPage = () => {
                                type="button"
                                className="p-2 text-slate-300 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all"
                                title="In thử"
-                               onClick={() => alert(`Đang gửi lệnh in thử đến ${pr.name}...`)}
+                               onClick={() => {
+                                 const testOrderData = {
+                                   orderCode: 'TESTPRINTER',
+                                   tableName: 'Bàn Test',
+                                   items: [
+                                     { productId: 'test-1', name: 'Sản phẩm mẫu 1', price: 50000, quantity: 1 },
+                                     { productId: 'test-2', name: 'Sản phẩm mẫu 2', price: 35000, quantity: 2 }
+                                   ],
+                                   subtotal: 120000,
+                                   discountAmount: 10000,
+                                   total: 110000,
+                                   createdAt: new Date().toISOString()
+                                 };
+                                 printOrder(testOrderData, { 
+                                   ...settings, 
+                                   brand: pr.brand, 
+                                   printWidth: pr.width,
+                                   templateFields
+                                 });
+                               }}
                              >
                                <Printer size={16} />
                              </button>

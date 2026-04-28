@@ -20,10 +20,40 @@ const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptTemplateProps>(
     const isThermal = ['xprinter', 'zywell', 'xpos', 'gprinter'].includes(settings.brand || '');
     const isXprinter = settings.brand === 'xprinter';
 
+    const printWidth = settings.printWidth === '58mm' ? '58mm' : '80mm';
+
+    const printStyles = (
+      <style>
+        {`
+          @media print {
+            html, body { 
+              margin: 0 !important; 
+              padding: 0 !important; 
+              height: auto !important;
+              overflow: visible !important;
+              background: white !important;
+            }
+            img { filter: grayscale(1) contrast(2) !important; }
+            .no-print { display: none !important; }
+            @page {
+              margin: 0;
+              size: ${printWidth} auto;
+            }
+            .thermal-receipt-root, .print-container {
+              width: ${printWidth} !important;
+              margin: 0 !important;
+              padding: 0 !important;
+            }
+          }
+        `}
+      </style>
+    );
+
     // If it's a thermal printer and we want high-fidelity thermal layout
     if (isThermal && settings.defaultPrintTemplate === 'classic') {
       return (
-        <div ref={ref} className="thermal-receipt-root" style={{ width: settings.printWidth === '58mm' ? '58mm' : '80mm', margin: '0 auto', background: '#fff' }}>
+        <div ref={ref} className="thermal-receipt-root" style={{ width: printWidth, margin: '0 auto', background: '#fff' }}>
+           {printStyles}
            <ThermalReceiptLayout order={order} settings={settings} isProvisional={isProvisional} />
         </div>
       );
@@ -57,8 +87,6 @@ const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptTemplateProps>(
       { id: 'footer', type: 'text', label: 'Chân trang', value: 'Cảm ơn và hẹn gặp lại!', enabled: true }
     ];
 
-    const printWidth = settings.printWidth === '58mm' ? '58mm' : '80mm';
-
     return (
       <div 
         ref={ref} 
@@ -78,25 +106,7 @@ const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptTemplateProps>(
           overflow: 'visible'
         }}
       >
-        <style>
-          {`
-            @media print {
-              html, body { 
-                margin: 0 !important; 
-                padding: 0 !important; 
-                height: auto !important;
-                overflow: visible !important;
-              }
-              img { filter: grayscale(1) contrast(2) !important; }
-              ${isThermal ? '.item-row { font-weight: bold !important; }' : ''}
-              ${isXprinter ? 'body { width: 100% !important; margin: 0 !important; }' : ''}
-              @page {
-                margin: 0;
-                size: ${printWidth} auto;
-              }
-            }
-          `}
-        </style>
+        {printStyles}
         {fields.filter(f => f.enabled).map((field, idx) => {
           switch (field.id) {
             case 'logo':

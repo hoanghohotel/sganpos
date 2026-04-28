@@ -980,7 +980,7 @@ const POSPage = () => {
 
   return (
     <div className="flex h-full overflow-hidden bg-[#F8FAFC] justify-center">
-      <div className="flex w-full max-w-[1920px] h-full overflow-hidden bg-white lg:bg-transparent shadow-2xl lg:shadow-none">
+      <div className="flex w-full max-w-[1440px] h-full overflow-hidden bg-white lg:bg-transparent shadow-2xl lg:shadow-none">
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col overflow-hidden relative">
           <AnimatePresence mode="wait">
