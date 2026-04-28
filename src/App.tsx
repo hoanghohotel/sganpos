@@ -147,8 +147,6 @@ const MainLayout = () => {
 
   return (
     <div className="flex h-screen bg-slate-50 text-slate-900 flex-col sm:flex-row">
-      {!isCustomerPage && (
-    <div className="flex h-screen bg-[#F8FAFC] text-slate-800 flex-col sm:flex-row">
       {!isCustomerPage && !isDevelopPage && (
         <>
           {/* Desktop Sidebar - Modern & Clean */}
