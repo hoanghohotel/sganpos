@@ -18,7 +18,7 @@ import {
   DropdownMenuTrigger 
 } from '../components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '../components/ui/sheet';
-import { ScrollArea } from '../components/ui/scroll-area';
+import { ScrollArea } from '../components/ui/scroll-area.tsx';
 import { Badge } from '../components/ui/badge';
 import ProtectedRoute from '../components/ProtectedRoute';
 import ShiftGuard from '../components/ShiftGuard';
