@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
 import axios from 'axios';
-import { ShoppingCart, Plus, Minus, Trash2, Coffee, CheckCircle2, Banknote, CreditCard, X, ChevronRight, LogOut, CircleDollarSign, ChevronLeft, Printer } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Trash2, Coffee, CheckCircle2, Banknote, CreditCard, X, ChevronRight, LogOut, CircleDollarSign, ChevronLeft, Printer, StickyNote, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuthStore } from '../store/authStore';
 import { useSocket } from '../hooks/useSocket';
@@ -26,6 +26,7 @@ interface CartItem {
   name: string;
   price: number;
   quantity: number;
+  note?: string;
   isSent?: boolean;
   orderId?: string;
 }
@@ -89,6 +90,15 @@ const POSPage = () => {
   const [loading, setLoading] = useState(true);
   const [ordering, setOrdering] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
+
+  // Note Modal States
+  const [showNoteModal, setShowNoteModal] = useState(false);
+  const [selectedCartItem, setSelectedCartItem] = useState<{ id: string, isSent: boolean } | null>(null);
+  const [tempNote, setTempNote] = useState('');
+
+  // Custom Item Modal States
+  const [showCustomItemModal, setShowCustomItemModal] = useState(false);
+  const [customItem, setCustomItem] = useState({ name: '', price: '' });
   
   // Discount and Tax
   const [discountType, setDiscountType] = useState<'PERCENTAGE' | 'FIXED'>('FIXED');
@@ -361,10 +371,11 @@ const POSPage = () => {
         orderType: orderType,
         tableId: selectedTable._id,
         items: unsentItems.map((item) => ({
-          productId: item.id,
-          name: item.name,
+          productId: item.id.startsWith('custom-') ? undefined : item.id,
+          name: item.name + (item.note ? ` (${item.note})` : ''),
           price: item.price,
           quantity: item.quantity,
+          note: item.note
         })),
         subtotal: unsentItems.reduce((s, i) => s + i.price * i.quantity, 0),
         total: unsentItems.reduce((s, i) => s + i.price * i.quantity, 0),
@@ -716,6 +727,50 @@ const POSPage = () => {
 
   const discountTypeFormatted = discountType === 'PERCENTAGE' ? '%' : 'VNĐ';
 
+  const addCustomItem = () => {
+    if (!customItem.name || !customItem.price) return;
+    const priceNum = parseInt(customItem.price);
+    if (isNaN(priceNum)) return;
+
+    const newItem: CartItem = {
+      id: `custom-${Date.now()}`,
+      name: customItem.name,
+      price: priceNum,
+      quantity: 1,
+      isSent: false
+    };
+
+    setCart(prev => [...prev, newItem]);
+    setCustomItem({ name: '', price: '' });
+    setShowCustomItemModal(false);
+  };
+
+  const handleOpenNoteModal = (item: CartItem) => {
+    setSelectedCartItem({ id: item.id, isSent: !!item.isSent });
+    setTempNote(item.note || '');
+    setShowNoteModal(true);
+  };
+
+  const saveNote = () => {
+    if (!selectedCartItem) return;
+    
+    setCart(prev => prev.map(item => 
+      (item.id === selectedCartItem.id && (!item.isSent || selectedCartItem.isSent)) 
+        ? { ...item, note: tempNote } 
+        : item
+    ));
+    
+    setShowNoteModal(false);
+    setSelectedCartItem(null);
+  };
+
+  const PRESET_NOTES = [
+    'Ít đá', 'Nhiều đá', 'Không đá', 
+    'Ít đường', 'Nhiều đường', 'Không đường', 
+    'Ít sữa', 'Nhiều sữa', 'Không sữa',
+    'Mang về', 'Uống tại chỗ'
+  ];
+
   const CartContent = ({ onBack }: { onBack?: () => void }) => (
     <div className="flex flex-col h-full bg-white overflow-hidden">
       <div className="p-6 sm:p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
@@ -729,6 +784,13 @@ const POSPage = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <button 
+            onClick={() => setShowCustomItemModal(true)}
+            className="w-10 h-10 flex items-center justify-center text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition-all rounded-xl shadow-sm" 
+            title="Món ngoài menu"
+          >
+            <Plus size={18} />
+          </button>
           <button onClick={resetFlow} className="w-10 h-10 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all rounded-xl" title="Xoá hết">
             <Trash2 size={18} />
           </button>
@@ -771,7 +833,22 @@ const POSPage = () => {
                     </div>
                   )}
                   <div className="flex justify-between items-start pr-8">
-                     <h4 className="text-xs font-black text-slate-800 uppercase tracking-tight leading-tight">{item.name}</h4>
+                     <div>
+                       <h4 className="text-xs font-black text-slate-800 uppercase tracking-tight leading-tight">{item.name}</h4>
+                       {item.note && (
+                         <div className="flex items-center gap-1 mt-1">
+                           <MessageSquare size={10} className="text-emerald-500" />
+                           <span className="text-[10px] font-bold text-emerald-600 italic">{item.note}</span>
+                         </div>
+                       )}
+                       <button 
+                        onClick={() => handleOpenNoteModal(item)}
+                        className="mt-2 flex items-center gap-1 px-2 py-0.5 bg-slate-100 hover:bg-emerald-50 text-[9px] font-black text-slate-500 hover:text-emerald-600 rounded-lg transition-all uppercase tracking-widest"
+                       >
+                         <StickyNote size={10} />
+                         {item.note ? 'Sửa chú' : 'Ghi chú'}
+                       </button>
+                     </div>
                      <button onClick={() => removeFromCart(item.id)} className="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition-colors">
                        <Trash2 size={16} />
                      </button>
@@ -1306,6 +1383,140 @@ const POSPage = () => {
                     Quay lại kiểm tra
                   </button>
                </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Note Selection Modal */}
+      <AnimatePresence>
+        {showNoteModal && (
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowNoteModal(false)}
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-md bg-white rounded-[40px] shadow-2xl overflow-hidden p-8"
+            >
+              <div className="flex justify-between items-center mb-8">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
+                    <StickyNote size={20} />
+                  </div>
+                  <h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter italic">Ghi chú món</h3>
+                </div>
+                <button onClick={() => setShowNoteModal(false)} className="text-slate-300 hover:text-slate-900">
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-3">
+                  {PRESET_NOTES.map((note) => (
+                    <button
+                      key={note}
+                      onClick={() => setTempNote((prev) => (prev.includes(note) ? prev.replace(note, '').trim() : (prev + ' ' + note).trim()))}
+                      className={cn(
+                        "p-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border",
+                        tempNote.includes(note)
+                          ? "bg-emerald-600 text-white border-emerald-600"
+                          : "bg-slate-50 text-slate-500 border-slate-100 hover:border-emerald-200"
+                      )}
+                    >
+                      {note}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Ghi chú khác</label>
+                  <textarea
+                    value={tempNote}
+                    onChange={(e) => setTempNote(e.target.value)}
+                    placeholder="Nhập yêu cầu đặc biệt..."
+                    className="w-full p-4 bg-slate-50 border border-slate-100 rounded-3xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[100px]"
+                  />
+                </div>
+
+                <button
+                  onClick={saveNote}
+                  className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black text-lg uppercase tracking-widest shadow-xl shadow-emerald-100 hover:bg-emerald-700 transition-all"
+                >
+                  Xác nhận
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Custom Item Modal */}
+      <AnimatePresence>
+        {showCustomItemModal && (
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowCustomItemModal(false)}
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-md bg-white rounded-[40px] shadow-2xl overflow-hidden p-8"
+            >
+              <div className="flex justify-between items-center mb-8">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
+                    <Plus size={20} />
+                  </div>
+                  <h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter italic">Món ngoài menu</h3>
+                </div>
+                <button onClick={() => setShowCustomItemModal(false)} className="text-slate-300 hover:text-slate-900">
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Tên món</label>
+                  <input
+                    type="text"
+                    value={customItem.name}
+                    onChange={(e) => setCustomItem({ ...customItem, name: e.target.value })}
+                    placeholder="Ví dụ: Nước sâm đặc biệt"
+                    className="w-full h-14 px-6 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Giá tiền (VNĐ)</label>
+                  <input
+                    type="number"
+                    value={customItem.price}
+                    onChange={(e) => setCustomItem({ ...customItem, price: e.target.value })}
+                    placeholder="25000"
+                    className="w-full h-14 px-6 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+
+                <button
+                  onClick={addCustomItem}
+                  disabled={!customItem.name || !customItem.price}
+                  className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black text-lg uppercase tracking-widest shadow-xl shadow-emerald-100 hover:bg-emerald-700 transition-all disabled:opacity-50 disabled:bg-slate-300"
+                >
+                  Thêm vào giỏ
+                </button>
+              </div>
             </motion.div>
           </div>
         )}
