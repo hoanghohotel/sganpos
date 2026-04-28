@@ -25,6 +25,7 @@ import tableRoutes from './src/routes/tables.js';
 import settingsRoutes from './src/routes/settings.js';
 import authRoutes from './src/routes/auth.js';
 import shiftRoutes from './src/routes/shifts.js';
+import printingRoutes from './src/routes/printing.js';
 import AuditLog from './src/models/AuditLog.js';
 
 const app = express();
@@ -185,6 +186,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/tables', tableRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/print', printingRoutes);
 
 import { authenticate, AuthRequest } from './src/middleware/auth.js';
 
