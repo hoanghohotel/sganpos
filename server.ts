@@ -6,6 +6,9 @@ import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import rateLimit from 'express-rate-limit';
+import compression from 'compression';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,8 +25,54 @@ import tableRoutes from './src/routes/tables.js';
 import settingsRoutes from './src/routes/settings.js';
 import authRoutes from './src/routes/auth.js';
 import shiftRoutes from './src/routes/shifts.js';
+import AuditLog from './src/models/AuditLog.js';
 
 const app = express();
+
+// SECURITY: Rate Limiting
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000, // limit each IP to 1000 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Quá nhiều yêu cầu từ IP này, vui lòng thử lại sau 15 phút.' }
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // limit each IP to 20 auth requests (login/register) per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Thử đăng nhập/đăng ký quá nhiều lần. Vui lòng đợi 15 phút.' }
+});
+
+// SECURITY: CORS Configuration
+const allowedOrigins = [
+  'http://localhost:3000',
+  process.env.APP_URL, // Deployed URL
+].filter(Boolean) as string[];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Tenant-Id']
+}));
+
+// PERFORMANCE: Gzip Compression
+app.use(compression());
+
+// Apply global rate limiter
+app.use('/api', globalLimiter);
+app.use('/api/auth', authLimiter);
 
 // Logging buffer for development
 const systemLogs: any[] = [];
@@ -322,10 +371,18 @@ app.delete('/api/admin/users/:id', authenticate, async (req: AuthRequest, res) =
       const purgeTenantId = targetUser.tenantId;
       console.log(`[Admin] Purging tenant data for: ${purgeTenantId}`);
       
+      // Audit log the start of purge
+      await AuditLog.create({
+        userId: currentUser._id,
+        action: 'TENANT_PURGE_START',
+        entity: 'Tenant',
+        tenantId: purgeTenantId,
+        details: { managerId: targetUser._id, managerEmail: targetUser.email }
+      });
+
       try {
         // Delete everything for this tenant
-        // We use check to make sure models are registered or we import them
-        await Promise.all([
+        const results = await Promise.all([
           mongoose.connection.collection('products').deleteMany({ tenantId: purgeTenantId }),
           mongoose.connection.collection('orders').deleteMany({ tenantId: purgeTenantId }),
           mongoose.connection.collection('tables').deleteMany({ tenantId: purgeTenantId }),
@@ -333,13 +390,39 @@ app.delete('/api/admin/users/:id', authenticate, async (req: AuthRequest, res) =
           mongoose.connection.collection('settings').deleteMany({ tenantId: purgeTenantId }),
           mongoose.connection.collection('users').deleteMany({ tenantId: purgeTenantId, role: { $ne: 'ADMIN' } }) 
         ]);
+        
         console.log(`[Admin] Tenant ${purgeTenantId} purged successful.`);
-      } catch (purgeErr) {
+        
+        await AuditLog.create({
+          userId: currentUser._id,
+          action: 'TENANT_PURGE_COMPLETE',
+          entity: 'Tenant',
+          tenantId: purgeTenantId,
+          details: { 
+            deletedCounts: results.map(r => r.deletedCount)
+          }
+        });
+      } catch (purgeErr: any) {
         console.error('[Admin] Purge error:', purgeErr);
-        // Continue anyway to delete the manager
+        await AuditLog.create({
+          userId: currentUser._id,
+          action: 'TENANT_PURGE_FAILED',
+          entity: 'Tenant',
+          tenantId: purgeTenantId,
+          details: { error: purgeErr.message }
+        });
       }
     } else {
       await User.findOneAndDelete({ _id: req.params.id, tenantId });
+      
+      await AuditLog.create({
+        userId: currentUser._id,
+        action: 'USER_DELETE',
+        entity: 'User',
+        entityId: req.params.id,
+        tenantId,
+        details: { deletedEmail: targetUser.email }
+      });
     }
 
     res.json({ success: true, message: 'User and tenant data deleted' });

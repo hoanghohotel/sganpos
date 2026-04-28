@@ -28,25 +28,9 @@ app.use((req, res, next) => {
   res.setHeader('X-Processed-By', 'SG-AN-POS-API');
   next();
 });
-// SECURITY FIX: Whitelist specific origins instead of allowing all
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:5173',
-  process.env.FRONTEND_URL || 'http://localhost:3000'
-].filter(Boolean);
-
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  origin: true,
+  credentials: true
 }));
 app.use(express.json());
 app.use(cookieParser());
@@ -112,8 +96,27 @@ apiRouter.use('/orders', orderRoutes);
 apiRouter.use('/tables', tableRoutes);
 apiRouter.use('/settings', settingsRoutes);
 
-// SECURITY FIX: Removed debug route that exposed sensitive information
-// If you need debugging, use admin-protected routes with authentication
+// Debug route
+apiRouter.get('/debug-settings', async (req, res) => {
+  try {
+    const tenantId = getTenantId();
+    const Settings = (await import('../src/models/Settings.js')).default;
+    const settings = await Settings.findOne({ tenantId });
+    res.json({ 
+      success: true, 
+      tenantId, 
+      settings,
+      headers: {
+        host: req.headers.host,
+        forwardedHost: req.headers['x-forwarded-host'],
+        tenantIdHeader: req.headers['x-tenant-id']
+      },
+      env: { hasMongo: !!process.env.MONGODB_URI }
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // --- Admin & Dev APIs ---
 apiRouter.get('/dev/logs', (req, res) => {
@@ -143,14 +146,7 @@ apiRouter.post('/dev/migrate', async (req, res) => {
   }
 });
 
-// SECURITY FIX: Add authentication and authorization to admin routes
-import { authenticate, AuthRequest } from '../src/middleware/auth.js';
-
-apiRouter.get('/admin/users', authenticate, async (req: AuthRequest, res) => {
-  // SECURITY: Only admins can view all users
-  if (req.user?.role !== 'ADMIN') {
-    return res.status(403).json({ error: 'Admin access required' });
-  }
+apiRouter.get('/admin/users', async (req, res) => {
   try {
     const users = await User.find({}, '-password');
     res.json(users);
@@ -159,11 +155,7 @@ apiRouter.get('/admin/users', authenticate, async (req: AuthRequest, res) => {
   }
 });
 
-apiRouter.post('/admin/users', authenticate, async (req: AuthRequest, res) => {
-  // SECURITY: Only admins can create users
-  if (req.user?.role !== 'ADMIN') {
-    return res.status(403).json({ error: 'Admin access required' });
-  }
+apiRouter.post('/admin/users', async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash(req.body.password || 'password@123', 10);
     const user = new User({ ...req.body, password: hashedPassword });
@@ -177,11 +169,7 @@ apiRouter.post('/admin/users', authenticate, async (req: AuthRequest, res) => {
   }
 });
 
-apiRouter.put('/admin/users/:id', authenticate, async (req: AuthRequest, res) => {
-  // SECURITY: Only admins can update users
-  if (req.user?.role !== 'ADMIN') {
-    return res.status(403).json({ error: 'Admin access required' });
-  }
+apiRouter.put('/admin/users/:id', async (req, res) => {
   try {
     const updateData = { ...req.body };
     if (updateData.password) {
@@ -194,11 +182,7 @@ apiRouter.put('/admin/users/:id', authenticate, async (req: AuthRequest, res) =>
   }
 });
 
-apiRouter.delete('/admin/users/:id', authenticate, async (req: AuthRequest, res) => {
-  // SECURITY: Only admins can delete users
-  if (req.user?.role !== 'ADMIN') {
-    return res.status(403).json({ error: 'Admin access required' });
-  }
+apiRouter.delete('/admin/users/:id', async (req, res) => {
   try {
     await User.findByIdAndDelete(req.params.id);
     res.json({ success: true });

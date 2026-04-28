@@ -57,7 +57,8 @@ const MainLayout = () => {
   // If we are on a subdomain (fromHostname exists), we are NEVER on the main landing page
   const isMainLanding = !fromHostname && !currentTenant && (location.pathname === '/' || location.pathname === '');
 
-  const isCustomerPage = location.pathname.startsWith(`${tenantPrefix}/order`);
+  const isCustomerPage = location.pathname.includes('/order');
+  const isDevelopPage = location.pathname.includes('/develop');
   const authPaths = [`${tenantPrefix}/login`, `${tenantPrefix}/register`, `/login`, `/register`].map(p => p.replace(/\/$/, ''));
   const isAuthPage = authPaths.includes(location.pathname.replace(/\/$/, ''));
 
@@ -146,7 +147,7 @@ const MainLayout = () => {
 
   return (
     <div className="flex h-screen bg-[#F8FAFC] text-slate-800 flex-col sm:flex-row">
-      {!isCustomerPage && (
+      {!isCustomerPage && !isDevelopPage && (
         <>
           {/* Desktop Sidebar - Premium Refinement */}
           <aside className="hidden sm:flex w-[120px] bg-slate-50 border-r border-slate-200 flex-col items-center py-8 gap-12 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)] shrink-0">
@@ -231,7 +232,7 @@ const MainLayout = () => {
         </>
       )}
 
-      <main className={cn("flex-1 overflow-hidden sm:overflow-visible", !isCustomerPage && "pb-24 sm:pb-0")}>
+      <main className={cn("flex-1 overflow-hidden sm:overflow-visible", (!isCustomerPage && !isDevelopPage) && "pb-24 sm:pb-0")}>
         <div className="h-full overflow-y-auto no-scrollbar">
           <AnimatePresence mode="wait">
             <motion.div 
@@ -264,22 +265,9 @@ const MainLayout = () => {
                 <Route path="order" element={<CustomerOrderPage />} />
               </Route>
               
-              {/* Fallback for deep links without prefix if they match routes */}
-              {tenantPrefix === '' && (
-                <>
-                  <Route element={<ProtectedRoute />}>
-                    <Route path="/pos" element={<ShiftGuard><POSPage /></ShiftGuard>} />
-                    <Route path="/shifts" element={<ShiftListPage />} />
-                    <Route path="/kitchen" element={<KitchenPage />} />
-                    <Route path="/menu" element={<MenuPage />} />
-                    <Route path="/tables" element={<TablesPage />} />
-                    <Route path="/qr" element={<QRManagerPage />} />
-                    <Route path="/settings" element={<SettingsPage />} />
-                    <Route path="/admin" element={<AdminPage />} />
-                  </Route>
-                  <Route path="/develop" element={<DevelopPage />} />
-                  <Route path="/order" element={<CustomerOrderPage />} />
-                </>
+              {/* Fallback for bare routes if not matched by tenant prefix (e.g. on main domain) */}
+              {tenantPrefix !== '' && (
+                <Route path="/develop" element={<DevelopPage />} />
               )}
             </Routes>
           </motion.div>

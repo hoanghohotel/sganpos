@@ -41,10 +41,10 @@ const DevelopPage = () => {
 
   // Security Check: Strictly for ADMIN
   useEffect(() => {
-    if (!isAuthLoading && (!authUser || authUser.role !== 'ADMIN')) {
-      // Keep them on the page but show Forbidden or redirect
+    if (!isAuthLoading && !authUser) {
+      navigate('/login?redirect=develop');
     }
-  }, [authUser, isAuthLoading]);
+  }, [authUser, isAuthLoading, navigate]);
 
   useEffect(() => {
     if (authUser?.role === 'ADMIN') {
