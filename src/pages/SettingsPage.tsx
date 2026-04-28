@@ -28,7 +28,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis, restrictToWindowEdges } from '@dnd-kit/modifiers';
 import { useAuthStore } from '../store/authStore';
 import { getTenantFromHostname } from '../lib/tenantUtils';
-import { printOrder, testPrinterConnection, printOrderViaThermalPrinter } from '../lib/printing';
+import { printOrder } from '../lib/printing';
 
 interface PrintField {
   id: string;
@@ -356,8 +356,6 @@ const SettingsPage = () => {
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isDesigning, setIsDesigning] = useState(false);
-  const [testingPrinter, setTestingPrinter] = useState<string | null>(null);
-  const [testingPrinterResult, setTestingPrinterResult] = useState<{ [key: string]: { success: boolean; message: string } }>({});
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -419,16 +417,6 @@ const SettingsPage = () => {
       ...prev,
       { id, type: 'text', label: 'Trường tùy chỉnh', value: 'Nội dung mới', enabled: true, isCustom: true }
     ]);
-  };
-
-  const handleTestPrint = async (printerId: string) => {
-    setTestingPrinter(printerId);
-    const result = await testPrinterConnection();
-    setTestingPrinterResult(prev => ({
-      ...prev,
-      [printerId]: result
-    }));
-    setTestingPrinter(null);
   };
 
   const [loading, setLoading] = useState(true);
@@ -980,7 +968,10 @@ const SettingsPage = () => {
                           total: 120000,
                           createdAt: new Date().toISOString()
                         };
-                        printOrder(testOrderData, { ...settings, templateFields });
+                        printOrder(testOrderData, { 
+                          ...settings, 
+                          templateFields: templateFields.length > 0 ? templateFields : undefined 
+                        });
                       }}
                       className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20"
                     >
@@ -1216,35 +1207,34 @@ const SettingsPage = () => {
                                </div>
                              </div>
                           </div>
-                          <div className="flex gap-2 items-center">
+                          <div className="flex gap-2">
                              <button
                                type="button"
-                               className={cn(
-                                 "p-2 rounded-lg transition-all",
-                                 testingPrinter === pr.id
-                                   ? "text-slate-400 cursor-not-allowed"
-                                   : "text-slate-300 hover:text-emerald-500 hover:bg-emerald-50"
-                               )}
+                               className="p-2 text-slate-300 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all"
                                title="In thử"
-                               disabled={testingPrinter === pr.id}
-                               onClick={() => handleTestPrint(pr.id)}
+                               onClick={() => {
+                                 const testOrderData = {
+                                   orderCode: 'TESTPRINTER',
+                                   tableName: 'Bàn Test',
+                                   items: [
+                                     { productId: 'test-1', name: 'Sản phẩm mẫu 1', price: 50000, quantity: 1 },
+                                     { productId: 'test-2', name: 'Sản phẩm mẫu 2', price: 35000, quantity: 2 }
+                                   ],
+                                   subtotal: 120000,
+                                   discountAmount: 10000,
+                                   total: 110000,
+                                   createdAt: new Date().toISOString()
+                                 };
+                                 printOrder(testOrderData, { 
+                                   ...settings, 
+                                   brand: pr.brand, 
+                                   printWidth: pr.printWidth || pr.width || '80mm',
+                                   templateFields: settings.templateFields && settings.templateFields.length > 0 ? settings.templateFields : undefined
+                                 });
+                               }}
                              >
-                               {testingPrinter === pr.id ? (
-                                 <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" />
-                               ) : (
-                                 <Printer size={16} />
-                               )}
+                               <Printer size={16} />
                              </button>
-                             {testingPrinterResult[pr.id] && (
-                               <div className={cn(
-                                 "text-[9px] font-bold px-2 py-0.5 rounded-lg whitespace-nowrap",
-                                 testingPrinterResult[pr.id].success
-                                   ? "bg-emerald-100 text-emerald-700"
-                                   : "bg-red-100 text-red-700"
-                               )}>
-                                 {testingPrinterResult[pr.id].success ? "✓ OK" : "✗ Lỗi"}
-                               </div>
-                             )}
                              <button
                                type="button"
                                className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
@@ -1271,19 +1261,6 @@ const SettingsPage = () => {
                  )}
               </div>
               
-              <div className="p-6 bg-blue-50 rounded-2xl border border-blue-100 flex gap-4">
-                 <AlertCircle size={20} className="text-blue-600 mt-1 shrink-0" />
-                 <div>
-                    <h4 className="text-xs font-black text-blue-900 uppercase mb-1">In qua API Server (Khuyến khích cho Android)</h4>
-                    <p className="text-[9px] text-blue-700 leading-relaxed mb-2">
-                      Hệ thống hỗ trợ gửi lệnh in qua ESC/POS Protocol. Nhấn nút "In thử" ở trên để kiểm tra kết nối máy in. Nếu thành công, máy in sẽ in phiếu test.
-                    </p>
-                    <p className="text-[9px] text-blue-700/70 leading-relaxed">
-                      Ưu điểm: Hoạt động 100% trên Android qua trình duyệt Chrome. Không cần cài driver hay plugin riêng.
-                    </p>
-                 </div>
-              </div>
-
               <div className="p-6 bg-amber-50 rounded-2xl border border-amber-100 flex gap-4">
                  <AlertCircle size={20} className="text-amber-600 mt-1 shrink-0" />
                  <div>

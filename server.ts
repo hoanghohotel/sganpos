@@ -25,7 +25,6 @@ import tableRoutes from './src/routes/tables.js';
 import settingsRoutes from './src/routes/settings.js';
 import authRoutes from './src/routes/auth.js';
 import shiftRoutes from './src/routes/shifts.js';
-import printingRoutes from './src/routes/printing.js';
 import AuditLog from './src/models/AuditLog.js';
 
 const app = express();
@@ -142,6 +141,11 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(tenantMiddleware);
 
+// Legacy Print API Compat (Resolves 404s)
+app.post('/api/print/test-print', (req, res) => {
+  res.json({ success: true, message: 'Compat response: Printing is handled client-side.' });
+});
+
 // DB Connection Check Middleware
 app.use('/api', async (req, res, next) => {
   const state = mongoose.connection.readyState;
@@ -186,7 +190,6 @@ app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/tables', tableRoutes);
 app.use('/api/settings', settingsRoutes);
-app.use('/api/print', printingRoutes);
 
 import { authenticate, AuthRequest } from './src/middleware/auth.js';
 
@@ -332,7 +335,7 @@ app.put('/api/admin/users/:id', authenticate, async (req: AuthRequest, res) => {
     const updatedUser = await User.findOneAndUpdate(
       { _id: req.params.id, tenantId }, 
       updateData, 
-      { new: true }
+      { returnDocument: 'after' }
     );
     res.json(updatedUser);
   } catch (err: any) {

@@ -73,7 +73,7 @@ const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptTemplateProps>(
 
     const dateStr = order.createdAt ? new Date(order.createdAt).toLocaleString('vi-VN') : new Date().toLocaleString('vi-VN');
 
-    const fields = settings.templateFields || [
+    const fields = (settings.templateFields && settings.templateFields.length > 0) ? settings.templateFields : [
       { id: 'logo', type: 'image', label: 'Logo cửa hàng', value: '', enabled: true },
       { id: 'store-name', type: 'text', label: 'Tên cửa hàng', value: '', enabled: true },
       { id: 'address', type: 'text', label: 'Địa chỉ', value: '', enabled: true },

@@ -51,7 +51,7 @@ router.put('/', authenticate, async (req, res) => {
     const settings = await Settings.findOneAndUpdate(
       { tenantId },
       { $set: updateData },
-      { new: true, upsert: true }
+      { returnDocument: 'after', upsert: true }
     );
     
     res.json(settings);

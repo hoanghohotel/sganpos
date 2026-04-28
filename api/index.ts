@@ -96,6 +96,11 @@ apiRouter.use('/orders', orderRoutes);
 apiRouter.use('/tables', tableRoutes);
 apiRouter.use('/settings', settingsRoutes);
 
+// Legacy Print API Compat
+apiRouter.post('/print/test-print', (req, res) => {
+  res.json({ success: true, message: 'Compat response: Printing is handled client-side.' });
+});
+
 // Debug route
 apiRouter.get('/debug-settings', async (req, res) => {
   try {
