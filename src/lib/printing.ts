@@ -51,7 +51,15 @@ export const generatePrintHTML = (order: PrintOrderData, settings: PrintSettings
     ? `https://img.vietqr.io/image/${settings.bankCode}-${settings.bankAccount}-compact2.png?amount=${order.total}&addInfo=${encodeURIComponent(`TT ${order.orderCode || ''} ${order.tableName || ''}`)}&accountName=${encodeURIComponent(settings.bankAccountHolder || '')}`
     : null;
 
-  const staffName = useAuthStore.getState().user?.name || '';
+  // Get staff name safely from auth store
+  let staffName = '';
+  try {
+    const state = useAuthStore.getState();
+    staffName = state?.user?.name || '';
+  } catch (e) {
+    staffName = '';
+  }
+  
   const dateStr = order.createdAt ? new Date(order.createdAt).toLocaleString('vi-VN') : new Date().toLocaleString('vi-VN');
 
   const fields = settings.templateFields || [
@@ -68,110 +76,128 @@ export const generatePrintHTML = (order: PrintOrderData, settings: PrintSettings
     { id: 'footer', type: 'text', label: 'Chân trang', value: 'Cảm ơn và hẹn gặp lại!', enabled: true }
   ];
   
-  return `
-    <html>
-      <head>
-        <title>${isProvisional ? 'Phiếu Tạm Tính' : 'Hóa Đơn Thanh Toán'}</title>
-        <style>
-          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono&display=swap');
-          body { 
-            font-family: ${isRetro ? "'JetBrains Mono', monospace" : "'Inter', sans-serif"}; 
-            padding: 20px; 
-            line-height: 1.4; 
-            font-size: 13px; 
-            width: 80mm;
-            margin: 0 auto;
-            color: #000;
-            background: white;
-          }
-          .text-center { text-align: center; }
-          .font-black { font-weight: 900; }
-          .font-bold { font-weight: 700; }
-          .uppercase { text-transform: uppercase; }
-          .italic { font-style: italic; }
-          .text-xs { font-size: 10px; }
-          .text-sm { font-size: 12px; }
-          .text-lg { font-size: 18px; }
-          .text-xl { font-size: 24px; }
-          .border-t { border-top: 1px solid #000; }
-          .border-double { border-top: 3px double #000; }
-          .my-2 { margin-top: 8px; margin-bottom: 8px; }
-          .flex { display: flex; }
-          .justify-between { justify-content: space-between; }
-          .flex-col { display: flex; flex-direction: column; }
-          .items-center { align-items: center; }
-          .gap-2 { gap: 8px; }
-          .qr-img { width: 140px; height: auto; margin: 10px auto; display: block; }
-          .item-row { display: flex; justify-content: space-between; margin: 4px 0; }
-          
-          ${isModern ? `
-            body { padding: 30px; border-radius: 20px; font-family: 'Inter', sans-serif; }
-            .item-row { border-bottom: 1px solid #f1f5f9; padding: 6px 0; }
-            .store-name { color: #059669; }
-            .total-row { color: #059669; }
-          ` : ''}
-          
-          ${isRetro ? `
-            body { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
-            .border-t { border-top: 1px dashed #000; }
-            .uppercase { letter-spacing: 2px; }
-          ` : ''}
-          
-          ${isElegant ? `
-            body { border: 4px double #000; padding: 25px; font-family: 'Inter', sans-serif; }
-            .store-name { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
-            .uppercase { letter-spacing: 1px; }
-          ` : ''}
+  return `<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${isProvisional ? 'Phiếu Tạm Tính' : 'Hóa Đơn Thanh Toán'}</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono&display=swap');
+      
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      body { 
+        font-family: ${isRetro ? "'JetBrains Mono', monospace" : "'Inter', sans-serif"}; 
+        padding: 20px; 
+        line-height: 1.4; 
+        font-size: 13px; 
+        width: 80mm;
+        margin: 0 auto;
+        color: #000;
+        background: white;
+      }
+      
+      .text-center { text-align: center; }
+      .font-black { font-weight: 900; }
+      .font-bold { font-weight: 700; }
+      .uppercase { text-transform: uppercase; }
+      .italic { font-style: italic; }
+      .text-xs { font-size: 10px; }
+      .text-sm { font-size: 12px; }
+      .text-lg { font-size: 18px; }
+      .text-xl { font-size: 24px; }
+      .border-t { border-top: 1px solid #000; }
+      .border-double { border-top: 3px double #000; }
+      .my-2 { margin-top: 8px; margin-bottom: 8px; }
+      .my-4 { margin-top: 16px; margin-bottom: 16px; }
+      .flex { display: flex; }
+      .justify-between { justify-content: space-between; }
+      .flex-col { display: flex; flex-direction: column; }
+      .items-center { align-items: center; }
+      .gap-2 { gap: 8px; }
+      .qr-img { width: 140px; height: auto; margin: 10px auto; display: block; max-width: 100%; }
+      .item-row { display: flex; justify-content: space-between; margin: 4px 0; }
+      .page-break { page-break-after: always; }
+      
+      ${isModern ? `
+        body { padding: 30px; border-radius: 20px; font-family: 'Inter', sans-serif; }
+        .item-row { border-bottom: 1px solid #f1f5f9; padding: 6px 0; }
+        .store-name { color: #059669; }
+        .total-row { color: #059669; }
+      ` : ''}
+      
+      ${isRetro ? `
+        body { font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.5px; }
+        .border-t { border-top: 1px dashed #000; }
+        .uppercase { letter-spacing: 2px; }
+      ` : ''}
+      
+      ${isElegant ? `
+        body { border: 4px double #000; padding: 25px; font-family: 'Inter', sans-serif; }
+        .store-name { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
+        .uppercase { letter-spacing: 1px; }
+      ` : ''}
 
-          ${isMinimal ? `
-            body { font-family: 'Inter', sans-serif; font-size: 11px; }
-            .font-black { font-weight: 700; }
-            .border-t { border-top: 1px solid #eee; }
-          ` : ''}
+      ${isMinimal ? `
+        body { font-family: 'Inter', sans-serif; font-size: 11px; }
+        .font-black { font-weight: 700; }
+        .border-t { border-top: 1px solid #eee; }
+      ` : ''}
 
-          @media print {
-            body { width: ${settings.printWidth === '58mm' ? '58mm' : '80mm'}; padding: 0; margin: 0; }
-            .no-print { display: none; }
-            @page {
-              margin: 0;
-              size: ${settings.printWidth === '58mm' ? '58mm' : '80mm'} auto;
-            }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="print-container" style="width: ${settings.printWidth === '58mm' ? '58mm' : '80mm'}; overflow: hidden;">
-        ${fields.filter(f => f.enabled).map(field => {
-          switch (field.id) {
-            case 'logo':
-              return settings.logoUrl ? `<div class="text-center"><img src="${settings.logoUrl}" style="width: 80px; height: 80px; object-fit: contain; margin-bottom: 15px;" /></div>` : '';
-            case 'store-name':
-              return `<div class="text-center font-black uppercase store-name ${isModern ? 'text-xl' : 'text-lg'}">${settings.storeName || 'SAIGON AN COFFEE'}</div>`;
-            case 'address':
-              return `<div class="text-center text-xs" style="margin-top: 4px; color: #444;">${settings.address || ''}</div>`;
-            case 'hotline':
-              return `<div class="text-center text-xs font-bold" style="margin-top: 2px;">Hotline: ${settings.hotline || ''}</div>`;
-            case 'sep-1':
-            case 'sep-2':
-              return `<div class="border-t my-4 ${isRetro ? 'style="border-top-style: dashed;"' : ''}"></div>`;
-            case 'order-info':
-              return `
-                <div class="order-info text-xs" style="margin: 15px 0;">
-                  <div class="text-center font-black mb-3 text-sm italic" style="border-bottom: 1px solid #eee; padding-bottom: 5px;">${isProvisional ? 'PHIẾU TẠM TÍNH' : 'HÓA ĐƠN THANH TOÁN'}</div>
-                  ${order.orderCode ? `<div class="flex justify-between" style="margin-bottom: 2px;"><span>Mã Đơn:</span><b class="font-black">#${order.orderCode}</b></div>` : ''}
-                  <div class="flex justify-between" style="margin-bottom: 2px;"><span>Bàn:</span><b class="font-black">${order.tableName || 'Mang về'}</b></div>
-                  <div class="flex justify-between" style="margin-bottom: 2px;"><span>Ngày:</span><span>${dateStr}</span></div>
-                  <div class="flex justify-between" style="margin-bottom: 2px;"><span>Nhân viên:</span><span>${staffName}</span></div>
-                  ${order.paymentMethod ? `<div class="flex justify-between" style="margin-top: 4px; padding-top: 4px; border-top: 1px dotted #ccc;"><span>PTTT:</span><b>${order.paymentMethod === 'CASH' ? 'Tiền mặt' : 'Chuyển khoản'}</b></div>` : ''}
+      @media print {
+        body { width: ${settings.printWidth === '58mm' ? '58mm' : '80mm'}; padding: 0; margin: 0; }
+        .no-print { display: none; }
+        @page {
+          margin: 0;
+          size: ${settings.printWidth === '58mm' ? '58mm' : '80mm'} auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="print-container">
+      ${fields.filter(f => f.enabled).map(field => {
+        switch (field.id) {
+          case 'logo':
+            return settings.logoUrl ? `<div class="text-center"><img src="${settings.logoUrl}" style="width: 80px; height: 80px; object-fit: contain; margin-bottom: 15px;" alt="Logo" /></div>` : '';
+          case 'store-name':
+            return `<div class="text-center font-black uppercase store-name ${isModern ? 'text-xl' : 'text-lg'}">${settings.storeName || 'SAIGON AN COFFEE'}</div>`;
+          case 'address':
+            return `<div class="text-center text-xs" style="margin-top: 4px; color: #444;">${settings.address || ''}</div>`;
+          case 'hotline':
+            return `<div class="text-center text-xs font-bold" style="margin-top: 2px;">Hotline: ${settings.hotline || ''}</div>`;
+          case 'sep-1':
+          case 'sep-2':
+            return `<div class="border-t my-4" ${isRetro ? 'style="border-top-style: dashed;"' : ''}></div>`;
+          case 'order-info':
+            return `
+              <div class="order-info text-xs" style="margin: 15px 0;">
+                <div class="text-center font-black mb-3 text-sm italic" style="border-bottom: 1px solid #eee; padding-bottom: 5px;">${isProvisional ? 'PHIẾU TẠM TÍNH' : 'HÓA ĐƠN THANH TOÁN'}</div>
+                ${order.orderCode ? `<div class="flex justify-between" style="margin-bottom: 2px;"><span>Mã Đơn:</span><b class="font-black">#${order.orderCode}</b></div>` : ''}
+                <div class="flex justify-between" style="margin-bottom: 2px;"><span>Bàn:</span><b class="font-black">${order.tableName || 'Mang về'}</b></div>
+                <div class="flex justify-between" style="margin-bottom: 2px;"><span>Ngày:</span><span>${dateStr}</span></div>
+                <div class="flex justify-between" style="margin-bottom: 2px;"><span>Nhân viên:</span><span>${staffName}</span></div>
+                ${order.paymentMethod ? `<div class="flex justify-between" style="margin-top: 4px; padding-top: 4px; border-top: 1px dotted #ccc;"><span>PTTT:</span><b>${order.paymentMethod === 'CASH' ? 'Tiền mặt' : 'Chuyển khoản'}</b></div>` : ''}
+              </div>
+            `;
+          case 'items-list':
+            return `
+              <div class="items" style="margin: 15px 0;">
+                <div class="item-row font-bold text-xs" style="border-bottom: 1px solid #000; padding-bottom: 4px; margin-bottom: 8px;">
+                  <div style="flex: 1;">Tên món</div>
+                  <div style="width: 35px; text-align: center;">SL</div>
+                  <div style="width: 80px; text-align: right;">Thành tiền</div>
                 </div>
-              `;
-            case 'items-list':
-              return `
-                <div class="items" style="margin: 15px 0;">
-                  <div class="item-row font-bold text-xs" style="border-bottom: 1px solid #000; padding-bottom: 4px; margin-bottom: 8px;">
-                    <div style="flex: 1;">Tên món</div>
-                    <div style="width: 35px; text-align: center;">SL</div>
-                    <div style="width: 80px; text-align: right;">Thành tiền</div>
+                ${order.items.map(item => `
+                  <div class="item-row" style="margin-bottom: 6px;">
+                    <div style="flex: 1; font-weight: 700;">${item.name}</div>
+                    <div style="width: 35px; text-align: center;">${item.quantity}</div>
+                    <div style="width: 80px; text-align: right; font-weight: 700;">${(item.price * item.quantity).toLocaleString('vi-VN')}</div>
                   </div>
                   ${order.items.map(item => `
                     <div class="item-row" style="margin-bottom: 6px;">
