@@ -133,10 +133,20 @@ interface Bank {
 }
 
 const PrintPreview = ({ fields, settings }: { fields: PrintField[], settings: any }) => {
-  const isModern = settings.defaultPrintTemplate === 'modern';
-  const isMinimal = settings.defaultPrintTemplate === 'minimal';
-  const isRetro = settings.defaultPrintTemplate === 'retro';
-  const isElegant = settings.defaultPrintTemplate === 'elegant';
+  const templateId = settings?.defaultPrintTemplate || 'classic';
+  const isModern = templateId === 'modern';
+  const isMinimal = templateId === 'minimal';
+  const isRetro = templateId === 'retro';
+  const isElegant = templateId === 'elegant';
+
+  // Debug: If fields are empty, show a message
+  if (!fields || fields.length === 0) {
+    return (
+      <div className="w-[320px] min-h-[500px] bg-white shadow-2xl p-6 flex items-center justify-center text-slate-400 text-xs italic text-center">
+        Chưa có trường thông tin nào được chọn.
+      </div>
+    );
+  }
 
   return (
     <div 
@@ -153,10 +163,10 @@ const PrintPreview = ({ fields, settings }: { fields: PrintField[], settings: an
       }}
     >
       <div className="space-y-4">
-        {fields.filter(f => f.enabled).map(field => {
+        {fields.filter(f => f.enabled !== false).map((field, idx) => {
           switch (field.id) {
             case 'logo':
-              return settings.logoUrl ? (
+              return settings?.logoUrl ? (
                 <div key={field.id} className="flex justify-center">
                   <img src={settings.logoUrl} alt="Logo" className="w-16 h-16 object-contain" />
                 </div>
@@ -168,25 +178,25 @@ const PrintPreview = ({ fields, settings }: { fields: PrintField[], settings: an
                    isModern ? "text-xl text-emerald-600" : "text-lg text-slate-900",
                    isElegant && "border-b-2 border-slate-900 pb-2 mb-2"
                 )}>
-                  {settings.storeName || 'SAIGON AN COFFEE'}
+                  {settings?.storeName || 'SAIGON AN COFFEE'}
                 </div>
               );
             case 'address':
               return (
                 <div key={field.id} className="text-[10px] text-center text-slate-500 font-medium leading-tight">
-                  {settings.address || '123 Đường ABC, Quận 1, TP.HCM'}
+                  {settings?.address || '123 Đường ABC, Quận 1, TP.HCM'}
                 </div>
               );
             case 'hotline':
               return (
                 <div key={field.id} className="text-[10px] text-center font-bold text-slate-700">
-                  Hotline: {settings.hotline || '0123.456.789'}
+                  Hotline: {settings?.hotline || '0123.456.789'}
                 </div>
               );
             case 'sep-1':
             case 'sep-2':
               return (
-                <div key={field.id} className={cn(
+                <div key={`${field.id}-${idx}`} className={cn(
                   "border-t my-2",
                   isRetro ? "border-dashed border-slate-300" : "border-slate-100"
                 )} />
@@ -194,9 +204,9 @@ const PrintPreview = ({ fields, settings }: { fields: PrintField[], settings: an
             case 'order-info':
               return (
                 <div key={field.id} className="space-y-1 text-[10px] text-slate-600">
-                   <div className="text-center font-black text-slate-900 mb-2 uppercase tracking-widest italic">Hóa đơn thanh toán</div>
-                   <div className="flex justify-between"><span>Mã Đơn:</span><span className="font-bold text-slate-900">#ABC123</span></div>
-                   <div className="flex justify-between"><span>Bàn:</span><span className="font-bold text-slate-900">Bàn 05</span></div>
+                   <div className="text-center font-black text-slate-900 mb-2 uppercase tracking-widest italic border-b border-slate-50 pb-1">Hóa đơn thanh toán</div>
+                   <div className="flex justify-between"><span>Mã Đơn:</span><span className="font-bold text-slate-900">#ORD678</span></div>
+                   <div className="flex justify-between"><span>Bàn:</span><span className="font-bold text-slate-900">Bàn 08</span></div>
                    <div className="flex justify-between"><span>Ngày:</span><span>{new Date().toLocaleString('vi-VN')}</span></div>
                    <div className="flex justify-between"><span>Nhân viên:</span><span>Admin</span></div>
                 </div>
@@ -207,11 +217,11 @@ const PrintPreview = ({ fields, settings }: { fields: PrintField[], settings: an
                   {[1, 2].map((_, i) => (
                     <div key={i} className="flex justify-between text-[11px] items-start gap-4">
                       <div className="flex-1">
-                        <div className="font-bold text-slate-900">{i === 0 ? 'Cà phê sữa đá' : 'Bạc xỉu'}</div>
-                        {i === 0 && <div className="text-[9px] text-slate-400 italic font-medium">Ghi chú: Ít đá, nhiều sữa</div>}
+                        <div className="font-bold text-slate-900">{i === 0 ? 'Cà phê muối' : 'Trà đào cam sả'}</div>
+                        {i === 0 && <div className="text-[9px] text-slate-400 italic font-medium">Ghi chú: Nhiều đá</div>}
                       </div>
-                      <div className="text-slate-500">x{i + 1}</div>
-                      <div className="font-bold text-slate-900">{(35000 * (i + 1)).toLocaleString()}</div>
+                      <div className="text-slate-500 italic">x{i + 1}</div>
+                      <div className="font-bold text-slate-900">{(45000 * (i + 1)).toLocaleString()}</div>
                     </div>
                   ))}
                 </div>
@@ -221,37 +231,37 @@ const PrintPreview = ({ fields, settings }: { fields: PrintField[], settings: an
                 <div key={field.id} className="space-y-1 pt-2 border-t border-slate-900 mt-4">
                   <div className="flex justify-between text-[10px] text-slate-500">
                     <span>Tạm tính</span>
-                    <span>105.000</span>
+                    <span>135.000</span>
                   </div>
                   <div className="flex justify-between text-[10px] text-slate-500">
                     <span>Giảm giá</span>
-                    <span>-5.000</span>
+                    <span>-15.000</span>
                   </div>
                   <div className="flex justify-between text-base font-black text-slate-900 pt-2 border-t border-slate-100 mt-2">
                     <span>TỔNG CỘNG</span>
-                    <span className={isModern ? "text-emerald-600" : ""}>100.000đ</span>
+                    <span className={isModern ? "text-emerald-600" : ""}>120.000đ</span>
                   </div>
                 </div>
               );
             case 'qr':
               return (
                 <div key={field.id} className="flex flex-col items-center gap-2 py-4">
-                  <div className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Quét mã thanh toán</div>
+                  <div className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Mã QR Thanh Toán</div>
                   <div className="w-32 h-32 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center overflow-hidden">
-                    <img src="https://img.vietqr.io/image/970423-123456789-compact2.png?amount=100000&addInfo=TT%20BAN05" alt="QR" className="w-full h-full object-contain p-2" />
+                    <img src={`https://img.vietqr.io/image/970423-123456789-compact2.png?amount=120000&addInfo=TT%20BAN08`} alt="QR" className="w-full h-full object-contain p-2" />
                   </div>
                 </div>
               );
             case 'footer':
               return (
-                <div key={field.id} className="text-[10px] text-center text-slate-400 italic mt-4 px-4 leading-relaxed">
+                <div key={field.id} className="text-[10px] text-center text-slate-400 italic mt-6 px-4 leading-relaxed border-t border-slate-50 pt-4">
                   {field.value || 'Cảm ơn quý khách và hẹn gặp lại!'}
                 </div>
               );
             default:
               if (field.isCustom) {
                 return (
-                  <div key={field.id} className="text-[10px] text-center py-1 border-b border-slate-50 text-slate-500">
+                  <div key={field.id} className="text-[10px] text-center py-1 border-b border-slate-50 text-slate-500 italic">
                     {field.value}
                   </div>
                 );
@@ -363,6 +373,25 @@ const SettingsPage = () => {
 
   const deleteField = (id: string) => {
     setTemplateFields(prev => prev.filter(f => f.id !== id));
+  };
+
+  const resetToDefault = () => {
+    if (confirm('Bạn có chắc chắn muốn đặt lại mẫu in về mặc định?')) {
+      setTemplateFields([
+        { id: 'logo', type: 'image', label: 'Logo cửa hàng', value: '', enabled: true },
+        { id: 'store-name', type: 'text', label: 'Tên cửa hàng', value: '', enabled: true },
+        { id: 'address', type: 'text', label: 'Địa chỉ', value: '', enabled: true },
+        { id: 'hotline', type: 'text', label: 'Hotline', value: '', enabled: true },
+        { id: 'sep-1', type: 'separator', label: 'Phân cách', value: '', enabled: true },
+        { id: 'order-info', type: 'text', label: 'Thông tin đơn hàng', value: '', enabled: true },
+        { id: 'items-list', type: 'list', label: 'Danh sách món', value: '', enabled: true },
+        { id: 'sep-2', type: 'separator', label: 'Phân cách', value: '', enabled: true },
+        { id: 'totals', type: 'totals', label: 'Tổng cộng', value: '', enabled: true },
+        { id: 'qr', type: 'qr', label: 'Mã QR thanh toán', value: '', enabled: true },
+        { id: 'footer', type: 'text', label: 'Lời cảm ơn', value: 'Cảm ơn và hẹn gặp lại!', enabled: true }
+      ]);
+      setSettings(prev => ({ ...prev, defaultPrintTemplate: 'classic' }));
+    }
   };
 
   const updateField = (id: string, value: string) => {
@@ -840,14 +869,23 @@ const SettingsPage = () => {
                     <div className="space-y-4">
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Sắp xếp các trường</h4>
-                        <button 
-                          type="button" 
-                          onClick={addCustomField}
-                          className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-all shadow-sm"
-                        >
-                          <Plus size={12} />
-                          Thêm trường
-                        </button>
+                        <div className="flex gap-2">
+                          <button 
+                            type="button" 
+                            onClick={resetToDefault}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all shadow-sm"
+                          >
+                            Mặc định
+                          </button>
+                          <button 
+                            type="button" 
+                            onClick={addCustomField}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-all shadow-sm"
+                          >
+                            <Plus size={12} />
+                            Thêm trường
+                          </button>
+                        </div>
                       </div>
 
                       <DndContext
