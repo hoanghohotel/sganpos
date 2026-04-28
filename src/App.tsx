@@ -145,16 +145,16 @@ const MainLayout = () => {
   });
 
   return (
-    <div className="flex h-screen bg-[#F8FAFC] text-slate-800 flex-col sm:flex-row">
+    <div className="flex h-screen bg-slate-50 text-slate-900 flex-col sm:flex-row">
       {!isCustomerPage && (
         <>
-          {/* Desktop Sidebar - Premium Refinement */}
-          <aside className="hidden sm:flex w-[120px] bg-slate-50 border-r border-slate-200 flex-col items-center py-8 gap-12 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)] shrink-0">
+          {/* Desktop Sidebar - Modern & Clean */}
+          <aside className="hidden sm:flex w-24 bg-white border-r border-slate-200 flex-col items-center py-8 gap-12 z-50 shadow-sm shrink-0">
             <Link to={`${tenantPrefix}/`} className="transition-all duration-300 hover:scale-110 active:scale-95">
                <Logo variant="icon" size="md" />
             </Link>
             
-            <nav className="flex-1 flex flex-col gap-6 overflow-y-auto no-scrollbar w-full px-3">
+            <nav className="flex-1 flex flex-col gap-4 overflow-y-auto no-scrollbar w-full px-2">
               {navItems.map((item) => {
                 const isActive = (location.pathname === item.to || (item.to === `${tenantPrefix}/` && (location.pathname === tenantPrefix || location.pathname === `${tenantPrefix}/`)));
                 return (
@@ -162,27 +162,28 @@ const MainLayout = () => {
                     key={item.to}
                     to={item.to} 
                     className={cn(
-                      "py-4 transition-all duration-300 rounded-[28px] group relative flex flex-col items-center gap-2.5 w-full active:scale-95", 
+                      "py-3 px-2 rounded-lg group relative flex flex-col items-center gap-2 w-full transition-all duration-200 active:scale-95", 
                       isActive 
-                        ? "text-emerald-700 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.06)] border border-slate-100" 
-                        : "text-slate-400 hover:text-emerald-600 hover:bg-emerald-50/50"
+                        ? "bg-emerald-50 text-emerald-600" 
+                        : "text-slate-500 hover:bg-slate-100"
                     )}
+                    title={item.label}
                   >
                     <div className="relative">
-                      <item.icon className={cn("w-7 h-7 transition-all duration-300", isActive ? "scale-110 text-emerald-600" : "group-hover:scale-110")} />
+                      <item.icon className={cn("w-6 h-6 transition-all duration-200", isActive ? "text-emerald-600" : "group-hover:text-emerald-600")} />
                       {isActive && (
                         <motion.div 
                           layoutId="active-nav-dot"
-                          className="absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white"
+                          className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-emerald-500 rounded-full"
                         />
                       )}
                     </div>
-                    <span className={cn("text-[9px] font-black uppercase tracking-[0.08em] text-center leading-none", isActive ? "text-emerald-700" : "text-slate-400 opacity-60 group-hover:opacity-100")}>
+                    <span className={cn("text-[8px] font-semibold uppercase tracking-wider text-center leading-none", isActive ? "text-emerald-600" : "text-slate-400 group-hover:text-slate-600")}>
                       {item.label}
                     </span>
                     {item.badge && (
-                      <div className="absolute top-3 right-3 w-4 h-4 bg-rose-500 rounded-full border-2 border-white flex items-center justify-center shadow-lg shadow-rose-200">
-                        <span className="text-[8px] text-white font-black truncate">!</span>
+                      <div className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full border-2 border-white flex items-center justify-center shadow-md text-[7px] text-white font-bold">
+                        •
                       </div>
                     )}
                   </Link>
@@ -192,15 +193,15 @@ const MainLayout = () => {
 
             <button 
               onClick={() => logout()}
-              className="p-4 text-slate-400 hover:text-rose-600 transition-all rounded-[24px] hover:bg-rose-50/50 shrink-0 mb-6 group active:scale-95"
+              className="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all shrink-0 mb-4 group active:scale-95"
               title="Đăng xuất"
             >
-              <LogOut className="w-7 h-7 group-hover:translate-x-0.5 transition-transform" />
+              <LogOut className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
             </button>
           </aside>
 
-          {/* Mobile Bottom Bar - Premium Refinement */}
-          <nav className="sm:hidden fixed bottom-6 left-6 right-6 h-20 bg-slate-900/95 backdrop-blur-2xl rounded-[32px] flex justify-around items-center px-4 z-[100] shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/10">
+          {/* Mobile Bottom Bar - Modern & Clean */}
+          <nav className="sm:hidden fixed bottom-4 left-4 right-4 h-16 bg-white border border-slate-200 rounded-2xl flex justify-around items-center px-2 z-50 shadow-lg">
             {navItems.map((item) => {
                const isActive = (location.pathname === item.to || (item.to === `${tenantPrefix}/` && (location.pathname === tenantPrefix || location.pathname === `${tenantPrefix}/`)));
                return (
@@ -208,21 +209,25 @@ const MainLayout = () => {
                   key={item.to}
                   to={item.to} 
                   className={cn(
-                    "p-3 rounded-2xl group relative flex flex-col items-center gap-1.5 transition-all duration-300", 
-                    isActive ? "text-emerald-400 scale-110 shadow-[0_0_20px_rgba(52,211,153,0.3)]" : "text-white opacity-40 hover:opacity-100"
+                    "p-2 rounded-lg group relative flex flex-col items-center gap-1 transition-all duration-200 flex-1", 
+                    isActive ? "bg-emerald-50 text-emerald-600" : "text-slate-500 hover:bg-slate-100"
                   )}
+                  title={item.label}
                 >
                   <div className="relative">
-                    <item.icon className="w-6 h-6" />
+                    <item.icon className={cn("w-5 h-5", isActive ? "text-emerald-600" : "group-hover:text-emerald-600")} />
                     {isActive && (
                       <motion.div 
                         layoutId="mobile-dot"
-                        className="absolute -top-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-emerald-400 rounded-full"
+                        className="absolute -top-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-emerald-500 rounded-full"
                       />
                     )}
                   </div>
+                  <span className={cn("text-[8px] font-semibold uppercase tracking-wider", isActive ? "text-emerald-600" : "text-slate-400")}>
+                    {item.label.slice(0, 3)}
+                  </span>
                   {item.badge && (
-                    <div className="absolute top-2 right-2 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-slate-900 shadow-sm" />
+                    <div className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
                   )}
                 </Link>
               );

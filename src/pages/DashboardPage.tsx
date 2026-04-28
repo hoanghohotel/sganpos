@@ -119,22 +119,22 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-8 overflow-y-auto h-full no-scrollbar pb-24 sm:pb-8">
+    <div className="p-6 sm:p-8 max-w-7xl mx-auto space-y-8 overflow-y-auto h-full no-scrollbar pb-24 sm:pb-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase mb-1">Thống kê</h1>
-          <p className="text-slate-500 font-medium tracking-wide text-xs">
+          <h1 className="text-4xl font-bold text-slate-900 mb-1">Thống kê</h1>
+          <p className="text-slate-500 text-sm font-medium">
             {format(dateRange.start, 'dd/MM/yyyy')} - {format(dateRange.end, 'dd/MM/yyyy')}
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="relative group">
+          <div className="relative">
             <select 
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="appearance-none bg-white border border-slate-200 rounded-xl px-4 py-2.5 pr-10 text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm"
+              className="appearance-none bg-white border border-slate-200 rounded-lg px-4 py-2.5 pr-10 text-sm font-medium text-slate-900 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 shadow-sm"
             >
               <option value="today">Hôm nay</option>
               <option value="yesterday">Hôm qua</option>
@@ -152,20 +152,18 @@ const DashboardPage = () => {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group"
+          className="card-base relative overflow-hidden group"
         >
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform">
-            <DollarSign size={80} />
-          </div>
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
-              <TrendingUp size={20} />
+          <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-100 rounded-full blur-2xl opacity-10 group-hover:scale-110 transition-transform" />
+          <div className="flex items-center gap-3 mb-4 relative z-10">
+            <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600">
+              <DollarSign size={20} />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Doanh thu</span>
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Doanh thu</span>
           </div>
-          <p className="text-xl sm:text-2xl font-black text-slate-900 mb-1">{formatCurrency(data?.summary?.total || 0)}</p>
-          <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-600">
-            <ArrowUpRight size={12} />
+          <p className="text-lg sm:text-xl font-bold text-slate-900 mb-2 relative z-10">{formatCurrency(data?.summary?.total || 0)}</p>
+          <div className="flex items-center gap-1 text-xs font-medium text-emerald-600 relative z-10">
+            <ArrowUpRight size={14} />
             <span>+12.5% so với kỳ trước</span>
           </div>
         </motion.div>
@@ -173,21 +171,19 @@ const DashboardPage = () => {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group"
+          transition={{ delay: 0.05 }}
+          className="card-base relative overflow-hidden group"
         >
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform">
-            <ShoppingBag size={80} />
-          </div>
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-blue-100 rounded-full blur-2xl opacity-10 group-hover:scale-110 transition-transform" />
+          <div className="flex items-center gap-3 mb-4 relative z-10">
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
               <ShoppingBag size={20} />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Đơn hàng</span>
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Đơn hàng</span>
           </div>
-          <p className="text-xl sm:text-2xl font-black text-slate-900 mb-1">{data?.summary?.count || 0}</p>
-          <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-600">
-            <ArrowUpRight size={12} />
+          <p className="text-lg sm:text-xl font-bold text-slate-900 mb-2 relative z-10">{data?.summary?.count || 0}</p>
+          <div className="flex items-center gap-1 text-xs font-medium text-emerald-600 relative z-10">
+            <ArrowUpRight size={14} />
             <span>+8.2% so với kỳ trước</span>
           </div>
         </motion.div>
@@ -195,21 +191,19 @@ const DashboardPage = () => {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group"
+          transition={{ delay: 0.1 }}
+          className="card-base relative overflow-hidden group"
         >
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform">
-            <Users size={80} />
-          </div>
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-100 rounded-full blur-2xl opacity-10 group-hover:scale-110 transition-transform" />
+          <div className="flex items-center gap-3 mb-4 relative z-10">
+            <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600">
               <Users size={20} />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Khách hàng</span>
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Khách hàng</span>
           </div>
-          <p className="text-xl sm:text-2xl font-black text-slate-900 mb-1">{data?.summary?.count || 0}</p>
-          <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-600">
-            <ArrowUpRight size={12} />
+          <p className="text-lg sm:text-xl font-bold text-slate-900 mb-2 relative z-10">{data?.summary?.count || 0}</p>
+          <div className="flex items-center gap-1 text-xs font-medium text-emerald-600 relative z-10">
+            <ArrowUpRight size={14} />
             <span>Đang tăng trưởng</span>
           </div>
         </motion.div>
@@ -217,23 +211,21 @@ const DashboardPage = () => {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden group"
+          transition={{ delay: 0.15 }}
+          className="card-base relative overflow-hidden group"
         >
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform">
-            <DollarSign size={80} />
-          </div>
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600">
+          <div className="absolute top-0 right-0 w-20 h-20 bg-slate-100 rounded-full blur-2xl opacity-10 group-hover:scale-110 transition-transform" />
+          <div className="flex items-center gap-3 mb-4 relative z-10">
+            <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-600">
               <TrendingUp size={20} />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tb. Đơn</span>
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Tb. Đơn</span>
           </div>
-          <p className="text-xl sm:text-2xl font-black text-slate-900 mb-1">
+          <p className="text-lg sm:text-xl font-bold text-slate-900 mb-2 relative z-10">
             {formatCurrency(data?.summary?.count > 0 ? (data.summary.total / data.summary.count) : 0)}
           </p>
-          <div className="flex items-center gap-1 text-[10px] font-bold text-rose-600">
-            <ArrowDownRight size={12} />
+          <div className="flex items-center gap-1 text-xs font-medium text-slate-600 relative z-10">
+            <ArrowDownRight size={14} />
             <span>-2.1% so với kỳ trước</span>
           </div>
         </motion.div>
@@ -244,17 +236,17 @@ const DashboardPage = () => {
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="lg:col-span-2 bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm"
+          className="lg:col-span-2 card-base"
         >
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-lg font-black text-slate-900 tracking-tighter uppercase italic">Biểu đồ doanh thu</h3>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hiệu suất kinh doanh theo thời gian</p>
+              <h3 className="text-lg font-bold text-slate-900">Biểu đồ doanh thu</h3>
+              <p className="text-xs font-medium text-slate-500 mt-1">Hiệu suất kinh doanh theo thời gian</p>
             </div>
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1.5">
-                <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full"></div>
-                <span className="text-[10px] font-bold text-slate-500 uppercase">Doanh thu</span>
+                <div className="w-2.5 h-2.5 bg-emerald-600 rounded-full"></div>
+                <span className="text-xs font-medium text-slate-600">Doanh thu</span>
               </div>
             </div>
           </div>
