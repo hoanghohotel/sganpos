@@ -7,7 +7,7 @@ import { useAuthStore } from '../store/authStore';
 import { useSocket } from '../hooks/useSocket';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { printOrder } from '../lib/printing';
+import { printOrder, printOrderViaThermalPrinter } from '../lib/printing';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -314,7 +314,7 @@ const POSPage = () => {
   const handlePrintProvisional = () => {
     if (cart.length === 0) return;
     
-    printOrder({
+    const provisionalData = {
       tableName: selectedTable?.name || 'Mang về',
       items: cart.map(item => ({
         productId: item.id,
@@ -328,7 +328,15 @@ const POSPage = () => {
       discountAmount,
       total,
       orderType: orderType || undefined
-    }, settings, true);
+    };
+
+    // In phiếu tạm tính qua browser
+    printOrder(provisionalData, settings, true);
+
+    // In phiếu tạm tính qua thermal printer API
+    printOrderViaThermalPrinter(provisionalData, settings, true).catch((err: any) => {
+      console.warn('[POS] Không thể in phiếu tạm tính qua thermal printer:', err);
+    });
   };
 
   const resetFlow = () => {
@@ -585,7 +593,7 @@ const POSPage = () => {
       }
       
       // Print Final Invoice
-      printOrder({
+      const receiptData = {
         orderCode: orderCode,
         tableName: selectedTable?.name || 'Mang về',
         items: cart.map(item => ({
@@ -601,7 +609,16 @@ const POSPage = () => {
         total: total,
         paymentMethod: method,
         orderType: orderType || undefined
-      }, settings);
+      };
+
+      // In hóa đơn qua browser (window.print)
+      printOrder(receiptData, settings);
+
+      // In hóa đơn qua thermal printer API (ESC/POS)
+      console.log('[POS] Gửi lệnh in hóa đơn đến API printer...');
+      printOrderViaThermalPrinter(receiptData, settings, false).catch((err: any) => {
+        console.warn('[POS] Không thể in qua thermal printer:', err);
+      });
 
       setOrderSuccess(true);
       setShowPaymentModal(false);
