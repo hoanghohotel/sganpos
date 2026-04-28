@@ -2,13 +2,13 @@ import { Routes, Route, Link, useLocation, Navigate, useNavigate } from 'react-r
 import { Coffee, CookingPot, Settings, LayoutDashboard, QrCode, UtensilsCrossed, History, Grid2X2, Users, ArrowRight, LogOut, Menu, Bell, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useEffect, useState } from 'react';
-import { cn } from '@/lib/utils';
-import { useAuthStore } from '@/store/authStore';
-import { getTenantPrefix, getTenantFromHostname, getTenantIdFromPath } from '@/lib/tenantUtils';
-import { useSocket } from '@/hooks/useSocket';
-import Logo from '@/components/Logo';
-import { ModeToggle } from '@/components/mode-toggle';
-import { Button } from '@/components/ui/button';
+import { cn } from '../lib/utils';
+import { useAuthStore } from '../store/authStore';
+import { getTenantPrefix, getTenantFromHostname, getTenantIdFromPath } from '../lib/tenantUtils';
+import { useSocket } from '../hooks/useSocket';
+import Logo from '../components/Logo';
+import { ModeToggle } from '../components/mode-toggle';
+import { Button } from '../components/ui/button';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -16,26 +16,26 @@ import {
   DropdownMenuLabel, 
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
-} from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import ShiftGuard from '@/components/ShiftGuard';
-import DashboardPage from '@/pages/DashboardPage';
-import POSPage from '@/pages/POSPage';
-import KitchenPage from '@/pages/KitchenPage';
-import MenuPage from '@/pages/MenuPage';
-import TablesPage from '@/pages/TablesPage';
-import DevelopPage from '@/pages/DevelopPage';
-import CustomerOrderPage from '@/pages/CustomerOrderPage';
-import QRManagerPage from '@/pages/QRManagerPage';
-import SettingsPage from '@/pages/SettingsPage';
-import ShiftListPage from '@/pages/ShiftListPage';
-import AdminPage from '@/pages/AdminPage';
-import LoginPage from '@/pages/LoginPage';
-import RegisterPage from '@/pages/RegisterPage';
-import PrintService from '@/components/printing/PrintService';
+} from '../components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetTrigger } from '../components/ui/sheet';
+import { ScrollArea } from '../components/ui/scroll-area';
+import { Badge } from '../components/ui/badge';
+import ProtectedRoute from '../components/ProtectedRoute';
+import ShiftGuard from '../components/ShiftGuard';
+import DashboardPage from '../pages/DashboardPage';
+import POSPage from '../pages/POSPage';
+import KitchenPage from '../pages/KitchenPage';
+import MenuPage from '../pages/MenuPage';
+import TablesPage from '../pages/TablesPage';
+import DevelopPage from '../pages/DevelopPage';
+import CustomerOrderPage from '../pages/CustomerOrderPage';
+import QRManagerPage from '../pages/QRManagerPage';
+import SettingsPage from '../pages/SettingsPage';
+import ShiftListPage from '../pages/ShiftListPage';
+import AdminPage from '../pages/AdminPage';
+import LoginPage from '../pages/LoginPage';
+import RegisterPage from '../pages/RegisterPage';
+import PrintService from '../components/printing/PrintService';
 
 const AppLayout = () => {
   const location = useLocation();
