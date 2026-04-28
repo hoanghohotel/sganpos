@@ -24,6 +24,7 @@ import LoginPage from '../../pages/LoginPage';
 import RegisterPage from '../../pages/RegisterPage';
 import Sidebar from './Sidebar';
 import MobileNav from './MobileNav';
+import PrintService from '../printing/PrintService';
 
 const MainLayout = () => {
   const location = useLocation();
@@ -139,6 +140,7 @@ const MainLayout = () => {
 
   return (
     <div className="flex h-screen bg-slate-50 text-slate-900 flex-col sm:flex-row">
+      <PrintService />
       {!isCustomerPage && !isDevelopPage && (
         <>
           <Sidebar 
