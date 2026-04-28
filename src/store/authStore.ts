@@ -4,6 +4,8 @@ import api from '../lib/api';
 interface User {
   id: string;
   name: string;
+  fullName?: string;
+  username?: string;
   email?: string;
   phone?: string;
   role: 'ADMIN' | 'MANAGER' | 'STAFF';

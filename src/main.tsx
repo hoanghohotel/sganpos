@@ -4,6 +4,10 @@ import { SpeedInsights } from "@vercel/speed-insights/react"
 import { Buffer } from 'buffer';
 import App from './App.tsx';
 import './index.css';
+import { ThemeProvider } from './components/theme-provider';
+import { QueryProvider } from './components/query-provider';
+import { Toaster } from './components/ui/sonner';
+import { TooltipProvider } from './components/ui/tooltip';
 
 // Fix for react-thermal-printer Buffer error
 if (typeof window !== 'undefined') {
@@ -12,8 +16,15 @@ if (typeof window !== 'undefined') {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
-    <SpeedInsights />
+    <QueryProvider>
+      <ThemeProvider defaultTheme="light" storageKey="app-theme">
+        <TooltipProvider>
+          <App />
+          <Toaster position="top-right" expand={false} richColors />
+          <SpeedInsights />
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryProvider>
   </StrictMode>,
 );
 

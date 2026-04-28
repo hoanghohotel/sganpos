@@ -1,13 +1,46 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import api from '../lib/api';
-import axios from 'axios';
-import { ShoppingCart, Plus, Minus, Trash2, Coffee, CheckCircle2, Banknote, CreditCard, X, ChevronRight, LogOut, CircleDollarSign, ChevronLeft, Printer, StickyNote, MessageSquare } from 'lucide-react';
+import { 
+  ShoppingCart, Plus, Minus, Trash2, Coffee, CheckCircle2, 
+  Banknote, CreditCard, X, ChevronRight, CircleDollarSign, 
+  ChevronLeft, Printer, StickyNote, MessageSquare, Search,
+  Store, Utensils, Truck, LogOut, Info, AlertTriangle, Wifi, WifiOff
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuthStore } from '../store/authStore';
 import { useSocket } from '../hooks/useSocket';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { printOrder } from '../lib/printing';
+import { get, set, del } from 'idb-keyval';
+import { 
+  Button 
+} from '../components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '../components/ui/card';
+import { Input } from '../components/ui/input';
+import { Badge } from '../components/ui/badge';
+import { ScrollArea } from '../components/ui/scroll-area';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '../components/ui/tabs';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../components/ui/dialog';
+import { toast } from 'sonner';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -40,23 +73,38 @@ interface Table {
 
 const ProductCard: React.FC<{ product: Product, onAdd: () => void }> = ({ product, onAdd }) => (
   <motion.button
-    whileHover={{ scale: 1.02 }}
-    whileTap={{ scale: 0.98 }}
+    whileHover={{ y: -4, transition: { duration: 0.2 } }}
+    whileTap={{ scale: 0.96 }}
     onClick={onAdd}
-    className="group bg-white p-2.5 sm:p-4 rounded-2xl border border-slate-100 shadow-sm hover:border-emerald-200 hover:shadow-emerald-100/20 transition-all text-left flex flex-col justify-between h-40 sm:h-44"
+    className="group relative flex flex-col h-full bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl hover:shadow-emerald-500/10 hover:border-emerald-500/50 transition-all text-left overflow-hidden"
   >
-    <div className="flex flex-col h-full">
-      <div className="w-full h-20 sm:h-24 bg-slate-50 rounded-xl mb-2 sm:mb-3 flex items-center justify-center group-hover:bg-emerald-50 transition-colors overflow-hidden shrink-0">
-        {product.image ? (
-          <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-        ) : (
-          <Coffee className="text-slate-300 group-hover:text-emerald-300 transition-colors" size={24} />
-        )}
+    <div className="aspect-square bg-slate-50 dark:bg-slate-950 overflow-hidden relative">
+      {product.image ? (
+        <img 
+          src={product.image} 
+          alt={product.name} 
+          className="w-full h-full object-cover transition-transform group-hover:scale-110" 
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center">
+          <Coffee className="text-slate-200 dark:text-slate-800 group-hover:text-emerald-500 transition-colors" size={40} />
+        </div>
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+        <span className="text-white text-[10px] font-bold uppercase tracking-widest flex items-center gap-1">
+          <Plus size={12} /> Thêm nhanh
+        </span>
       </div>
-      <div className="flex flex-col justify-between flex-1">
-        <h3 className="font-bold text-slate-900 leading-tight group-hover:text-emerald-600 transition-colors line-clamp-2 text-[11px] sm:text-xs uppercase tracking-tighter font-sans">{product.name}</h3>
-        <span className="text-emerald-600 font-extrabold text-[12px] sm:text-sm font-mono mt-1">
-          {product.basePrice.toLocaleString('vi-VN')}đ
+    </div>
+    
+    <div className="p-3 sm:p-4 flex flex-col flex-1 justify-between gap-1">
+      <h3 className="font-bold text-slate-900 dark:text-slate-100 leading-tight line-clamp-2 text-xs sm:text-sm uppercase tracking-tight font-sans">
+        {product.name}
+      </h3>
+      <div className="flex items-center justify-between mt-auto pt-2 border-t border-slate-100 dark:border-slate-800">
+        <span className="text-emerald-600 dark:text-emerald-400 font-extrabold text-sm sm:text-base font-mono">
+          {product.basePrice.toLocaleString('vi-VN')}
+          <span className="text-[10px] ml-0.5">đ</span>
         </span>
       </div>
     </div>
@@ -69,14 +117,34 @@ const POSPage = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('Tất cả');
   const [tables, setTables] = useState<Table[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [tableCarts, setTableCarts] = useState<Record<string, CartItem[]>>(() => {
-    const saved = localStorage.getItem('tableCarts');
-    return saved ? JSON.parse(saved) : {};
-  });
+  const [tableCarts, setTableCarts] = useState<Record<string, CartItem[]>>({});
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   
-  // Sync tableCarts to localStorage
+  // Load tableCarts from IDB
   useEffect(() => {
-    localStorage.setItem('tableCarts', JSON.stringify(tableCarts));
+    get('tableCarts').then((saved) => {
+      if (saved) {
+        setTableCarts(saved);
+      }
+    });
+
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+  
+  // Sync tableCarts to IDB
+  useEffect(() => {
+    if (Object.keys(tableCarts).length > 0) {
+      set('tableCarts', tableCarts);
+    }
   }, [tableCarts]);
   
   // Flow states
@@ -772,102 +840,134 @@ const POSPage = () => {
   ];
 
   const CartContent = ({ onBack }: { onBack?: () => void }) => (
-    <div className="flex flex-col h-full bg-white overflow-hidden">
-      <div className="p-6 sm:p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+    <div className="flex flex-col h-full bg-white dark:bg-slate-900 overflow-hidden">
+      <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-950/50">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-lg shrink-0">
+          <div className="w-10 h-10 bg-slate-900 dark:bg-emerald-600 rounded-xl flex items-center justify-center text-white shadow-lg shrink-0">
             <ShoppingCart size={20} />
           </div>
           <div>
-            <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tighter uppercase leading-none">Giỏ hàng</h2>
-            <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mt-1 italic">{selectedTable?.name}</p>
+            <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">Giỏ hàng</h2>
+            <div className="flex items-center gap-2 mt-1">
+              <Badge variant="outline" className="text-[9px] h-4 px-1.5 font-black uppercase tracking-widest italic border-emerald-500/30 text-emerald-600 bg-emerald-500/5">
+                {selectedTable?.name}
+              </Badge>
+              {!isOnline && <Badge variant="destructive" className="text-[8px] h-4 px-1.5 uppercase font-black tracking-widest">Offline</Badge>}
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button 
+        <div className="flex items-center gap-1">
+          <Button 
+            variant="ghost" 
+            size="icon" 
             onClick={() => setShowCustomItemModal(true)}
-            className="w-10 h-10 flex items-center justify-center text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition-all rounded-xl shadow-sm" 
-            title="Món ngoài menu"
+            className="w-9 h-9 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-xl"
           >
             <Plus size={18} />
-          </button>
-          <button onClick={resetFlow} className="w-10 h-10 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all rounded-xl" title="Xoá hết">
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={resetFlow}
+            className="w-9 h-9 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl"
+          >
             <Trash2 size={18} />
-          </button>
+          </Button>
           {onBack && (
-            <button onClick={onBack} className="w-10 h-10 flex items-center justify-center text-slate-400 hover:bg-slate-100 transition-all rounded-xl lg:hidden">
+            <Button variant="ghost" size="icon" onClick={onBack} className="w-9 h-9 lg:hidden rounded-xl">
               <X size={18} />
-            </button>
+            </Button>
           )}
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 no-scrollbar">
+      <ScrollArea className="flex-1 px-4 sm:px-6 py-4">
         <AnimatePresence initial={false}>
           {cart.length === 0 ? (
-            <div key="empty-cart" className="h-full flex flex-col items-center justify-center text-slate-200 opacity-50">
-              <div className="w-24 h-24 bg-slate-50 rounded-[32px] flex items-center justify-center mb-6">
-                <Coffee size={40} className="text-slate-200" />
+            <div key="empty-cart" className="h-[40vh] flex flex-col items-center justify-center text-slate-200 dark:text-slate-800 opacity-50">
+              <div className="w-20 h-20 bg-slate-50 dark:bg-slate-950 rounded-[32px] flex items-center justify-center mb-4">
+                <Coffee size={32} className="text-slate-300 dark:text-slate-700" />
               </div>
-              <p className="text-xs font-black uppercase tracking-widest text-slate-400">Chọn món từ menu</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-600">Bắt đầu chọn món ngay</p>
             </div>
           ) : (
-            <div key="cart-list" className="flex flex-col gap-4">
+            <div key="cart-list" className="flex flex-col gap-3 pb-4">
               {cart.map((item) => (
                 <motion.div
                   layout
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, x: -20 }}
                   key={item.id + (item.isSent ? '-sent' : '-pending')}
                   className={cn(
-                    "p-4 rounded-3xl border transition-all flex flex-col gap-3 group relative overflow-hidden",
+                    "p-4 rounded-2xl border transition-all flex flex-col gap-3 group relative overflow-hidden",
                     item.isSent 
-                      ? "bg-slate-50 border-slate-200 opacity-80" 
-                      : "bg-white border-slate-100 shadow-sm hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-50"
+                      ? "bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800/50 opacity-90" 
+                      : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md dark:hover:shadow-emerald-500/5"
                   )}
                 >
                   {item.isSent && (
-                    <div className="absolute top-0 right-0 px-2 py-0.5 bg-emerald-500 text-[8px] font-black text-white uppercase tracking-widest rounded-bl-xl">
-                      Đã báo bếp
+                    <div className="absolute top-0 right-0 px-2 py-0.5 bg-emerald-500 text-[8px] font-black text-white uppercase tracking-widest rounded-bl-lg">
+                      Sent to Kitchen
                     </div>
                   )}
-                  <div className="flex justify-between items-start pr-8">
-                     <div>
-                       <h4 className="text-xs font-black text-slate-800 uppercase tracking-tight leading-tight">{item.name}</h4>
-                       {item.note && (
-                         <div className="flex items-center gap-1 mt-1">
-                           <MessageSquare size={10} className="text-emerald-500" />
-                           <span className="text-[10px] font-bold text-emerald-600 italic">{item.note}</span>
-                         </div>
-                       )}
+                  <div className="flex justify-between items-start gap-2">
+                     <div className="flex-1">
+                       <h4 className="text-xs font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight leading-tight mb-1">{item.name}</h4>
+                       <div className="flex flex-wrap items-center gap-2">
+                         <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 font-mono">
+                           {item.price.toLocaleString('vi-VN')}đ / món
+                         </span>
+                         {item.note && (
+                           <Badge variant="outline" className="h-4 px-1.5 text-[8px] border-emerald-500/20 text-emerald-600 bg-emerald-500/5 gap-1 font-bold">
+                             <MessageSquare size={8} /> {item.note}
+                           </Badge>
+                         )}
+                       </div>
                        <button 
                         onClick={() => handleOpenNoteModal(item)}
-                        className="mt-2 flex items-center gap-1 px-2 py-0.5 bg-slate-100 hover:bg-emerald-50 text-[9px] font-black text-slate-500 hover:text-emerald-600 rounded-lg transition-all uppercase tracking-widest"
+                        className="mt-2 flex items-center gap-1.5 py-1 px-2 group/note bg-slate-50 dark:bg-slate-800/50 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg transition-all"
                        >
-                         <StickyNote size={10} />
-                         {item.note ? 'Sửa chú' : 'Ghi chú'}
+                         <StickyNote size={10} className="text-slate-400 group-hover/note:text-emerald-500" />
+                         <span className="text-[9px] font-black text-slate-500 dark:text-slate-400 group-hover/note:text-emerald-600 uppercase tracking-widest">
+                           {item.note ? 'Sửa chú thích' : 'Thêm chú thích'}
+                         </span>
                        </button>
                      </div>
-                     <button onClick={() => removeFromCart(item.id)} className="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition-colors">
-                       <Trash2 size={16} />
-                     </button>
+                     <Button 
+                       variant="ghost" 
+                       size="icon" 
+                       onClick={() => removeFromCart(item.id)} 
+                       className="h-8 w-8 text-slate-300 hover:text-red-500 dark:hover:bg-red-500/10 rounded-xl shrink-0"
+                     >
+                       <X size={14} />
+                     </Button>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-900 font-black text-base font-mono">
+                  
+                  <div className="flex justify-between items-center pt-2 border-t border-slate-100/50 dark:border-slate-800/50">
+                    <span className="text-slate-900 dark:text-white font-black text-sm font-mono">
                       {(item.price * item.quantity).toLocaleString('vi-VN')}đ
                     </span>
-                    <div className={cn(
-                      "flex items-center gap-3 p-1 rounded-xl shadow-inner border",
-                      item.isSent ? "bg-slate-100 border-slate-200" : "bg-slate-50 border-slate-100 ring-1 ring-slate-200/50"
-                    )}>
-                      <button onClick={() => updateQuantity(item.id, -1)} className="p-1.5 bg-white text-slate-400 hover:text-red-500 hover:shadow-sm rounded-lg transition-all">
-                        <Minus size={14} />
-                      </button>
-                      <span className="font-mono text-sm font-black min-w-[24px] text-center">{item.quantity}</span>
-                      <button onClick={() => updateQuantity(item.id, 1)} className="p-1.5 bg-white text-emerald-600 hover:text-emerald-700 hover:shadow-sm rounded-lg transition-all">
-                        <Plus size={14} />
-                      </button>
+                    <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => updateQuantity(item.id, -1)} 
+                        className="h-7 w-7 bg-white dark:bg-slate-900 shadow-sm hover:text-red-500 rounded-lg"
+                      >
+                        <Minus size={12} />
+                      </Button>
+                      <span className="font-mono text-xs font-black min-w-[32px] text-center text-slate-900 dark:text-white">
+                        {item.quantity}
+                      </span>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => updateQuantity(item.id, 1)} 
+                        className="h-7 w-7 bg-white dark:bg-slate-900 shadow-sm hover:text-emerald-500 rounded-lg"
+                      >
+                        <Plus size={12} />
+                      </Button>
                     </div>
                   </div>
                 </motion.div>
@@ -875,97 +975,98 @@ const POSPage = () => {
             </div>
           )}
         </AnimatePresence>
-      </div>
+      </ScrollArea>
 
-      <div className="p-6 bg-white border-t border-slate-100 shadow-[0_-10px_20px_rgba(0,0,0,0.02)] sm:mb-0 mb-safe">
-        <div className="space-y-3 mb-6">
-          <div className="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
+      <div className="p-6 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shadow-[0_-10px_30px_rgba(0,0,0,0.03)] dark:shadow-none space-y-4">
+        <div className="space-y-2">
+          <div className="flex justify-between items-center text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
             <span>Tạm tính</span>
-            <span className="text-slate-600 font-mono italic">{subtotal.toLocaleString('vi-VN')}đ</span>
+            <span className="text-slate-700 dark:text-slate-300 font-mono italic">{subtotal.toLocaleString('vi-VN')}đ</span>
           </div>
           
-          <div className="flex flex-col gap-2">
-            <div className="flex justify-between items-center">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Giảm giá</span>
-              <div className="flex items-center gap-1">
-                <button 
-                  onClick={() => setDiscountType(discountType === 'PERCENTAGE' ? 'FIXED' : 'PERCENTAGE')}
-                  className="text-[9px] font-black bg-slate-100 px-2 py-0.5 rounded text-slate-500 hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
-                >
-                  {discountTypeFormatted}
-                </button>
-                <input 
-                  type="number"
-                  value={discountValue}
-                  onChange={(e) => setDiscountValue(Number(e.target.value))}
-                  className="w-16 bg-slate-50 border-none rounded text-right text-xs font-black text-emerald-600 p-1 focus:ring-1 focus:ring-emerald-500"
-                />
-              </div>
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Giảm giá</span>
+              <button 
+                onClick={() => setDiscountType(discountType === 'PERCENTAGE' ? 'FIXED' : 'PERCENTAGE')}
+                className="text-[8px] font-black bg-slate-100 dark:bg-slate-800 h-4 px-1.5 rounded uppercase tracking-tighter text-slate-500 border border-slate-200 dark:border-slate-700"
+              >
+                {discountTypeFormatted}
+              </button>
             </div>
+            <Input 
+              type="number"
+              value={discountValue}
+              onChange={(e) => setDiscountValue(Number(e.target.value))}
+              className="w-20 h-7 bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-right text-xs font-black text-emerald-600 focus-visible:ring-emerald-500 p-1"
+            />
           </div>
 
           {taxRate > 0 && (
-            <div className="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
-              <span>Thuế ({taxRate}%)</span>
-              <span className="text-slate-600 font-mono italic">{taxAmount.toLocaleString('vi-VN')}đ</span>
+            <div className="flex justify-between items-center text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+              <span>VAT ({taxRate}%)</span>
+              <span className="text-slate-700 dark:text-slate-300 font-mono italic">{taxAmount.toLocaleString('vi-VN')}đ</span>
             </div>
           )}
 
-          <div className="flex justify-between items-end pt-2 border-t border-dashed border-slate-100">
-            <span className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Tổng cộng</span>
-            <span className="text-2xl sm:text-3xl font-black text-emerald-600 tracking-tighter font-mono">
-              {total.toLocaleString('vi-VN')}đ
-            </span>
+          <div className="flex justify-between items-end pt-3 mt-1 border-t border-dashed border-slate-200 dark:border-slate-800">
+            <span className="text-[11px] font-black text-slate-900 dark:text-white uppercase tracking-widest">Thành tiền</span>
+            <div className="text-right">
+              <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400 tracking-tighter font-mono leading-none">
+                {total.toLocaleString('vi-VN')}
+                <span className="text-sm ml-1 italic tracking-normal">đ</span>
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mb-3">
-          <button
+        <div className="grid grid-cols-2 gap-3 pt-2">
+          <Button
             disabled={cart.length === 0 || ordering}
+            variant="outline"
             onClick={handleSendToKitchen}
             className={cn(
-              "py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border shadow-sm",
+              "h-12 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all gap-2 border-slate-200 dark:border-slate-800",
               cart.some(i => !i.isSent)
-                ? "bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100"
-                : "bg-slate-50 border-slate-100 text-slate-400 opacity-60 pointer-events-none"
+                ? "bg-emerald-500 hover:bg-emerald-600 border-emerald-500 text-white"
+                : "bg-slate-50 dark:bg-slate-950 text-slate-400 opacity-60"
             )}
           >
-            <Coffee size={14} />
-            <span>Báo bếp</span>
-          </button>
-          <button
+            <Utensils size={14} /> Báo bếp
+          </Button>
+          <Button
             disabled={cart.length === 0}
+            variant="outline"
             onClick={handlePrintProvisional}
-            className="py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-2 shadow-sm"
+            className="h-12 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-[10px] font-black uppercase tracking-widest gap-2"
           >
-            <Printer size={14} />
-            <span>Tạm tính</span>
-          </button>
+            <Printer size={14} /> Tạm tính
+          </Button>
         </div>
 
-        <button
+        <Button
           disabled={cart.length === 0 || ordering}
           onClick={handleCheckoutInitiate}
           className={cn(
-            "w-full py-4 rounded-2xl font-black text-lg transition-all flex items-center justify-center gap-3 uppercase tracking-widest shadow-xl",
-            cart.length === 0 ? "bg-slate-100 text-slate-300 cursor-not-allowed" : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-200/50 shadow-lg",
-            ordering && "opacity-70"
+            "w-full h-16 rounded-2xl font-black text-lg gap-3 uppercase tracking-widest shadow-xl transition-all",
+            cart.length === 0 ? "bg-slate-100 text-slate-300 cursor-not-allowed" : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20",
+            ordering && "opacity-70 animate-pulse"
           )}
         >
           {ordering ? (
-            <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+             <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
           ) : orderSuccess ? (
             <>
               <CheckCircle2 size={24} />
-              <span>Thành công!</span>
+              <span>Checkout!</span>
             </>
           ) : (
             <>
-              <ShoppingCart size={20} />
+              <Banknote size={24} />
               <span>Thanh toán</span>
             </>
           )}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -991,28 +1092,79 @@ const POSPage = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="h-full flex flex-col justify-center max-w-4xl mx-auto p-8"
+              className="h-full flex flex-col justify-center items-center max-w-6xl mx-auto p-4 sm:p-8"
             >
-              <h2 className="text-4xl font-black text-slate-900 mb-12 text-center tracking-tighter">Bắt đầu đơn hàng mới</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              <div className="text-center mb-12 sm:mb-16">
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <Badge variant={isOnline ? "outline" : "destructive"} className="px-3 py-1 gap-2 border-slate-200 dark:border-slate-800">
+                    {isOnline ? <Wifi size={12} className="text-emerald-500" /> : <WifiOff size={12} />}
+                    {isOnline ? "System Online" : "System Offline (Local Mode)"}
+                  </Badge>
+                </div>
+                <h1 className="text-4xl sm:text-6xl font-black text-slate-900 dark:text-white tracking-tighter uppercase mb-4">
+                  Terminal <span className="text-emerald-600">POS</span>
+                </h1>
+                <p className="text-slate-500 dark:text-slate-400 font-medium tracking-tight">Chào mừng quay trở lại, <span className="text-slate-900 dark:text-slate-100 font-bold">{user?.name}</span></p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
                 {[
-                  { id: 'DINE_IN', label: 'Tại chỗ', icon: '🏠', color: 'bg-emerald-600', action: () => handleTypeSelect('DINE_IN') },
-                  { id: 'TAKEAWAY', label: 'Mang về', icon: '🥡', color: 'bg-slate-900', action: () => handleTypeSelect('TAKEAWAY') },
-                  { id: 'DELIVERY', label: 'Ship đi', icon: '🛵', color: 'bg-emerald-400', action: () => handleTypeSelect('DELIVERY') },
-                  { id: 'SHIFT', label: 'Chốt ca', icon: '💰', color: 'bg-rose-500', action: handleCloseShiftInitiate }
+                  { id: 'DINE_IN', label: 'Tại chỗ', sub: 'Dine-in Order', icon: <Utensils size={32} />, color: 'emerald', action: () => handleTypeSelect('DINE_IN') },
+                  { id: 'TAKEAWAY', label: 'Mang về', sub: 'Take Away', icon: <Store size={32} />, color: 'slate', action: () => handleTypeSelect('TAKEAWAY') },
+                  { id: 'DELIVERY', label: 'Ship đi', sub: 'Delivery Slot', icon: <Truck size={32} />, color: 'blue', action: () => handleTypeSelect('DELIVERY') },
+                  { id: 'SHIFT', label: 'Chốt ca', sub: 'End Session', icon: <CircleDollarSign size={32} />, color: 'rose', action: handleCloseShiftInitiate }
                 ].map((t, idx) => (
-                  <button
-                    key={`type-${t.id}-${idx}`}
+                  <motion.button
+                    key={`type-${t.id}`}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0, transition: { delay: idx * 0.1 } }}
                     onClick={t.action}
                     className={cn(
-                      "group bg-white p-10 rounded-[32px] border border-slate-100 shadow-xl shadow-slate-200/50 hover:border-emerald-500 hover:scale-[1.05] transition-all flex flex-col items-center gap-6",
-                      t.id === 'SHIFT' && "hover:border-rose-500"
+                      "group relative bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-2xl transition-all flex flex-col items-center justify-center gap-6 overflow-hidden",
+                      t.color === 'emerald' && "hover:border-emerald-500/50 hover:shadow-emerald-500/10",
+                      t.color === 'slate' && "hover:border-slate-900/50 hover:shadow-slate-900/10",
+                      t.color === 'blue' && "hover:border-blue-500/50 hover:shadow-blue-500/10",
+                      t.color === 'rose' && "hover:border-rose-500/50 hover:shadow-rose-500/10"
                     )}
                   >
-                    <span className="text-6xl group-hover:scale-125 transition-transform">{t.icon}</span>
-                    <span className="text-2xl font-black text-slate-900 uppercase tracking-tighter">{t.label}</span>
-                  </button>
+                    <div className={cn(
+                      "w-16 h-16 rounded-[24px] flex items-center justify-center transition-all group-hover:scale-110 group-hover:rotate-3",
+                      t.color === 'emerald' && "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600",
+                      t.color === 'slate' && "bg-slate-50 dark:bg-slate-100/10 text-slate-800 dark:text-slate-100",
+                      t.color === 'blue' && "bg-blue-50 dark:bg-blue-500/10 text-blue-600",
+                      t.color === 'rose' && "bg-rose-50 dark:bg-rose-500/10 text-rose-600"
+                    )}>
+                      {t.icon}
+                    </div>
+                    <div className="text-center">
+                      <span className="block text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-1">{t.label}</span>
+                      <span className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{t.sub}</span>
+                    </div>
+
+                    <div className={cn(
+                      "absolute bottom-0 left-0 h-1 transition-all w-0 group-hover:w-full",
+                      t.color === 'emerald' && "bg-emerald-500",
+                      t.color === 'slate' && "bg-slate-900 dark:bg-slate-100",
+                      t.color === 'blue' && "bg-blue-500",
+                      t.color === 'rose' && "bg-rose-500"
+                    )} />
+                  </motion.button>
                 ))}
+              </div>
+
+              <div className="mt-16 flex items-center gap-8 grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all">
+                <div className="flex flex-col items-center">
+                   <div className="w-12 h-12 rounded-full border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-400">
+                     <Info size={18} />
+                   </div>
+                   <span className="text-[10px] font-bold uppercase tracking-widest mt-2">{tables.length} Máy trạm</span>
+                </div>
+                <div className="flex flex-col items-center">
+                   <div className="w-12 h-12 rounded-full border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-400">
+                     <Utensils size={18} />
+                   </div>
+                   <span className="text-[10px] font-bold uppercase tracking-widest mt-2">{products.length} Món ăn</span>
+                </div>
               </div>
             </motion.div>
           )}
@@ -1021,52 +1173,90 @@ const POSPage = () => {
           {step === 'TABLE' && (
             <motion.div 
               key="table-step"
-              initial={{ opacity: 0, x: 50 }}
+              initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-              className="h-full flex flex-col p-4 sm:p-8 overflow-auto"
+              exit={{ opacity: 0, x: -20 }}
+              className="h-full flex flex-col p-4 sm:p-8 overflow-hidden"
             >
-              <div className="flex items-center gap-4 mb-10">
-                <button onClick={() => setStep('TYPE')} className="p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50">
-                  <ChevronLeft className="text-slate-400" />
-                </button>
-                <h2 className="text-3xl font-black text-slate-900 tracking-tighter">Chọn {orderType === 'DINE_IN' ? 'Bàn' : orderType === 'TAKEAWAY' ? 'Ô mang về' : 'Slot ship'}</h2>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 sm:mb-12">
+                <div className="flex items-center gap-4">
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={() => setStep('TYPE')}
+                    className="rounded-xl border-slate-200 dark:border-slate-800"
+                  >
+                    <ChevronLeft className="text-slate-500" />
+                  </Button>
+                  <div>
+                    <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic">
+                      {orderType === 'DINE_IN' ? 'Chọn Bàn' : orderType === 'TAKEAWAY' ? 'Chọn Ô mang về' : 'Chọn Slot ship'}
+                    </h2>
+                    <p className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Lựa chọn vị trí để bắt đầu đơn hàng</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 px-3 py-1">
+                    {tables.filter(t => t.status === 'OCCUPIED').length} Đang phục vụ
+                  </Badge>
+                  <Badge variant="outline" className="bg-slate-500/10 text-slate-600 border-slate-500/20 px-3 py-1">
+                    {tables.filter(t => t.status === 'EMPTY').length} Trống
+                  </Badge>
+                </div>
               </div>
               
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                {filteredTables.map((table, idx) => {
-                  const hasItems = (tableCarts[table._id]?.length || 0) > 0;
-                  return (
-                    <button
-                      key={`table-${table._id}-${idx}`}
-                      onClick={() => handleTableSelect(table)}
-                      className={cn(
-                        "p-6 rounded-[24px] border-2 font-bold text-lg transition-all flex flex-col items-center gap-2 relative overflow-hidden group",
-                        table.status === 'OCCUPIED' 
-                          ? "bg-emerald-50 border-emerald-400 text-emerald-900 shadow-lg shadow-emerald-100/50"
-                          : hasItems
-                            ? "bg-amber-50 border-amber-400 text-amber-900 shadow-lg shadow-amber-100/50"
-                            : "bg-white border-slate-100 hover:border-emerald-500 hover:bg-emerald-50/10 text-slate-900"
-                      )}
-                    >
-                      <div className={cn(
-                        "text-[9px] uppercase tracking-widest font-black px-2 py-0.5 rounded-full",
-                        table.status === 'OCCUPIED'
-                          ? "bg-emerald-600 text-white animate-pulse"
-                          : hasItems
-                            ? "bg-amber-400 text-white animate-pulse"
-                            : "bg-slate-100 text-slate-400"
-                      )}>
-                        {table.status === 'OCCUPIED' ? 'Phục vụ' : hasItems ? 'Phục vụ' : 'Trống'}
-                      </div>
-                      <span className="font-black text-2xl tracking-tighter italic">{table.name}</span>
-                      {hasItems && (
-                        <div className="absolute top-1 right-1 w-2 h-2 bg-amber-500 rounded-full" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+              <ScrollArea className="flex-1 -mx-4 sm:-mx-8 px-4 sm:px-8">
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 sm:gap-6 pb-8">
+                  {filteredTables.map((table, idx) => {
+                    const hasItems = (tableCarts[table._id]?.length || 0) > 0;
+                    const isOccupied = table.status === 'OCCUPIED';
+
+                    return (
+                      <motion.button
+                        key={`table-${table._id}`}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1, transition: { delay: idx * 0.05 } }}
+                        whileHover={{ y: -4 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => handleTableSelect(table)}
+                        className={cn(
+                          "relative aspect-square sm:aspect-[4/3] rounded-[32px] border-2 flex flex-col items-center justify-center gap-2 transition-all group overflow-hidden shadow-sm",
+                          isOccupied 
+                            ? "bg-emerald-500 dark:bg-emerald-600 border-emerald-400 dark:border-emerald-500 text-white shadow-emerald-500/20"
+                            : hasItems
+                              ? "bg-amber-50 dark:bg-amber-500/10 border-amber-400/50 dark:border-amber-500/50 text-amber-900 dark:text-amber-100 shadow-amber-500/10"
+                              : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-emerald-500 dark:hover:border-emerald-500 text-slate-900 dark:text-slate-100"
+                        )}
+                      >
+                        <div className={cn(
+                          "text-[9px] uppercase tracking-widest font-black px-2 py-0.5 rounded-full mb-1",
+                          isOccupied
+                            ? "bg-white/20 text-white"
+                            : hasItems
+                              ? "bg-amber-500 text-white"
+                              : "bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover:bg-emerald-500 group-hover:text-white"
+                        )}>
+                          {isOccupied ? 'Phục vụ' : hasItems ? 'Có món' : 'Trống'}
+                        </div>
+                        <span className="font-black text-2xl sm:text-3xl tracking-tighter italic">{table.name}</span>
+                        
+                        {/* Status bar */}
+                        <div className={cn(
+                          "absolute bottom-0 left-0 w-full h-1.5 opacity-0 group-hover:opacity-100 transition-all",
+                          isOccupied ? "bg-white/30" : "bg-emerald-500"
+                        )} />
+                        
+                        {/* Animated background circle */}
+                        <div className={cn(
+                          "absolute -bottom-8 -right-8 w-24 h-24 rounded-full opacity-10 blur-2xl group-hover:scale-150 transition-transform",
+                          isOccupied ? "bg-white" : "bg-emerald-500"
+                        )} />
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
             </motion.div>
           )}
 
@@ -1076,12 +1266,14 @@ const POSPage = () => {
                key="menu-step"
                initial={{ opacity: 0 }}
                animate={{ opacity: 1 }}
-               className="flex flex-col h-full"
+               className="flex flex-col h-full bg-slate-50 dark:bg-slate-950"
             >
-              <header className="px-4 sm:px-8 py-4 sm:py-6 bg-white/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-100 flex flex-col gap-4">
+              <header className="px-4 sm:px-8 py-4 sm:py-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 dark:border-slate-800 flex flex-col gap-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <div className="flex items-center gap-4 w-full sm:w-auto">
-                    <button 
+                    <Button 
+                      variant="outline" 
+                      size="icon"
                       onClick={async () => {
                         const hasUnsent = cart.some(i => !i.isSent);
                         if (hasUnsent) {
@@ -1089,40 +1281,40 @@ const POSPage = () => {
                         }
                         setStep('TABLE');
                       }} 
-                      className="p-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 shadow-sm"
+                      className="rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm"
                     >
-                      <ChevronLeft className="text-slate-400" />
-                    </button>
+                      <ChevronLeft className="text-slate-500" />
+                    </Button>
                     <div className="flex-1 sm:flex-initial">
-                      <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tighter uppercase">{selectedTable?.name}</h1>
+                      <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic">{selectedTable?.name}</h1>
                       <div className="flex items-center gap-2">
-                        <p className="text-emerald-600 text-[10px] font-black uppercase tracking-widest leading-none">{orderType?.replace('_', ' ')}</p>
-                        <span className="text-slate-200">|</span>
-                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest leading-none">Ca: {shift?.code}</p>
+                        <p className="text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest leading-none">{orderType?.replace('_', ' ')}</p>
+                        <span className="text-slate-200 dark:text-slate-800 text-xs">|</span>
+                        <p className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest leading-none">Shift: {shift?.code}</p>
                       </div>
                     </div>
                     {/* Cart Trigger for Mobile */}
-                    <button 
+                    <Button 
                       onClick={() => setShowMobileCart(true)}
-                      className="lg:hidden relative p-3 bg-emerald-600 text-white rounded-xl shadow-lg shadow-emerald-200 hover:scale-105 active:scale-95 transition-all"
+                      className="lg:hidden relative h-12 w-12 bg-emerald-600 text-white rounded-xl shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95 transition-all p-0"
                     >
                       <ShoppingCart size={20} />
                       {cart.length > 0 && (
-                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 rounded-full border-2 border-white text-[10px] flex items-center justify-center font-black">
+                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 rounded-full border-2 border-white dark:border-slate-900 text-[10px] flex items-center justify-center font-black">
                           {cart.reduce((acc, curr) => acc + curr.quantity, 0)}
                         </span>
                       )}
-                    </button>
+                    </Button>
                   </div>
-                  <div className="relative w-full sm:w-64">
-                    <input 
+                  <div className="relative w-full sm:w-80">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <Input 
                       type="text" 
-                      placeholder="Tìm món..." 
+                      placeholder="Tìm món trong thực đơn..." 
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="bg-white border border-slate-200 rounded-xl px-10 py-2 w-full text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm" 
+                      className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 pl-11 rounded-xl h-11 text-sm focus-visible:ring-emerald-500 shadow-sm" 
                     />
-                    <ShoppingCart className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                   </div>
                 </div>
                 
@@ -1133,10 +1325,10 @@ const POSPage = () => {
                       key={`cat-${cat}-${index}`}
                       onClick={() => setSelectedCategory(cat)}
                       className={cn(
-                        "px-4 py-2 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-all whitespace-nowrap border",
+                        "px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border shadow-sm",
                         selectedCategory === cat 
-                          ? "bg-emerald-600 text-white border-emerald-600 shadow-lg shadow-emerald-100" 
-                          : "bg-white text-slate-500 border-slate-100 hover:border-emerald-200"
+                          ? "bg-emerald-600 text-white border-emerald-600 shadow-emerald-500/10" 
+                          : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700"
                       )}
                     >
                       {cat}
@@ -1145,30 +1337,35 @@ const POSPage = () => {
                 </div>
               </header>
 
-              <div className="flex-1 overflow-auto px-4 sm:px-8 pb-8 scrollbar-hide">
-                {selectedCategory === 'Tất cả' && !searchQuery ? (
-                  categories.filter(c => c !== 'Tất cả').map((cat) => {
-                    const catProducts = products.filter(p => p.category === cat);
-                    if (catProducts.length === 0) return null;
-                    return (
-                      <div key={`cat-group-${cat}`} className="mb-8">
-                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4 border-b border-slate-100 pb-2">{cat}</h3>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4">
-                          {catProducts.map((product, idx) => (
-                            <ProductCard key={`${cat}-${product._id}-${idx}`} product={product} onAdd={() => addToCart(product)} />
-                          ))}
+              <ScrollArea className="flex-1 px-4 sm:px-8 pb-8">
+                <div className="pt-8">
+                  {selectedCategory === 'Tất cả' && !searchQuery ? (
+                    categories.filter(c => c !== 'Tất cả').map((cat) => {
+                      const catProducts = products.filter(p => p.category === cat);
+                      if (catProducts.length === 0) return null;
+                      return (
+                        <div key={`cat-group-${cat}`} className="mb-10">
+                          <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-[0.4em] mb-6 flex items-center gap-4">
+                            {cat}
+                            <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800/50" />
+                          </h3>
+                          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
+                            {catProducts.map((product, idx) => (
+                              <ProductCard key={`${cat}-${product._id}-${idx}`} product={product} onAdd={() => addToCart(product)} />
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4">
-                    {filteredProducts.map((product, idx) => (
-                      <ProductCard key={`filtered-${product._id}-${idx}`} product={product} onAdd={() => addToCart(product)} />
-                    ))}
-                  </div>
-                )}
-              </div>
+                      );
+                    })
+                  ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
+                      {filteredProducts.map((product, idx) => (
+                        <ProductCard key={`filtered-${product._id}-${idx}`} product={product} onAdd={() => addToCart(product)} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
             </motion.div>
           )}
         </AnimatePresence>
@@ -1181,7 +1378,7 @@ const POSPage = () => {
             initial={{ x: 400 }}
             animate={{ x: 0 }}
             exit={{ x: 400 }}
-            className="hidden lg:flex w-[380px] bg-white border-l border-slate-200 flex-col shadow-2xl z-20"
+            className="hidden lg:flex w-[400px] bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 flex-col shadow-2xl dark:shadow-none z-20"
           >
             <CartContent />
           </motion.aside>
@@ -1197,16 +1394,16 @@ const POSPage = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowMobileCart(false)}
-              className="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] z-[60] lg:hidden"
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] z-[60] lg:hidden"
             />
             <motion.aside 
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed bottom-0 left-0 right-0 h-[90vh] bg-white rounded-t-[40px] shadow-[0_-20px_50px_rgba(0,0,0,0.15)] z-[70] lg:hidden flex flex-col overflow-hidden"
+              className="fixed bottom-0 left-0 right-0 h-[85vh] bg-white dark:bg-slate-900 rounded-t-[40px] shadow-[0_-20px_60px_rgba(0,0,0,0.2)] z-[70] lg:hidden flex flex-col overflow-hidden"
             >
-              <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto my-4 shrink-0" />
+              <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full mx-auto my-4 shrink-0" />
               <div className="flex-1 overflow-hidden">
                 <CartContent onBack={() => setShowMobileCart(false)} />
               </div>
@@ -1215,409 +1412,341 @@ const POSPage = () => {
         )}
       </AnimatePresence>
 
-      {/* Payment Modal */}
-      <AnimatePresence>
-        {showPaymentModal && (
-          <div key="payment-modal-container" className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div
-              key="payment-modal-overlay"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => !ordering && setShowPaymentModal(false)}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
-            />
-            <motion.div
-              key="payment-modal-content"
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-lg bg-white rounded-[40px] shadow-2xl overflow-hidden"
-            >
-               {paymentStep === 'SELECT' ? (
-                 <div className="p-8">
-                    <div className="flex justify-between items-center mb-8">
-                       <h3 className="text-2xl font-black text-slate-900 tracking-tighter uppercase italic">Thanh toán</h3>
-                       <button onClick={() => setShowPaymentModal(false)} className="p-2 hover:bg-slate-50 rounded-full transition-colors text-slate-400">
-                          <X size={24} />
-                       </button>
-                    </div>
-
-                    <div className="space-y-4 mb-8">
-                       <button 
-                        onClick={() => handleConfirmPayment('CASH')}
-                        className="w-full p-6 bg-slate-50 border border-slate-100 rounded-3xl flex items-center justify-between group hover:border-emerald-500 hover:bg-emerald-50 transition-all text-left"
-                       >
-                          <div className="flex items-center gap-4">
-                             <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm text-slate-400 group-hover:text-emerald-600 transition-colors">
-                                <Banknote size={24} />
-                             </div>
-                             <div>
-                                <p className="text-sm font-black text-slate-900 uppercase">Tiền mặt</p>
-                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Thanh toán trực tiếp</p>
-                             </div>
-                          </div>
-                          <ChevronRight size={20} className="text-slate-300 group-hover:translate-x-1 transition-transform" />
-                       </button>
-
-                       <button 
-                        onClick={() => handleConfirmPayment('TRANSFER')}
-                        className="w-full p-6 bg-slate-50 border border-slate-100 rounded-3xl flex items-center justify-between group hover:border-emerald-500 hover:bg-emerald-50 transition-all text-left"
-                       >
-                          <div className="flex items-center gap-4">
-                             <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm text-slate-400 group-hover:text-emerald-600 transition-colors">
-                                <CreditCard size={24} />
-                             </div>
-                             <div>
-                                <p className="text-sm font-black text-slate-900 uppercase">Chuyển khoản</p>
-                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Quét mã VietQR động</p>
-                             </div>
-                          </div>
-                          <ChevronRight size={20} className="text-slate-300 group-hover:translate-x-1 transition-transform" />
-                       </button>
-                    </div>
-
-                    <div className="p-6 bg-emerald-50 rounded-3xl border border-emerald-100 flex justify-between items-center">
-                       <span className="text-[10px] font-black text-emerald-800 uppercase tracking-widest">Tổng tiền cần thu</span>
-                       <span className="text-2xl font-black text-emerald-600 font-mono tracking-tighter">
-                          {total.toLocaleString('vi-VN')}đ
-                       </span>
-                    </div>
-                 </div>
-               ) : (
-                 <div className="p-8 flex flex-col items-center text-center">
-                    <div className="w-full flex justify-between items-center mb-8">
-                       <button onClick={() => setPaymentStep('SELECT')} className="p-2 hover:bg-slate-50 rounded-full transition-colors text-slate-400">
-                          <Plus size={24} className="rotate-45" />
-                       </button>
-                       <h3 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic">Quét mã VietQR</h3>
-                       <button onClick={() => setShowPaymentModal(false)} className="p-2 hover:bg-slate-50 rounded-full transition-colors text-slate-400">
-                          <X size={24} />
-                       </button>
-                    </div>
-
-                    <div className="bg-slate-50 p-6 rounded-[32px] border border-slate-100 shadow-inner mb-8">
-                       {settings && (
-                          <img 
-                            src={`https://img.vietqr.io/image/${settings.bankCode || 'ICB'}-${settings.bankAccount || '0000'}-compact2.png?amount=${total}&addInfo=${encodeURIComponent(`TT ${orderCode} ${selectedTable?.name || ''}`)}&accountName=${encodeURIComponent(settings.bankAccountHolder || '')}`}
-                            alt="VietQR"
-                            className="w-64 h-auto rounded-xl shadow-xl mx-auto"
-                          />
-                       )}
-                    </div>
-
-                    <div className="w-full space-y-2 mb-8 text-left">
-                       <div className="flex justify-between items-center p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
-                          <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest italic">Mã đơn hàng</span>
-                          <span className="text-sm font-black text-emerald-700 tracking-widest">{orderCode}</span>
-                       </div>
-                       <div className="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Người thụ hưởng</span>
-                          <span className="text-xs font-black text-slate-900 uppercase">{settings?.bankAccountHolder}</span>
-                       </div>
-                       <div className="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Số tài khoản</span>
-                          <span className="text-xs font-black text-slate-900 font-mono">{settings?.bankAccount}</span>
-                       </div>
-                    </div>
-
-                    <button 
-                      onClick={() => processOrder('TRANSFER')}
-                      disabled={ordering}
-                      className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black text-lg uppercase tracking-widest shadow-xl shadow-emerald-100 hover:bg-emerald-700 transition-all flex items-center justify-center gap-3"
-                    >
-                       {ordering ? (
-                          <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                       ) : (
-                          <>
-                             <CheckCircle2 size={24} />
-                             <span>Đã nhận tiền</span>
-                          </>
-                       )}
-                    </button>
-                    <p className="mt-4 text-[10px] text-slate-400 font-bold uppercase tracking-widest">Kiểm tra tài khoản trước khi nhấn xác nhận</p>
-                 </div>
-               )}
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Shift Closing Warning Modal */}
-      <AnimatePresence>
-        {showShiftWarning && (
-          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-slate-950/90 backdrop-blur-md"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              className="relative w-full max-w-sm bg-white rounded-[48px] p-12 text-center shadow-2xl"
-            >
-               <div className="w-20 h-20 bg-amber-100 rounded-3xl flex items-center justify-center mx-auto mb-8">
-                  <CircleDollarSign className="text-amber-600 w-10 h-10" />
-               </div>
-               <h3 className="text-2xl font-black text-slate-900 mb-4 tracking-tighter uppercase italic">Cảnh báo bàn đang phục vụ</h3>
-               <p className="text-slate-500 font-medium mb-10 leading-relaxed text-sm">
-                  Hiện vẫn còn <span className="text-rose-600 font-black">{getActiveTables().length} bàn</span> đang có khách hoặc chưa thanh toán. Nhân viên ca sau sẽ tiếp quản các bàn này. Bạn vẫn muốn chốt ca?
-               </p>
-               <div className="space-y-4">
-                  <button 
-                    onClick={async () => {
-                      setShowShiftWarning(false);
-                      await fetchShiftSummary();
-                      setShowCloseShiftModal(true);
-                    }}
-                    className="w-full h-16 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-600 transition-all active:scale-95"
-                  >
-                    Tiếp tục chốt ca
-                  </button>
-                  <button 
-                    onClick={() => setShowShiftWarning(false)}
-                    className="w-full h-16 bg-slate-50 text-slate-400 rounded-2xl font-black uppercase tracking-widest hover:text-slate-900 transition-all"
-                  >
-                    Quay lại kiểm tra
-                  </button>
-               </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Note Selection Modal */}
-      <AnimatePresence>
-        {showNoteModal && (
-          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowNoteModal(false)}
-              className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-md bg-white rounded-[40px] shadow-2xl overflow-hidden p-8"
-            >
-              <div className="flex justify-between items-center mb-8">
+      {/* Payment Dialog */}
+      <Dialog open={showPaymentModal} onOpenChange={(open) => !ordering && setShowPaymentModal(open)}>
+        <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden border-none rounded-[40px] shadow-2xl">
+          {paymentStep === 'SELECT' ? (
+            <div className="p-8 dark:bg-slate-900">
+              <DialogHeader className="mb-8">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
-                    <StickyNote size={20} />
-                  </div>
-                  <h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter italic">Ghi chú món</h3>
-                </div>
-                <button onClick={() => setShowNoteModal(false)} className="text-slate-300 hover:text-slate-900">
-                  <X size={24} />
-                </button>
-              </div>
-
-              <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-3">
-                  {PRESET_NOTES.map((note) => (
-                    <button
-                      key={note}
-                      onClick={() => setTempNote((prev) => (prev.includes(note) ? prev.replace(note, '').trim() : (prev + ' ' + note).trim()))}
-                      className={cn(
-                        "p-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border",
-                        tempNote.includes(note)
-                          ? "bg-emerald-600 text-white border-emerald-600"
-                          : "bg-slate-50 text-slate-500 border-slate-100 hover:border-emerald-200"
-                      )}
-                    >
-                      {note}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Ghi chú khác</label>
-                  <textarea
-                    value={tempNote}
-                    onChange={(e) => setTempNote(e.target.value)}
-                    placeholder="Nhập yêu cầu đặc biệt..."
-                    className="w-full p-4 bg-slate-50 border border-slate-100 rounded-3xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[100px]"
-                  />
-                </div>
-
-                <button
-                  onClick={saveNote}
-                  className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black text-lg uppercase tracking-widest shadow-xl shadow-emerald-100 hover:bg-emerald-700 transition-all"
-                >
-                  Xác nhận
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Custom Item Modal */}
-      <AnimatePresence>
-        {showCustomItemModal && (
-          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowCustomItemModal(false)}
-              className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-md bg-white rounded-[40px] shadow-2xl overflow-hidden p-8"
-            >
-              <div className="flex justify-between items-center mb-8">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
-                    <Plus size={20} />
-                  </div>
-                  <h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter italic">Món ngoài menu</h3>
-                </div>
-                <button onClick={() => setShowCustomItemModal(false)} className="text-slate-300 hover:text-slate-900">
-                  <X size={24} />
-                </button>
-              </div>
-
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Tên món</label>
-                  <input
-                    type="text"
-                    value={customItem.name}
-                    onChange={(e) => setCustomItem({ ...customItem, name: e.target.value })}
-                    placeholder="Ví dụ: Nước sâm đặc biệt"
-                    className="w-full h-14 px-6 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Giá tiền (VNĐ)</label>
-                  <input
-                    type="number"
-                    value={customItem.price}
-                    onChange={(e) => setCustomItem({ ...customItem, price: e.target.value })}
-                    placeholder="25000"
-                    className="w-full h-14 px-6 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                </div>
-
-                <button
-                  onClick={addCustomItem}
-                  disabled={!customItem.name || !customItem.price}
-                  className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black text-lg uppercase tracking-widest shadow-xl shadow-emerald-100 hover:bg-emerald-700 transition-all disabled:opacity-50 disabled:bg-slate-300"
-                >
-                  Thêm vào giỏ
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Close Shift Modal */}
-      <AnimatePresence>
-        {showCloseShiftModal && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => !closing && setShowCloseShiftModal(false)}
-              className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-md bg-white rounded-[40px] p-10 shadow-2xl"
-            >
-               <div className="flex items-center gap-4 mb-8">
-                  <div className="w-12 h-12 bg-rose-100 rounded-2xl flex items-center justify-center">
-                     <CircleDollarSign className="text-rose-600 w-6 h-6" />
+                   <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 rounded-xl flex items-center justify-center">
+                      <Banknote size={20} />
                    </div>
                    <div>
-                      <h3 className="text-xl font-black text-slate-900 leading-none">Chốt ca bán hàng</h3>
-                      <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-1">Tổng kết doanh thu và tiền mặt</p>
+                     <DialogTitle className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">Thanh toán</DialogTitle>
+                     <DialogDescription className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Chọn phương thức để kết thúc</DialogDescription>
                    </div>
                 </div>
+              </DialogHeader>
 
-                <div className="space-y-6">
-                  <div className="bg-slate-50 p-6 rounded-3xl space-y-4">
-                    {shiftSummary && (
-                      <div className="space-y-2 mb-4">
-                        <div className="flex justify-between items-center text-[10px]">
-                          <span className="text-slate-400 font-bold uppercase tracking-widest">Tiền đầu ca</span>
-                          <span className="font-bold text-slate-700">{shiftSummary.openingBalance.toLocaleString('vi-VN')}đ</span>
-                        </div>
-                        <div className="flex justify-between items-center text-[10px]">
-                          <span className="text-slate-400 font-bold uppercase tracking-widest">Doanh thu Tiền mặt</span>
-                          <span className="font-bold text-emerald-600">+{shiftSummary.cashSales.toLocaleString('vi-VN')}đ</span>
-                        </div>
-                        <div className="flex justify-between items-center text-[10px]">
-                          <span className="text-slate-400 font-bold uppercase tracking-widest">Doanh thu Chuyển khoản</span>
-                          <span className="font-bold text-blue-600">+{shiftSummary.transferSales.toLocaleString('vi-VN')}đ</span>
-                        </div>
-                        <div className="h-px bg-slate-100" />
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-slate-900 font-black uppercase tracking-tight">Tiền mặt hệ thống</span>
-                          <span className="font-black text-slate-900">{shiftSummary.expectedBalance.toLocaleString('vi-VN')}đ</span>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="space-y-2">
-                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Tiền mặt thực thực tế</label>
-                       <div className="relative">
-                          <input 
-                            type="number"
-                            value={closingBalance}
-                            onChange={(e) => setClosingBalance(Number(e.target.value))}
-                            className="w-full h-16 bg-white rounded-2xl border-none text-2xl font-black text-slate-900 text-center focus:ring-4 focus:ring-rose-500/20 shadow-inner"
-                            placeholder="0"
-                          />
-                          <span className="absolute top-1/2 -translate-y-1/2 left-4 text-slate-300 font-black">đ</span>
-                       </div>
+              <div className="space-y-4 mb-8">
+                <Button 
+                  variant="outline"
+                  onClick={() => handleConfirmPayment('CASH')}
+                  className="w-full h-24 p-6 border-slate-200 dark:border-slate-800 rounded-[32px] flex items-center justify-between group hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/5 transition-all text-left bg-white dark:bg-slate-900 shadow-sm"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-400 group-hover:text-emerald-600 transition-colors">
+                      <Banknote size={24} />
                     </div>
+                    <div>
+                      <p className="text-sm font-black text-slate-900 dark:text-white uppercase">Tiền mặt</p>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Thanh toán trực tiếp</p>
+                    </div>
+                  </div>
+                  <ChevronRight size={20} className="text-slate-300 group-hover:translate-x-1 transition-transform" />
+                </Button>
 
-                    {shiftSummary && closingBalance !== shiftSummary.expectedBalance && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="space-y-3"
-                      >
-                        <div className="flex justify-between items-center p-3 bg-rose-50 rounded-xl border border-rose-100 italic">
-                          <span className="text-[10px] font-bold text-rose-600 uppercase tracking-widest">Chênh lệch:</span>
-                          <span className="text-sm font-black text-rose-600 font-mono">
-                            {(closingBalance - shiftSummary.expectedBalance).toLocaleString('vi-VN')}đ
-                          </span>
-                        </div>
-                        
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-black text-rose-600 uppercase tracking-widest px-1">Ghi chú giải trình (Bắt buộc)</label>
-                          <textarea 
-                            value={shiftNotes}
-                            onChange={(e) => setShiftNotes(e.target.value)}
-                            placeholder="Nhập lý do chênh lệch tiền mặt..."
-                            className="w-full p-4 bg-white rounded-2xl border border-rose-100 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-rose-500 text-slate-900 min-h-[80px]"
-                          />
-                        </div>
-                      </motion.div>
-                    )}
+                <Button 
+                  variant="outline"
+                  onClick={() => handleConfirmPayment('TRANSFER')}
+                  className="w-full h-24 p-6 border-slate-200 dark:border-slate-800 rounded-[32px] flex items-center justify-between group hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/5 transition-all text-left bg-white dark:bg-slate-900 shadow-sm"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-400 group-hover:text-emerald-600 transition-colors">
+                      <CreditCard size={24} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-black text-slate-900 dark:text-white uppercase">Chuyển khoản</p>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">VietQR Dynamic code</p>
+                    </div>
+                  </div>
+                  <ChevronRight size={20} className="text-slate-300 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </div>
+
+              <div className="p-6 bg-emerald-600 rounded-[32px] shadow-lg shadow-emerald-500/20 flex justify-between items-center text-white">
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-widest opacity-80">Tổng tiền thu</span>
+                  <div className="text-3xl font-black font-mono tracking-tighter mt-1">
+                    {total.toLocaleString('vi-VN')}đ
+                  </div>
+                </div>
+                <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
+                   <CircleDollarSign size={24} />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="p-8 flex flex-col items-center text-center dark:bg-slate-900">
+              <header className="w-full flex justify-between items-center mb-10">
+                <Button variant="ghost" size="icon" onClick={() => setPaymentStep('SELECT')} className="rounded-full">
+                  <ChevronLeft size={20} />
+                </Button>
+                <DialogTitle className="text-xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic">VietQR Payment</DialogTitle>
+                <div className="w-10" />
+              </header>
+
+              <div className="bg-white dark:bg-slate-800 p-6 rounded-[40px] border border-slate-100 dark:border-slate-700 shadow-inner mb-8">
+                {settings && (
+                  <img 
+                    src={`https://img.vietqr.io/image/${settings.bankCode || 'ICB'}-${settings.bankAccount || '0000'}-compact2.png?amount=${total}&addInfo=${encodeURIComponent(`TT ${orderCode} ${selectedTable?.name || ''}`)}&accountName=${encodeURIComponent(settings.bankAccountHolder || '')}`}
+                    alt="VietQR"
+                    className="w-64 h-auto rounded-3xl shadow-2xl mx-auto border-4 border-white dark:border-slate-900"
+                  />
+                )}
+              </div>
+
+              <div className="w-full space-y-2 mb-8 text-left">
+                <div className="flex justify-between items-center p-4 bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl border border-emerald-100 dark:border-emerald-500/20">
+                  <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest italic">Order Key</span>
+                  <span className="text-sm font-black text-emerald-700 dark:text-emerald-300 tracking-widest">{orderCode}</span>
+                </div>
+                <div className="grid grid-cols-1 gap-2">
+                   <div className="flex justify-between items-center px-4 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Account</span>
+                      <span className="text-[11px] font-black text-slate-900 dark:text-slate-100 uppercase">{settings?.bankAccountHolder}</span>
+                   </div>
+                   <div className="flex justify-between items-center px-4 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Number</span>
+                      <span className="text-xs font-black text-slate-900 dark:text-slate-100 font-mono italic">{settings?.bankAccount}</span>
+                   </div>
+                </div>
+              </div>
+
+              <Button 
+                onClick={() => processOrder('TRANSFER')}
+                disabled={ordering}
+                className="w-full h-16 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-lg uppercase tracking-widest shadow-xl shadow-emerald-500/20 gap-3"
+              >
+                {ordering ? (
+                  <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <CheckCircle2 size={24} />
+                    <span>Xác nhận đã nhận</span>
+                  </>
+                )}
+              </Button>
+              <p className="mt-4 text-[9px] text-slate-400 font-bold uppercase tracking-[0.2em] italic">Vui lòng kiểm tra biến động số dư trước</p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Shift Closing Warning Dialog */}
+      <Dialog open={showShiftWarning} onOpenChange={setShowShiftWarning}>
+        <DialogContent className="sm:max-w-[400px] p-8 dark:bg-slate-900 rounded-[40px] border-none shadow-2xl">
+          <div className="flex flex-col items-center text-center">
+            <div className="w-20 h-20 bg-amber-100 dark:bg-amber-500/10 rounded-3xl flex items-center justify-center mb-8">
+              <CircleDollarSign className="text-amber-600 w-10 h-10" />
+            </div>
+            <DialogTitle className="text-2xl font-black text-slate-900 dark:text-white mb-4 tracking-tighter uppercase italic">Cảnh báo bàn đang phục vụ</DialogTitle>
+            <DialogDescription className="text-slate-500 dark:text-slate-400 font-medium mb-10 leading-relaxed text-sm">
+              Hiện vẫn còn <span className="text-rose-600 font-black">{getActiveTables().length} bàn</span> đang có khách hoặc chưa thanh toán. Nhân viên ca sau sẽ tiếp quản các bàn này. Bạn vẫn muốn chốt ca?
+            </DialogDescription>
+            <div className="w-full space-y-4">
+              <Button 
+                onClick={async () => {
+                  setShowShiftWarning(false);
+                  await fetchShiftSummary();
+                  setShowCloseShiftModal(true);
+                }}
+                className="w-full h-14 bg-slate-900 dark:bg-slate-100 dark:text-slate-900 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-600 dark:hover:bg-emerald-400 transition-all shadow-lg"
+              >
+                Tiếp tục chốt ca
+              </Button>
+              <Button 
+                variant="ghost"
+                onClick={() => setShowShiftWarning(false)}
+                className="w-full h-14 text-slate-400 dark:text-slate-600 font-black uppercase tracking-widest hover:text-slate-900 dark:hover:text-white"
+              >
+                Quay lại kiểm tra
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Note Selection Dialog */}
+      <Dialog open={showNoteModal} onOpenChange={setShowNoteModal}>
+        <DialogContent className="sm:max-w-[440px] p-8 dark:bg-slate-900 rounded-[40px] border-none shadow-2xl">
+          <DialogHeader className="mb-8">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 rounded-xl flex items-center justify-center">
+                <StickyNote size={20} />
+              </div>
+              <DialogTitle className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">Ghi chú món</DialogTitle>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-3">
+              {PRESET_NOTES.map((note) => (
+                <button
+                  key={note}
+                  onClick={() => setTempNote((prev) => (prev.includes(note) ? prev.replace(note, '').trim() : (prev + ' ' + note).trim()))}
+                  className={cn(
+                    "p-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border",
+                    tempNote.includes(note)
+                      ? "bg-emerald-600 text-white border-emerald-600"
+                      : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-emerald-300 dark:hover:border-emerald-700"
+                  )}
+                >
+                  {note}
+                </button>
+              ))}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2">Ghi chú khác</label>
+              <textarea
+                value={tempNote}
+                onChange={(e) => setTempNote(e.target.value)}
+                placeholder="Nhập yêu cầu đặc biệt..."
+                className="w-full p-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[100px] shadow-inner"
+              />
+            </div>
+
+            <Button
+              onClick={saveNote}
+              className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-lg uppercase tracking-widest shadow-xl shadow-emerald-500/20"
+            >
+              Lưu ghi chú
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Custom Item Dialog */}
+      <Dialog open={showCustomItemModal} onOpenChange={setShowCustomItemModal}>
+        <DialogContent className="sm:max-w-[440px] p-8 dark:bg-slate-900 rounded-[40px] border-none shadow-2xl">
+          <DialogHeader className="mb-8">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 rounded-xl flex items-center justify-center">
+                <Plus size={20} />
+              </div>
+              <DialogTitle className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter italic">Món ngoài menu</DialogTitle>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2">Tên món</label>
+              <Input
+                type="text"
+                value={customItem.name}
+                onChange={(e) => setCustomItem({ ...customItem, name: e.target.value })}
+                placeholder="Ví dụ: Nước sâm đặc biệt"
+                className="h-14 px-6 bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold text-slate-900 dark:text-white focus-visible:ring-emerald-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2">Giá tiền (VNĐ)</label>
+              <Input
+                type="number"
+                value={customItem.price}
+                onChange={(e) => setCustomItem({ ...customItem, price: e.target.value })}
+                placeholder="25000"
+                className="h-14 px-6 bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 rounded-2xl text-sm font-bold text-slate-900 dark:text-white focus-visible:ring-emerald-500"
+              />
+            </div>
+
+            <Button
+              onClick={addCustomItem}
+              disabled={!customItem.name || !customItem.price}
+              className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-lg uppercase tracking-widest shadow-xl shadow-emerald-200/20 disabled:scale-100"
+            >
+              Thêm vào giỏ
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Close Shift Dialog */}
+      <Dialog open={showCloseShiftModal} onOpenChange={(open) => !closing && setShowCloseShiftModal(open)}>
+        <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden border-none rounded-[48px] shadow-2xl">
+          <div className="p-10 dark:bg-slate-900">
+             <div className="flex items-center gap-4 mb-8">
+                <div className="w-12 h-12 bg-rose-100 dark:bg-rose-500/10 rounded-2xl flex items-center justify-center">
+                   <LogOut className="text-rose-600 w-6 h-6" />
+                 </div>
+                 <div>
+                    <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight uppercase italic">Chốt ca bán hàng</h3>
+                    <p className="text-slate-400 dark:text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1">Tổng kết doanh thu và tiền mặt</p>
+                 </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="bg-slate-50 dark:bg-slate-950 p-6 rounded-[32px] space-y-4 border border-slate-100 dark:border-slate-800 shadow-inner">
+                  {shiftSummary && (
+                    <div className="space-y-3 mb-6">
+                      <div className="flex justify-between items-center text-[10px]">
+                        <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">Tiền đầu ca</span>
+                        <span className="font-black text-slate-700 dark:text-slate-300 font-mono">{shiftSummary.openingBalance.toLocaleString('vi-VN')}đ</span>
+                      </div>
+                      <div className="flex justify-between items-center text-[10px]">
+                        <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">Doanh thu Tiền mặt</span>
+                        <span className="font-black text-emerald-600 dark:text-emerald-400 font-mono">+{shiftSummary.cashSales.toLocaleString('vi-VN')}đ</span>
+                      </div>
+                      <div className="flex justify-between items-center text-[10px]">
+                        <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">Doanh thu CK</span>
+                        <span className="font-black text-blue-600 dark:text-blue-400 font-mono">+{shiftSummary.transferSales.toLocaleString('vi-VN')}đ</span>
+                      </div>
+                      <div className="h-px bg-slate-200 dark:bg-slate-800" />
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-tight">Hệ thống tính</span>
+                        <span className="text-lg font-black text-slate-900 dark:text-white font-mono">{shiftSummary.expectedBalance.toLocaleString('vi-VN')}đ</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                     <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2">Tiền mặt thực tế (Quầy)</label>
+                     <div className="relative">
+                        <Input 
+                          type="number"
+                          value={closingBalance}
+                          onChange={(e) => setClosingBalance(Number(e.target.value))}
+                          className="h-16 bg-white dark:bg-slate-900 rounded-2xl border-slate-200 dark:border-slate-800 text-2xl font-black text-slate-900 dark:text-white text-center focus-visible:ring-rose-500 shadow-sm"
+                          placeholder="0"
+                        />
+                        <span className="absolute top-1/2 -translate-y-1/2 left-6 text-slate-300 dark:text-slate-700 font-black">đ</span>
+                     </div>
                   </div>
 
-                  <button 
+                  {shiftSummary && closingBalance !== shiftSummary.expectedBalance && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="space-y-4 pt-2"
+                    >
+                      <div className="flex justify-between items-center p-4 bg-rose-50 dark:bg-rose-500/5 rounded-2xl border border-rose-100 dark:border-rose-500/20 italic">
+                        <span className="text-[10px] font-black text-rose-600 dark:text-rose-400 uppercase tracking-widest">Chênh lệch:</span>
+                        <span className="text-lg font-black text-rose-600 dark:text-rose-400 font-mono">
+                          {(closingBalance - shiftSummary.expectedBalance).toLocaleString('vi-VN')}đ
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-rose-600 dark:text-rose-400 uppercase tracking-widest px-2">Giải trình (Bắt buộc)</label>
+                        <textarea 
+                          value={shiftNotes}
+                          onChange={(e) => setShiftNotes(e.target.value)}
+                          placeholder="Lý do chênh lệch..."
+                          className="w-full p-4 bg-white dark:bg-slate-900 rounded-2xl border border-rose-100 dark:border-rose-500/20 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-rose-500 text-slate-900 dark:text-white min-h-[100px] shadow-sm resize-none"
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+
+                <div className="space-y-3 mt-8">
+                  <Button 
                     onClick={handleCloseShift}
                     disabled={closing || (shiftSummary && closingBalance !== shiftSummary.expectedBalance && !shiftNotes.trim())}
-                    className="w-full h-16 bg-rose-600 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-rose-700 transition-all shadow-xl shadow-rose-100 flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed"
+                    className="w-full h-16 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl font-black text-lg uppercase tracking-widest shadow-xl shadow-rose-500/20 gap-3"
                   >
                     {closing ? (
                       <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
@@ -1627,18 +1756,19 @@ const POSPage = () => {
                         Xác nhận chốt ca
                       </>
                     )}
-                  </button>
-                  <button 
+                  </Button>
+                  <Button 
+                    variant="ghost" 
                     onClick={() => setShowCloseShiftModal(false)}
-                    className="w-full text-slate-400 font-black uppercase tracking-widest text-[10px] hover:text-slate-600 transition-colors"
+                    className="w-full h-12 text-slate-400 dark:text-slate-600 font-black uppercase tracking-widest hover:text-slate-900 dark:hover:text-white"
                   >
                     Huỷ bỏ
-                  </button>
-               </div>
-            </motion.div>
+                  </Button>
+                </div>
+              </div>
           </div>
-        )}
-      </AnimatePresence>
+        </DialogContent>
+      </Dialog>
       </div>
     </div>
   );

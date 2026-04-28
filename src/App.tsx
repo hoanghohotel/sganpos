@@ -1,7 +1,7 @@
 import { BrowserRouter as Router } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useAuthStore } from './store/authStore';
-import MainLayout from './components/layout/MainLayout';
+import AppLayout from './layouts/AppLayout';
 
 export default function App() {
   const checkAuth = useAuthStore((state) => state.checkAuth);
@@ -12,7 +12,7 @@ export default function App() {
 
   return (
     <Router>
-      <MainLayout />
+      <AppLayout />
     </Router>
   );
 }
