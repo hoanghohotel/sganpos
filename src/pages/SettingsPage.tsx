@@ -1036,7 +1036,9 @@ const SettingsPage = () => {
                               role: 'RECEIPT',
                               status: 'ONLINE',
                               vendorId: device.vendorId,
-                              productId: device.productId
+                              productId: device.productId,
+                              printWidth: '80mm',
+                              autoPrint: true
                             });
                             setSettings({ ...settings, printers: newPrinters });
                           }
@@ -1068,7 +1070,9 @@ const SettingsPage = () => {
                               name: device.name || 'Bluetooth Printer',
                               type: 'BLUETOOTH',
                               role: 'RECEIPT',
-                              status: 'ONLINE'
+                              status: 'ONLINE',
+                              printWidth: '58mm', // Bluetooth printers are often 58mm
+                              autoPrint: true
                             });
                             setSettings({ ...settings, printers: newPrinters });
                           }
@@ -1126,6 +1130,35 @@ const SettingsPage = () => {
                                     <option value="USB">USB</option>
                                     <option value="BLUETOOTH">BLUETOOTH</option>
                                     <option value="BROWSER">TRÌNH DUYỆT</option>
+                                    <option value="SUNMI">SUNMI NATIVE</option>
+                                    <option value="XPRINTER">XPRINTER V58/V80</option>
+                                  </select>
+
+                                  <select 
+                                    className="bg-transparent border-none p-0 focus:ring-0 cursor-pointer hover:text-blue-600 transition-colors"
+                                    value={pr.protocol || 'ESCPOS'}
+                                    onChange={(e) => {
+                                       const updated = [...settings.printers];
+                                       updated[idx].protocol = e.target.value;
+                                       setSettings({ ...settings, printers: updated });
+                                    }}
+                                  >
+                                    <option value="ESCPOS">ESC/POS (Standard)</option>
+                                    <option value="SUNMI">SUNMI NATIVE</option>
+                                    <option value="STAR">STAR MICRONICS</option>
+                                  </select>
+
+                                  <select 
+                                    className="bg-transparent border-none p-0 focus:ring-0 cursor-pointer hover:text-orange-600 transition-colors"
+                                    value={pr.printWidth || '80mm'}
+                                    onChange={(e) => {
+                                       const updated = [...settings.printers];
+                                       updated[idx].printWidth = e.target.value;
+                                       setSettings({ ...settings, printers: updated });
+                                    }}
+                                  >
+                                    <option value="80mm">Khổ 80mm</option>
+                                    <option value="58mm">Khổ 58mm</option>
                                   </select>
                                   {pr.type === 'LAN' && (
                                     <input 

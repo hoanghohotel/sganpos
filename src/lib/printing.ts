@@ -29,6 +29,7 @@ export interface PrintSettings {
   bankAccount?: string;
   bankAccountHolder?: string;
   defaultPrintTemplate?: string;
+  printWidth?: string;
   templateFields?: Array<{
     id: string;
     type: string;
@@ -129,16 +130,17 @@ export const generatePrintHTML = (order: PrintOrderData, settings: PrintSettings
           ` : ''}
 
           @media print {
-            body { width: 80mm; padding: 0; margin: 0; }
+            body { width: ${settings.printWidth === '58mm' ? '58mm' : '80mm'}; padding: 0; margin: 0; }
             .no-print { display: none; }
-            /* Thermal printers often need specific width */
             @page {
               margin: 0;
+              size: ${settings.printWidth === '58mm' ? '58mm' : '80mm'} auto;
             }
           }
         </style>
       </head>
       <body>
+        <div class="print-container" style="width: ${settings.printWidth === '58mm' ? '58mm' : '80mm'}; overflow: hidden;">
         ${fields.filter(f => f.enabled).map(field => {
           switch (field.id) {
             case 'logo':
