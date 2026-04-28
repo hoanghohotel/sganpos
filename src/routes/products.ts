@@ -6,10 +6,13 @@ import { authenticate } from '../middleware/auth.js';
 const router = express.Router();
 
 // GET /api/products - List all products for the current tenant
+// PERFORMANCE FIX: Added .lean() for read-only queries
 router.get('/', async (req, res) => {
   try {
     const tenantId = getTenantId();
-    const products = await Product.find({ tenantId }).sort({ name: 1 });
+    const products = await Product.find({ tenantId })
+      .sort({ name: 1 })
+      .lean();  // Use lean() for better performance on read-only queries
     res.json(products);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch products' });
