@@ -28,6 +28,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis, restrictToWindowEdges } from '@dnd-kit/modifiers';
 import { useAuthStore } from '../store/authStore';
 import { getTenantFromHostname } from '../lib/tenantUtils';
+import { printOrder } from '../lib/printing';
 
 interface PrintField {
   id: string;
@@ -154,9 +155,9 @@ const PrintPreview = ({ fields, settings }: { fields: PrintField[], settings: an
       className={cn(
         "w-[320px] min-h-[500px] bg-white shadow-2xl p-6 transition-all duration-500 mx-auto border-t-[10px] border-emerald-500 rounded-t-sm",
         isRetro && "font-mono scale-[0.98] border-dashed border-slate-300 shadow-none border-t-slate-800",
-        isModern && "rounded-3xl shadow-emerald-200/20 border-none",
+        isModern && "rounded-[40px] shadow-emerald-200/20 border-none",
         isElegant && "border-double border-4 border-slate-900 shadow-none px-8",
-        isMinimal && "border-none shadow-sm"
+        isMinimal && "border-none shadow-sm scale-[0.95]"
       )}
       style={{
         fontFamily: isRetro ? "'JetBrains Mono', monospace" : "'Inter', sans-serif"
@@ -167,29 +168,30 @@ const PrintPreview = ({ fields, settings }: { fields: PrintField[], settings: an
           switch (field.id) {
             case 'logo':
               return settings?.logoUrl ? (
-                <div key={field.id} className="flex justify-center">
-                  <img src={settings.logoUrl} alt="Logo" className="w-16 h-16 object-contain" />
+                <div key={field.id} className="flex justify-center mb-4">
+                  <img src={settings.logoUrl} alt="Logo" className="w-20 h-20 object-contain" />
                 </div>
               ) : null;
             case 'store-name':
               return (
                 <div key={field.id} className={cn(
                    "text-center font-black uppercase tracking-tight",
-                   isModern ? "text-xl text-emerald-600" : "text-lg text-slate-900",
-                   isElegant && "border-b-2 border-slate-900 pb-2 mb-2"
+                   isModern ? "text-2xl text-emerald-600" : "text-xl text-slate-900",
+                   isElegant && "border-b-2 border-slate-900 pb-2 mb-2",
+                   isMinimal && "text-base font-bold"
                 )}>
                   {settings?.storeName || 'SAIGON AN COFFEE'}
                 </div>
               );
             case 'address':
               return (
-                <div key={field.id} className="text-[10px] text-center text-slate-500 font-medium leading-tight">
+                <div key={field.id} className="text-[10px] text-center text-slate-500 font-medium leading-tight px-4">
                   {settings?.address || '123 Đường ABC, Quận 1, TP.HCM'}
                 </div>
               );
             case 'hotline':
               return (
-                <div key={field.id} className="text-[10px] text-center font-bold text-slate-700">
+                <div key={field.id} className="text-[10px] text-center font-bold text-slate-700 mt-1">
                   Hotline: {settings?.hotline || '0123.456.789'}
                 </div>
               );
@@ -197,14 +199,16 @@ const PrintPreview = ({ fields, settings }: { fields: PrintField[], settings: an
             case 'sep-2':
               return (
                 <div key={`${field.id}-${idx}`} className={cn(
-                  "border-t my-2",
-                  isRetro ? "border-dashed border-slate-300" : "border-slate-100"
+                  "border-t my-4",
+                  isRetro ? "border-dashed border-slate-400" : "border-slate-100",
+                  isElegant && "border-slate-900",
+                  isMinimal && "my-2 opacity-50"
                 )} />
               );
             case 'order-info':
               return (
-                <div key={field.id} className="space-y-1 text-[10px] text-slate-600">
-                   <div className="text-center font-black text-slate-900 mb-2 uppercase tracking-widest italic border-b border-slate-50 pb-1">Hóa đơn thanh toán</div>
+                <div key={field.id} className="space-y-1.5 text-[10px] text-slate-600 my-4">
+                   <div className="text-center font-black text-slate-900 mb-3 uppercase tracking-widest italic border-b border-slate-50 pb-2">Hóa đơn thanh toán</div>
                    <div className="flex justify-between"><span>Mã Đơn:</span><span className="font-bold text-slate-900">#ORD678</span></div>
                    <div className="flex justify-between"><span>Bàn:</span><span className="font-bold text-slate-900">Bàn 08</span></div>
                    <div className="flex justify-between"><span>Ngày:</span><span>{new Date().toLocaleString('vi-VN')}</span></div>
@@ -213,14 +217,19 @@ const PrintPreview = ({ fields, settings }: { fields: PrintField[], settings: an
               );
             case 'items-list':
               return (
-                <div key={field.id} className="space-y-2 py-2">
+                <div key={field.id} className="space-y-3 py-2">
+                  <div className="flex justify-between text-[10px] font-black uppercase text-slate-400 border-b border-slate-50 pb-1">
+                    <span>Món</span>
+                    <span>SL</span>
+                    <span>T.Tiền</span>
+                  </div>
                   {[1, 2].map((_, i) => (
                     <div key={i} className="flex justify-between text-[11px] items-start gap-4">
                       <div className="flex-1">
                         <div className="font-bold text-slate-900">{i === 0 ? 'Cà phê muối' : 'Trà đào cam sả'}</div>
                         {i === 0 && <div className="text-[9px] text-slate-400 italic font-medium">Ghi chú: Nhiều đá</div>}
                       </div>
-                      <div className="text-slate-500 italic">x{i + 1}</div>
+                      <div className="text-slate-500 italic font-bold">x{i + 1}</div>
                       <div className="font-bold text-slate-900">{(45000 * (i + 1)).toLocaleString()}</div>
                     </div>
                   ))}
@@ -228,16 +237,19 @@ const PrintPreview = ({ fields, settings }: { fields: PrintField[], settings: an
               );
             case 'totals':
               return (
-                <div key={field.id} className="space-y-1 pt-2 border-t border-slate-900 mt-4">
+                <div key={field.id} className="space-y-1.5 pt-4 border-t border-slate-900 mt-6">
                   <div className="flex justify-between text-[10px] text-slate-500">
                     <span>Tạm tính</span>
-                    <span>135.000</span>
+                    <span className="font-bold">135.000</span>
                   </div>
                   <div className="flex justify-between text-[10px] text-slate-500">
                     <span>Giảm giá</span>
-                    <span>-15.000</span>
+                    <span className="font-bold text-red-500">-15.000</span>
                   </div>
-                  <div className="flex justify-between text-base font-black text-slate-900 pt-2 border-t border-slate-100 mt-2">
+                  <div className={cn(
+                    "flex justify-between text-lg font-black text-slate-900 pt-3 border-t border-slate-100 mt-3",
+                    isModern && "bg-emerald-50 p-3 rounded-2xl -mx-3"
+                  )}>
                     <span>TỔNG CỘNG</span>
                     <span className={isModern ? "text-emerald-600" : ""}>120.000đ</span>
                   </div>
@@ -943,34 +955,19 @@ const SettingsPage = () => {
                     <button
                       type="button"
                       onClick={() => {
-                        const content = document.getElementById('print-preview-content')?.innerHTML;
-                        const printWindow = window.open('', '_blank');
-                        if (printWindow && content) {
-                          printWindow.document.write(`
-                            <html>
-                              <head>
-                                <title>In thử mẫu hóa đơn</title>
-                                <style>
-                                  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono&display=swap');
-                                  body { font-family: 'Inter', sans-serif; margin: 0; padding: 20px; display: flex; justify-content: center; background: #f8fafc; }
-                                  .print-wrapper { background: white; padding: 20px; width: 80mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-                                  ${settings.defaultPrintTemplate === 'retro' ? ".print-wrapper { font-family: 'JetBrains Mono', monospace; }" : ""}
-                                  .print-wrapper * { max-width: 100%; box-sizing: border-box; }
-                                  @media print {
-                                    body { background: white; padding: 0; }
-                                    .print-wrapper { box-shadow: none; width: 100%; border: none; padding: 0; }
-                                  }
-                                </style>
-                              </head>
-                              <body onload="window.print(); window.close();">
-                                <div class="print-wrapper">
-                                  ${content}
-                                </div>
-                              </body>
-                            </html>
-                          `);
-                          printWindow.document.close();
-                        }
+                        const testOrderData = {
+                          orderCode: 'TEST678',
+                          tableName: 'Bàn 08',
+                          items: [
+                            { productId: 'test-1', name: 'Cà phê muối', price: 45000, quantity: 1 },
+                            { productId: 'test-2', name: 'Trà đào cam sả', price: 45000, quantity: 2 }
+                          ],
+                          subtotal: 135000,
+                          discountAmount: 15000,
+                          total: 120000,
+                          createdAt: new Date().toISOString()
+                        };
+                        printOrder(testOrderData, { ...settings, templateFields });
                       }}
                       className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20"
                     >

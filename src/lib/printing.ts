@@ -104,23 +104,37 @@ export const generatePrintHTML = (order: PrintOrderData, settings: PrintSettings
           .item-row { display: flex; justify-content: space-between; margin: 4px 0; }
           
           ${isModern ? `
-            body { padding: 30px; border-radius: 20px; }
-            .item-row { border-bottom: 1px solid #f1f5f9; padding-bottom: 4px; }
+            body { padding: 30px; border-radius: 20px; font-family: 'Inter', sans-serif; }
+            .item-row { border-bottom: 1px solid #f1f5f9; padding: 6px 0; }
+            .store-name { color: #059669; }
+            .total-row { color: #059669; }
           ` : ''}
           
           ${isRetro ? `
             body { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
             .border-t { border-top: 1px dashed #000; }
+            .uppercase { letter-spacing: 2px; }
           ` : ''}
           
           ${isElegant ? `
-            body { border: 4px double #000; padding: 25px; }
+            body { border: 4px double #000; padding: 25px; font-family: 'Inter', sans-serif; }
+            .store-name { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
             .uppercase { letter-spacing: 1px; }
           ` : ''}
 
+          ${isMinimal ? `
+            body { font-family: 'Inter', sans-serif; font-size: 11px; }
+            .font-black { font-weight: 700; }
+            .border-t { border-top: 1px solid #eee; }
+          ` : ''}
+
           @media print {
-            body { width: 100%; padding: 0; margin: 0; }
+            body { width: 80mm; padding: 0; margin: 0; }
             .no-print { display: none; }
+            /* Thermal printers often need specific width */
+            @page {
+              margin: 0;
+            }
           }
         </style>
       </head>
@@ -128,46 +142,51 @@ export const generatePrintHTML = (order: PrintOrderData, settings: PrintSettings
         ${fields.filter(f => f.enabled).map(field => {
           switch (field.id) {
             case 'logo':
-              return settings.logoUrl ? `<div class="text-center"><img src="${settings.logoUrl}" style="width: 60px; height: 60px; object-fit: contain; margin-bottom: 10px;" /></div>` : '';
+              return settings.logoUrl ? `<div class="text-center"><img src="${settings.logoUrl}" style="width: 80px; height: 80px; object-fit: contain; margin-bottom: 15px;" /></div>` : '';
             case 'store-name':
-              return `<div class="text-center font-black uppercase ${isModern ? 'text-xl' : 'text-lg'}">${settings.storeName || 'SAIGON AN COFFEE'}</div>`;
+              return `<div class="text-center font-black uppercase store-name ${isModern ? 'text-xl' : 'text-lg'}">${settings.storeName || 'SAIGON AN COFFEE'}</div>`;
             case 'address':
-              return `<div class="text-center text-xs" style="margin-top: 2px;">${settings.address || ''}</div>`;
+              return `<div class="text-center text-xs" style="margin-top: 4px; color: #444;">${settings.address || ''}</div>`;
             case 'hotline':
-              return `<div class="text-center text-xs font-bold">Hotline: ${settings.hotline || ''}</div>`;
+              return `<div class="text-center text-xs font-bold" style="margin-top: 2px;">Hotline: ${settings.hotline || ''}</div>`;
             case 'sep-1':
             case 'sep-2':
-              return `<div class="border-t my-2 ${isRetro ? 'style="border-top-style: dashed;"' : ''}"></div>`;
+              return `<div class="border-t my-4 ${isRetro ? 'style="border-top-style: dashed;"' : ''}"></div>`;
             case 'order-info':
               return `
-                <div class="order-info text-xs" style="margin: 10px 0;">
-                  <div class="text-center font-black mb-2 text-sm">${isProvisional ? 'PHIẾU TẠM TÍNH' : 'HÓA ĐƠN THANH TOÁN'}</div>
-                  ${order.orderCode ? `<div class="flex justify-between"><span>Mã Đơn:</span><b>${order.orderCode}</b></div>` : ''}
-                  <div class="flex justify-between"><span>Bàn:</span><b>${order.tableName || 'Mang về'}</b></div>
-                  <div class="flex justify-between"><span>Ngày:</span><span>${dateStr}</span></div>
-                  <div class="flex justify-between"><span>Nhân viên:</span><span>${staffName}</span></div>
-                  ${order.paymentMethod ? `<div class="flex justify-between"><span>PTTT:</span><b>${order.paymentMethod === 'CASH' ? 'Tiền mặt' : 'Chuyển khoản'}</b></div>` : ''}
+                <div class="order-info text-xs" style="margin: 15px 0;">
+                  <div class="text-center font-black mb-3 text-sm italic" style="border-bottom: 1px solid #eee; padding-bottom: 5px;">${isProvisional ? 'PHIẾU TẠM TÍNH' : 'HÓA ĐƠN THANH TOÁN'}</div>
+                  ${order.orderCode ? `<div class="flex justify-between" style="margin-bottom: 2px;"><span>Mã Đơn:</span><b class="font-black">#${order.orderCode}</b></div>` : ''}
+                  <div class="flex justify-between" style="margin-bottom: 2px;"><span>Bàn:</span><b class="font-black">${order.tableName || 'Mang về'}</b></div>
+                  <div class="flex justify-between" style="margin-bottom: 2px;"><span>Ngày:</span><span>${dateStr}</span></div>
+                  <div class="flex justify-between" style="margin-bottom: 2px;"><span>Nhân viên:</span><span>${staffName}</span></div>
+                  ${order.paymentMethod ? `<div class="flex justify-between" style="margin-top: 4px; padding-top: 4px; border-top: 1px dotted #ccc;"><span>PTTT:</span><b>${order.paymentMethod === 'CASH' ? 'Tiền mặt' : 'Chuyển khoản'}</b></div>` : ''}
                 </div>
               `;
             case 'items-list':
               return `
-                <div class="items" style="margin: 10px 0;">
+                <div class="items" style="margin: 15px 0;">
+                  <div class="item-row font-bold text-xs" style="border-bottom: 1px solid #000; padding-bottom: 4px; margin-bottom: 8px;">
+                    <div style="flex: 1;">Tên món</div>
+                    <div style="width: 35px; text-align: center;">SL</div>
+                    <div style="width: 80px; text-align: right;">Thành tiền</div>
+                  </div>
                   ${order.items.map(item => `
-                    <div class="item-row">
-                      <div style="flex: 1;">${item.name}</div>
-                      <div style="width: 30px; text-align: center;">x${item.quantity}</div>
-                      <div style="width: 80px; text-align: right;">${(item.price * item.quantity).toLocaleString('vi-VN')}</div>
+                    <div class="item-row" style="margin-bottom: 6px;">
+                      <div style="flex: 1; font-weight: 700;">${item.name}</div>
+                      <div style="width: 35px; text-align: center;">${item.quantity}</div>
+                      <div style="width: 80px; text-align: right; font-weight: 700;">${(item.price * item.quantity).toLocaleString('vi-VN')}</div>
                     </div>
                   `).join('')}
                 </div>
               `;
             case 'totals':
               return `
-                <div class="totals" style="margin: 10px 0;">
-                  <div class="flex justify-between text-xs"><span>Tạm tính:</span><span>${order.subtotal.toLocaleString('vi-VN')}đ</span></div>
-                  ${(order.discountAmount || 0) > 0 ? `<div class="flex justify-between text-xs"><span>Giảm giá:</span><span>-${(order.discountAmount || 0).toLocaleString('vi-VN')}đ</span></div>` : ''}
-                  ${(order.taxAmount || 0) > 0 ? `<div class="flex justify-between text-xs"><span>Thuế (${order.taxRate}%):</span><span>${(order.taxAmount || 0).toLocaleString('vi-VN')}đ</span></div>` : ''}
-                  <div class="flex justify-between font-black text-lg border-t mt-2 pt-2"><span>TỔNG CỘNG:</span><span>${order.total.toLocaleString('vi-VN')}đ</span></div>
+                <div class="totals" style="margin: 15px 0; padding-top: 5px; border-top: 1px solid #000;">
+                  <div class="flex justify-between text-xs" style="margin-bottom: 2px;"><span>Tạm tính:</span><span>${order.subtotal.toLocaleString('vi-VN')}đ</span></div>
+                  ${(order.discountAmount || 0) > 0 ? `<div class="flex justify-between text-xs" style="margin-bottom: 2px;"><span>Giảm giá:</span><span>-${(order.discountAmount || 0).toLocaleString('vi-VN')}đ</span></div>` : ''}
+                  ${(order.taxAmount || 0) > 0 ? `<div class="flex justify-between text-xs" style="margin-bottom: 2px;"><span>Thuế (${order.taxRate}%):</span><span>${(order.taxAmount || 0).toLocaleString('vi-VN')}đ</span></div>` : ''}
+                  <div class="flex justify-between font-black text-xl border-t mt-3 pt-3 total-row"><span>TỔNG CỘNG:</span><span>${order.total.toLocaleString('vi-VN')}đ</span></div>
                 </div>
               `;
             case 'qr':
