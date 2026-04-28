@@ -36,10 +36,15 @@ const MainLayout = () => {
   const [hasNewOrder, setHasNewOrder] = useState(false);
   const [audio] = useState(new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'));
 
+  const checkShift = useAuthStore((state) => state.checkShift);
+  
   useSocket((event, data) => {
     if (event === 'order:new') {
       setHasNewOrder(true);
       audio.play().catch(e => console.log('Audio play blocked:', e));
+    }
+    if (event === 'shift:update') {
+      checkShift();
     }
   });
 

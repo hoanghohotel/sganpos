@@ -1152,7 +1152,7 @@ const POSPage = () => {
                     return (
                       <div key={`cat-group-${cat}`} className="mb-8">
                         <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-4 border-b border-slate-100 pb-2">{cat}</h3>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4">
                           {catProducts.map((product, idx) => (
                             <ProductCard key={`${cat}-${product._id}-${idx}`} product={product} onAdd={() => addToCart(product)} />
                           ))}
@@ -1161,7 +1161,7 @@ const POSPage = () => {
                     );
                   })
                 ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4">
                     {filteredProducts.map((product, idx) => (
                       <ProductCard key={`filtered-${product._id}-${idx}`} product={product} onAdd={() => addToCart(product)} />
                     ))}

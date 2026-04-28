@@ -264,7 +264,7 @@ const PrintPreview = ({ fields, settings }: { fields: PrintField[], settings: an
 const SettingsPage = () => {
   const { user } = useAuthStore();
   const canManageSettings = user?.role === 'ADMIN' || user?.role === 'MANAGER' || user?.permissions?.includes('SETTINGS_MANAGE');
-  const [activeTab, setActiveTab] = useState<'overview' | 'payment' | 'subdomain' | 'templates'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'payment' | 'subdomain' | 'templates' | 'printers'>('overview');
   const [banks, setBanks] = useState<Bank[]>([]);
   const [showBankList, setShowBankList] = useState(false);
   const [bankSearch, setBankSearch] = useState('');
@@ -283,7 +283,8 @@ const SettingsPage = () => {
     subdomain: '',
     customPath: '',
     taxRate: 0,
-    defaultPrintTemplate: 'classic'
+    defaultPrintTemplate: 'classic',
+    printers: [] as any[]
   });
 
   const getBaseDomain = () => {
@@ -547,6 +548,16 @@ const SettingsPage = () => {
         >
           <CreditCard size={16} />
           Mẫu in
+        </button>
+        <button
+          onClick={() => setActiveTab('printers')}
+          className={cn(
+            "flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
+            activeTab === 'printers' ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
+          )}
+        >
+          <Printer size={16} />
+          Máy in
         </button>
       </div>
 
@@ -896,7 +907,157 @@ const SettingsPage = () => {
                 </div>
               </div>
             </motion.div>
-          ) : (
+          ) : activeTab === 'printers' ? (
+            <motion.div
+              key="printers-tab"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-6"
+            >
+              <div className="flex justify-between items-center mb-6">
+                 <div>
+                   <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight mb-1">Kết nối máy in</h3>
+                   <p className="text-xs text-slate-500">Quản lý máy in hóa đơn (LAN/USB/Browser).</p>
+                 </div>
+                 <button
+                   type="button"
+                   onClick={() => {
+                     const newPrinters = [...(settings.printers || [])];
+                     newPrinters.push({
+                       id: Date.now().toString(),
+                       name: `Máy in ${newPrinters.length + 1}`,
+                       type: 'LAN',
+                       address: '192.168.1.100',
+                       role: 'RECEIPT',
+                       status: 'ONLINE'
+                     });
+                     setSettings({ ...settings, printers: newPrinters });
+                   }}
+                   className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-all shadow-sm"
+                 >
+                   <Plus size={14} />
+                   Thêm máy in
+                 </button>
+              </div>
+
+              <div className="space-y-4">
+                 {settings.printers && settings.printers.length > 0 ? (
+                   settings.printers.map((pr: any, idx: number) => (
+                     <div key={pr.id} className="p-5 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-all group">
+                        <div className="flex justify-between items-start">
+                          <div className="flex gap-4">
+                             <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 group-hover:text-emerald-500 transition-colors">
+                               <Printer size={20} />
+                             </div>
+                             <div>
+                               <div className="flex items-center gap-2 mb-1">
+                                 <input 
+                                   className="text-xs font-black text-slate-900 bg-transparent border-none p-0 focus:ring-0 uppercase tracking-tight w-40"
+                                   value={pr.name}
+                                   onChange={(e) => {
+                                      const updated = [...settings.printers];
+                                      updated[idx].name = e.target.value;
+                                      setSettings({ ...settings, printers: updated });
+                                   }}
+                                 />
+                                 <span className={cn(
+                                   "px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest",
+                                   pr.status === 'ONLINE' ? "bg-emerald-100 text-emerald-600" : "bg-red-100 text-red-600"
+                                 )}>
+                                   {pr.status}
+                                 </span>
+                               </div>
+                               <div className="flex gap-4 text-[10px] font-bold text-slate-400">
+                                  <select 
+                                    className="bg-transparent border-none p-0 focus:ring-0 cursor-pointer hover:text-slate-900 transition-colors"
+                                    value={pr.type}
+                                    onChange={(e) => {
+                                       const updated = [...settings.printers];
+                                       updated[idx].type = e.target.value;
+                                       setSettings({ ...settings, printers: updated });
+                                    }}
+                                  >
+                                    <option value="LAN">LAN / WIFI</option>
+                                    <option value="USB">USB</option>
+                                    <option value="BROWSER">TRÌNH DUYỆT</option>
+                                  </select>
+                                  {pr.type === 'LAN' && (
+                                    <input 
+                                      className="bg-transparent border-none p-0 focus:ring-0 text-slate-500 w-32"
+                                      value={pr.address}
+                                      onChange={(e) => {
+                                        const updated = [...settings.printers];
+                                        updated[idx].address = e.target.value;
+                                        setSettings({ ...settings, printers: updated });
+                                      }}
+                                      placeholder="192.168.1.100"
+                                    />
+                                  )}
+                                  <select 
+                                    className="bg-transparent border-none p-0 focus:ring-0 cursor-pointer hover:text-slate-900 transition-colors"
+                                    value={pr.role}
+                                    onChange={(e) => {
+                                       const updated = [...settings.printers];
+                                       updated[idx].role = e.target.value;
+                                       setSettings({ ...settings, printers: updated });
+                                    }}
+                                  >
+                                    <option value="RECEIPT">MÁY IN HOÁ ĐƠN</option>
+                                    <option value="KITCHEN">MÁY IN BẾP</option>
+                                    <option value="STAMP">MÁY IN TEM</option>
+                                  </select>
+                               </div>
+                             </div>
+                          </div>
+                          <div className="flex gap-2">
+                             <button
+                               type="button"
+                               className="p-2 text-slate-300 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all"
+                               title="In thử"
+                               onClick={() => alert(`Đang gửi lệnh in thử đến ${pr.name}...`)}
+                             >
+                               <Printer size={16} />
+                             </button>
+                             <button
+                               type="button"
+                               className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                               title="Gỡ bỏ"
+                               onClick={() => {
+                                  const updated = settings.printers.filter((_: any, i: number) => i !== idx);
+                                  setSettings({ ...settings, printers: updated });
+                               }}
+                             >
+                               <Trash2 size={16} />
+                             </button>
+                          </div>
+                        </div>
+                     </div>
+                   ))
+                 ) : (
+                   <div className="p-12 border-2 border-dashed border-slate-100 rounded-[32px] flex flex-col items-center justify-center text-center">
+                      <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-200 mb-4">
+                        <Printer size={32} />
+                      </div>
+                      <p className="text-xs font-black text-slate-400 tracking-tighter uppercase mb-1">Chưa có máy in nào</p>
+                      <p className="text-[10px] text-slate-300 font-medium">Bấm "Thêm máy in" để bắt đầu cấu hình kết nối.</p>
+                   </div>
+                 )}
+              </div>
+              
+              <div className="p-6 bg-amber-50 rounded-2xl border border-amber-100 flex gap-4">
+                 <AlertCircle size={20} className="text-amber-600 mt-1 shrink-0" />
+                 <div>
+                    <h4 className="text-xs font-black text-amber-900 uppercase mb-1">Lưu ý kết nối</h4>
+                    <ul className="text-[10px] text-amber-700/80 font-medium space-y-1 list-disc ml-3">
+                       <li>Máy in LAN cần được cắm dây mạng và set IP tĩnh để đảm bảo ổn định.</li>
+                       <li>In qua USB yêu cầu cài đặt Driver máy in lên máy tính/POS sử dụng.</li>
+                       <li>Khoảng cách kết nối WIFI có thể ảnh hưởng đến tốc độ in ấn.</li>
+                    </ul>
+                 </div>
+              </div>
+            </motion.div>
+          ) : activeTab === 'subdomain' ? (
             <motion.div
               key="subdomain-tab"
               initial={{ opacity: 0, x: 10 }}
@@ -977,7 +1138,7 @@ const SettingsPage = () => {
                 </div>
               </div>
             </motion.div>
-          )}
+          ) : null}
         </AnimatePresence>
 
         <div className="mt-10 flex items-center justify-between border-t border-slate-100 pt-8">

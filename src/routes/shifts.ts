@@ -3,6 +3,7 @@ import Shift from '../models/Shift.js';
 import Order from '../models/Order.js';
 import { authenticate, AuthRequest } from '../middleware/auth.js';
 import { getTenantId } from '../lib/tenant.js';
+import { emitToTenant } from '../lib/socketService.js';
 
 const router = express.Router();
 
@@ -12,7 +13,6 @@ router.get('/current', authenticate, async (req: AuthRequest, res) => {
     const tenantId = req.user.tenantId; // Use user's own tenantId record for security
     const shift = await Shift.findOne({ 
       tenantId, 
-      userId: req.user._id, 
       status: 'OPEN' 
     });
     res.json(shift);
@@ -37,10 +37,10 @@ router.post('/open', authenticate, async (req: AuthRequest, res) => {
       return code;
     };
 
-    // Check if there's already an open shift for this user
-    const existingShift = await Shift.findOne({ tenantId, userId, status: 'OPEN' });
+    // Check if there's already an open shift for this tenant
+    const existingShift = await Shift.findOne({ tenantId, status: 'OPEN' });
     if (existingShift) {
-      return res.status(400).json({ error: 'There is already an open shift' });
+      return res.status(400).json({ error: 'There is already an open shift for this tenant' });
     }
 
     const shift = new Shift({
@@ -60,6 +60,8 @@ router.post('/open', authenticate, async (req: AuthRequest, res) => {
       { $set: { shiftId: shift._id } }
     );
 
+    emitToTenant(tenantId, 'shift:update', shift);
+
     res.status(201).json(shift);
   } catch (error) {
     console.error('Open Shift Error:', error);
@@ -71,9 +73,8 @@ router.post('/open', authenticate, async (req: AuthRequest, res) => {
 router.get('/summary', authenticate, async (req: AuthRequest, res) => {
   try {
     const tenantId = req.user.tenantId; // Use user's own tenantId record for security
-    const userId = req.user._id;
 
-    const shift = await Shift.findOne({ tenantId, userId, status: 'OPEN' });
+    const shift = await Shift.findOne({ tenantId, status: 'OPEN' });
     if (!shift) {
       return res.status(404).json({ error: 'No open shift found' });
     }
@@ -136,9 +137,8 @@ router.post('/close', authenticate, async (req: AuthRequest, res) => {
   try {
     const { closingBalance } = req.body;
     const tenantId = req.user.tenantId; // Use user's own tenantId record for security
-    const userId = req.user._id;
 
-    const shift = await Shift.findOne({ tenantId, userId, status: 'OPEN' });
+    const shift = await Shift.findOne({ tenantId, status: 'OPEN' });
     if (!shift) {
       return res.status(404).json({ error: 'No open shift found' });
     }
@@ -203,6 +203,9 @@ router.post('/close', authenticate, async (req: AuthRequest, res) => {
     shift.notes = req.body.notes || '';
     
     await shift.save();
+    
+    emitToTenant(tenantId, 'shift:update', { status: 'CLOSED', shiftId: shift._id });
+    
     res.json(shift);
   } catch (error) {
     console.error('Close Shift Error:', error);

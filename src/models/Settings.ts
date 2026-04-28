@@ -15,6 +15,8 @@ export interface ISettings extends Document {
   customPath?: string;
   taxRate?: number;
   defaultPrintTemplate?: string;
+  templateFields?: any[];
+  printers?: any[];
 }
 
 const SettingsSchema: Schema = new Schema({
@@ -32,6 +34,8 @@ const SettingsSchema: Schema = new Schema({
   customPath: { type: String },
   taxRate: { type: Number, default: 0 },
   defaultPrintTemplate: { type: String, default: 'classic' },
+  templateFields: { type: Array },
+  printers: { type: Array, default: [] },
 }, { timestamps: true });
 
 export default mongoose.models.Settings || mongoose.model<ISettings>('Settings', SettingsSchema);

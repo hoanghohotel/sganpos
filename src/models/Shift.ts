@@ -44,6 +44,7 @@ const ShiftSchema: Schema = new Schema({
   }
 }, { timestamps: true });
 
-ShiftSchema.index({ tenantId: 1, userId: 1, status: 1 });
+ShiftSchema.index({ tenantId: 1, status: 1 });
+ShiftSchema.index({ tenantId: 1, userId: 1 });
 
 export default mongoose.models.Shift || mongoose.model<IShift>('Shift', ShiftSchema);
