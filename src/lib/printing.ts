@@ -186,20 +186,61 @@ export const generatePrintHTML = (order: PrintOrderData, settings: PrintSettings
               return '';
           }
         }).join('')}
-        <script>window.print(); setTimeout(() => window.close(), 1000);</script>
       </body>
     </html>
   `;
 };
 
 export const printOrder = (order: PrintOrderData, settings: PrintSettings, isProvisional: boolean = false) => {
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
-    alert('Vui lòng cho phép trình duyệt mở tab mới để in.');
-    return;
-  }
+  try {
+    const printWindow = window.open('', '_blank', 'width=800,height=600,scrollbars=yes');
+    if (!printWindow) {
+      alert('Vui lòng cho phép trình duyệt mở tab mới để in.');
+      return;
+    }
 
-  const html = generatePrintHTML(order, settings, isProvisional);
-  printWindow.document.write(html);
-  printWindow.document.close();
+    const html = generatePrintHTML(order, settings, isProvisional);
+    
+    // Write HTML to new window
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+    
+    // Wait for content to load before printing
+    printWindow.onload = () => {
+      setTimeout(() => {
+        printWindow.focus();
+        printWindow.print();
+      }, 250);
+    };
+  } catch (error) {
+    console.error('Lỗi in ấn:', error);
+    alert('Có lỗi xảy ra khi in. Vui lòng kiểm tra cài đặt trình duyệt.');
+  }
+};
+
+export const printPreview = (order: PrintOrderData, settings: PrintSettings, isProvisional: boolean = false) => {
+  try {
+    const previewWindow = window.open('', '_blank', 'width=900,height=700,scrollbars=yes');
+    if (!previewWindow) {
+      alert('Vui lòng cho phép trình duyệt mở tab mới để xem trước.');
+      return;
+    }
+
+    const html = generatePrintHTML(order, settings, isProvisional);
+    
+    // Write HTML to preview window
+    previewWindow.document.open();
+    previewWindow.document.write(html);
+    previewWindow.document.close();
+    
+    // Remove auto-print script for preview
+    previewWindow.onload = () => {
+      previewWindow.focus();
+      // Just display, don't print automatically
+    };
+  } catch (error) {
+    console.error('Lỗi xem trước:', error);
+    alert('Có lỗi xảy ra khi xem trước. Vui lòng kiểm tra cài đặt trình duyệt.');
+  }
 };

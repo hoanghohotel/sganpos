@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import api from '../lib/api';
 import axios from 'axios';
-import { ShoppingCart, Plus, Minus, Trash2, Coffee, CheckCircle2, Banknote, CreditCard, X, ChevronRight, LogOut, CircleDollarSign, ChevronLeft, Printer, StickyNote, MessageSquare } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Trash2, Coffee, CheckCircle2, Banknote, CreditCard, X, ChevronRight, LogOut, CircleDollarSign, ChevronLeft, Printer, StickyNote, MessageSquare, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuthStore } from '../store/authStore';
 import { useSocket } from '../hooks/useSocket';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { printOrder } from '../lib/printing';
+import { printOrder, printPreview } from '../lib/printing';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -315,6 +315,26 @@ const POSPage = () => {
     if (cart.length === 0) return;
     
     printOrder({
+      tableName: selectedTable?.name || 'Mang về',
+      items: cart.map(item => ({
+        productId: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity
+      })),
+      subtotal,
+      taxRate,
+      taxAmount,
+      discountAmount,
+      total,
+      orderType: orderType || undefined
+    }, settings, true);
+  };
+
+  const handlePreviewProvisional = () => {
+    if (cart.length === 0) return;
+    
+    printPreview({
       tableName: selectedTable?.name || 'Mang về',
       items: cart.map(item => ({
         productId: item.id,
@@ -935,11 +955,19 @@ const POSPage = () => {
           </button>
           <button
             disabled={cart.length === 0}
+            onClick={handlePreviewProvisional}
+            className="py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-2 shadow-sm"
+          >
+            <Eye size={14} />
+            <span>Xem trước</span>
+          </button>
+          <button
+            disabled={cart.length === 0}
             onClick={handlePrintProvisional}
             className="py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center justify-center gap-2 shadow-sm"
           >
             <Printer size={14} />
-            <span>Tạm tính</span>
+            <span>In tạm tính</span>
           </button>
         </div>
 
