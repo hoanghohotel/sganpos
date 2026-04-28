@@ -13,6 +13,7 @@ interface User {
   role: 'ADMIN' | 'MANAGER' | 'STAFF';
   permissions: string[];
   isActive: boolean;
+  managerId?: string;
 }
 
 const AVAILABLE_PERMISSIONS = [
@@ -112,8 +113,14 @@ const AdminPage = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (id === currentUser?.id) {
-       alert('Bạn không thể tự xóa chính mình!');
+    const target = users.find(u => u._id === id);
+    if (target?.role === 'ADMIN' && currentUser?.role !== 'ADMIN') {
+      alert('Bạn không có quyền xóa tài khoản ADMIN!');
+      return;
+    }
+
+    if (id === currentUser?.id || id === (currentUser as any)._id) {
+       alert('Bạn không có quyền tự xóa chính mình!');
        return;
     }
     if (!window.confirm('Bạn có chắc chắn muốn xóa nhân viên này?')) return;
@@ -192,18 +199,22 @@ const AdminPage = () => {
                   <Users size={24} />
                 </div>
                 <div className="flex items-center gap-1">
-                   <button 
-                    onClick={() => handleOpenModal(user)}
-                    className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
-                  >
-                    <Edit2 size={16} />
-                  </button>
-                  <button 
-                    onClick={() => handleDelete(user._id)}
-                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  {(currentUser?.role === 'ADMIN' || user.managerId === (currentUser as any)?._id?.toString()) && (
+                    <>
+                      <button 
+                        onClick={() => handleOpenModal(user)}
+                        className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(user._id)}
+                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
 

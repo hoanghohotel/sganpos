@@ -249,8 +249,11 @@ app.put('/api/admin/users/:id', authenticate, async (req: AuthRequest, res) => {
     if (!targetUser) return res.status(404).json({ error: 'User not found' });
 
     if (currentUser.role !== 'ADMIN') {
-      // Must be MANAGER or have permission, and must OWN the target or target has no manager (owner added them but manager needs to edit?)
-      // Actually, request says "ngoại trừ các Staft do họ thêm vào"
+      // Cannot touch ADMIN accounts
+      if (targetUser.role === 'ADMIN') {
+        return res.status(403).json({ error: 'Bạn không có quyền sửa tài khoản ADMIN' });
+      }
+
       const isAllowedRole = currentUser.role === 'MANAGER' || currentUser.permissions?.includes('USER_MANAGE');
       const isOwner = targetUser.managerId === currentUser._id.toString();
 
@@ -258,7 +261,7 @@ app.put('/api/admin/users/:id', authenticate, async (req: AuthRequest, res) => {
         return res.status(403).json({ error: 'Bạn không có quyền sửa nhân viên này' });
       }
       
-      // Manager cannot escalate privileges
+      // Manager/Staff cannot escalate privileges or change manager
       delete req.body.role;
       delete req.body.managerId;
     }
@@ -295,6 +298,11 @@ app.delete('/api/admin/users/:id', authenticate, async (req: AuthRequest, res) =
     if (!targetUser) return res.status(404).json({ error: 'User not found' });
 
     if (currentUser.role !== 'ADMIN') {
+      // Cannot delete ADMIN accounts
+      if (targetUser.role === 'ADMIN') {
+        return res.status(403).json({ error: 'Bạn không có quyền xóa tài khoản ADMIN' });
+      }
+
       const isAllowedRole = currentUser.role === 'MANAGER' || currentUser.permissions?.includes('USER_MANAGE');
       const isOwner = targetUser.managerId === currentUser._id.toString();
 

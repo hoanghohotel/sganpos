@@ -57,7 +57,7 @@ router.post('/register', async (req: any, res) => {
       email: email ? email.trim() : undefined,
       phone: phone ? phone.trim() : undefined,
       password: hashedPassword,
-      role: 'MANAGER',
+      role: 'ADMIN',
       permissions: [
         'DASHBOARD_VIEW',
         'POS_ACCESS',
