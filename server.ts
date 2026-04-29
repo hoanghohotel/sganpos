@@ -539,6 +539,12 @@ async function startServer() {
     const distPath = path.join(__dirname, 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
+      const url = req.originalUrl;
+      // If it's a request for an asset that we didn't serve via express.static above,
+      // we should return a 404 instead of index.html to prevent MIME type issues.
+      if (url.includes('.') || url.startsWith('/assets/')) {
+        return res.status(404).send('Not found');
+      }
       const indexPath = path.join(distPath, 'index.html');
       res.sendFile(indexPath);
     });
