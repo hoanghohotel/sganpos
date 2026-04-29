@@ -32,12 +32,12 @@ const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptTemplateProps>(
         {`
           @font-face {
             font-family: 'Poppins';
-            src: url('https://cdn.jsdelivr.net/gh/taxvui/Poppins@main/Poppins-Regular.otf') format('opentype');
+            src: url('https://cdn.jsdelivr.net/gh/taxvui/Poppins@main/FZ%20Poppins-Regular.ttf') format('truetype');
             font-weight: 400;
           }
           @font-face {
             font-family: 'Poppins';
-            src: url('https://cdn.jsdelivr.net/gh/taxvui/Poppins@main/Poppins-Bold.otf') format('opentype');
+            src: url('https://cdn.jsdelivr.net/gh/taxvui/Poppins@main/FZ%20Poppins-Bold.ttf') format('truetype');
             font-weight: 700;
           }
           @media print {
