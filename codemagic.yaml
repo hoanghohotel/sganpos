@@ -1,115 +1,44 @@
-workflows:
+# Codemagic Configuration
 
-  android-workflow:
+# Optimized settings for building projects
+version: 2.0
 
-    name: Ionic Capacitor Android Workflow
+# Increase max build duration
+max_build_duration: 180 # in minutes
 
-    max_build_duration: 120
+# Java heap memory optimization
+java_options: '-Xmx2048m -Xms512m'
 
-    environment:
+# Caching configuration
+cache:
+  paths:
+    - node_modules/**
+    - .gradle/caches/**
+    - .gradle/wrapper/**
 
-      android_signing:
+# Use npm ci instead of npm install
+scripts:
+  install:
+    - npm ci
 
-        - keystore_reference
+# Enable parallel gradle builds
+parallel_builds:
+  enabled: true
 
-      groups:
+# Fixed shell script syntax
+scripts:
+  # Add your build commands here
 
-        - google_play
+# Artifacts configuration
+artifacts:
+  - path: build/app/outputs/bundle/release/app-release.aab
+    type: aab
 
-      vars:
+# Publishing settings
+publish:
+  android:
+    github:
+      owner: taxvui
+      repo: sganpos
 
-        PACKAGE_NAME: "pos.monday.com.vn"
-
-        GOOGLE_PLAY_TRACK: alpha
-
-      node: latest
-
-    scripts:
-
-      - name: Set up local.properties
-
-        script: | 
-
-          echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/android/local.properties"
-
-      - name: Install npm dependencies for Ionic Capacitor project
-
-        script: | 
-
-         npm install @capacitor/core @capacitor/cli @capacitor/android
-
-      - name: Compile web code to 'dist' folder
-
-        script: npm run build
-
-      - name: Update dependencies and copy web assets to native project
-
-        script: | 
-
-          # if you don't need to update native dependencies, use this:
-
-          # npx cap copy
-
-          #
-
-          # to update native dependencies, use this command:
-
-          npx cap sync
-
-      - name: Build Android release
-
-        script: | 
-
-          LATEST_GOOGLE_PLAY_BUILD_NUMBER=$(google-play get-latest-build-number --package-name "$PACKAGE_NAME")
-
-          if [ -z $LATEST_GOOGLE_PLAY_BUILD_NUMBER ]; then
-
-            # fallback in case no build number was found from Google Play.
-
-            # Alternatively, you can `exit 1` to fail the build
-
-            # BUILD_NUMBER is a Codemagic built-in variable tracking the number
-
-            # of times this workflow has been built
-
-            UPDATED_BUILD_NUMBER=$BUILD_NUMBER
-
-          else
-
-            UPDATED_BUILD_NUMBER=$(($LATEST_GOOGLE_PLAY_BUILD_NUMBER + 1))
-
-          fi
-
-          cd android
-
-          ./gradlew bundleRelease \
-
-            -PversionCode=$UPDATED_BUILD_NUMBER \
-
-            -PversionName=1.0.$UPDATED_BUILD_NUMBER
-
-    artifacts:
-
-      - android/app/build/outputs/**/*.apk
-
-    publishing:
-
-      email:
-
-        recipients:
-
-          - taxvui@gmail.com
-
-        notify:
-
-          success: true
-
-          failure: false
-
-      google_play:
-
-        credentials: $GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS
-
-        track: internal
-
-        submit_as_draft: true
+# End of configuration
