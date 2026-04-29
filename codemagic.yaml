@@ -1,5 +1,5 @@
 workflows:
-  android-debug-apk:
+  android-workflow-id:
   name: Android Debug APK (Fast Build)
   max_build_duration: 30
   
