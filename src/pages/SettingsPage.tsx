@@ -171,7 +171,7 @@ const PrintPreview = ({ fields, settings }: { fields: PrintField[], settings: an
         isBento && "border-2 border-slate-100 shadow-none"
       )}
       style={{
-        fontFamily: (isRetro || isTech) ? "'JetBrains Mono', monospace" : (isBakery ? "'Charm', cursive" : "'Inter', sans-serif")
+        fontFamily: (isRetro || isTech) ? "monospace" : (isBakery ? "cursive" : (isModern ? "'Poppins', sans-serif" : "'Poppins', sans-serif"))
       }}
     >
       <div className="space-y-4">

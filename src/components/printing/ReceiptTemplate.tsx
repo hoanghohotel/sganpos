@@ -30,7 +30,16 @@ const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptTemplateProps>(
     const printStyles = (
       <style>
         {`
-          @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Charm:wght@400;700&family=Comfortaa:wght@400;700&family=JetBrains+Mono:wght@400;800&family=Playfair+Display:ital,wght@0,900;1,900&display=swap');
+          @font-face {
+            font-family: 'Poppins';
+            src: url('https://cdn.jsdelivr.net/gh/taxvui/Poppins@main/Poppins-Regular.ttf') format('truetype');
+            font-weight: 400;
+          }
+          @font-face {
+            font-family: 'Poppins';
+            src: url('https://cdn.jsdelivr.net/gh/taxvui/Poppins@main/Poppins-Bold.ttf') format('truetype');
+            font-weight: 700;
+          }
           @media print {
             html, body { 
               margin: 0 !important; 
@@ -107,17 +116,17 @@ const ReceiptTemplate = forwardRef<HTMLDivElement, ReceiptTemplateProps>(
         lineHeight: '1.4'
       };
 
-      if (isModern) return { ...base, padding: '30px', fontFamily: "'Comfortaa', sans-serif", borderRadius: '25px', fontSize: '13px' };
-      if (isMinimal) return { ...base, padding: '10px', fontFamily: "'Inter', sans-serif", fontSize: '11px', lineHeight: '1.2' };
-      if (isRetro) return { ...base, padding: '15px', fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', border: '1px dashed #000' };
-      if (isElegant) return { ...base, padding: '25px', fontFamily: "'Playfair Display', serif", fontSize: '13px', border: '4px double #000' };
-      if (isEco) return { ...base, padding: '20px', fontFamily: "'Inter', sans-serif", fontSize: '13px', borderLeft: '10px solid #059669' };
-      if (isTech) return { ...base, padding: '20px', fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', backgroundColor: '#fff', border: '2px solid #000' };
+      if (isModern) return { ...base, padding: '30px', fontFamily: "'Poppins', sans-serif", borderRadius: '25px', fontSize: '13px' };
+      if (isMinimal) return { ...base, padding: '10px', fontFamily: "'Poppins', sans-serif", fontSize: '11px', lineHeight: '1.2' };
+      if (isRetro) return { ...base, padding: '15px', fontFamily: "monospace", fontSize: '12px', border: '1px dashed #000' };
+      if (isElegant) return { ...base, padding: '25px', fontFamily: "serif", fontSize: '13px', border: '4px double #000' };
+      if (isEco) return { ...base, padding: '20px', fontFamily: "'Poppins', sans-serif", fontSize: '13px', borderLeft: '10px solid #059669' };
+      if (isTech) return { ...base, padding: '20px', fontFamily: "monospace", fontSize: '12px', backgroundColor: '#fff', border: '2px solid #000' };
       if (isVoucher) return { ...base, padding: '25px', border: '2px dashed #000', borderRadius: '15px' };
-      if (isBakery) return { ...base, padding: '20px', fontFamily: "'Charm', cursive", fontSize: '15px' };
+      if (isBakery) return { ...base, padding: '20px', fontFamily: "cursive", fontSize: '15px' };
       if (isBento) return { ...base, padding: '20px', fontSize: '12px' };
       
-      return { ...base, padding: '20px', fontFamily: "'Inter', sans-serif", fontSize: '13px' };
+      return { ...base, padding: '20px', fontFamily: "'Poppins', sans-serif", fontSize: '13px' };
     };
 
     return (

@@ -64,7 +64,16 @@ export const generatePrintHTML = (order: PrintOrderData, settings: PrintSettings
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${isProvisional ? 'Phiếu Tạm Tính' : 'Hóa Đơn Thanh Toán'}</title>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Charm:wght@400;700&family=Comfortaa:wght@400;700&family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;800&family=Playfair+Display:ital,wght@0,900;1,900&display=swap');
+      @font-face {
+        font-family: 'Poppins';
+        src: url('https://cdn.jsdelivr.net/gh/taxvui/Poppins@main/Poppins-Regular.ttf') format('truetype');
+        font-weight: 400;
+      }
+      @font-face {
+        font-family: 'Poppins';
+        src: url('https://cdn.jsdelivr.net/gh/taxvui/Poppins@main/Poppins-Bold.ttf') format('truetype');
+        font-weight: 700;
+      }
       
       * {
         margin: 0;
@@ -73,7 +82,7 @@ export const generatePrintHTML = (order: PrintOrderData, settings: PrintSettings
       }
       
       body { 
-        font-family: ${isRetro || isTech ? "'JetBrains Mono', monospace" : (isBakery ? "'Charm', cursive" : (isModern ? "'Comfortaa', sans-serif" : (isElegant ? "'Playfair Display', serif" : "'Inter', sans-serif")))}; 
+        font-family: ${isRetro || isTech ? "monospace" : (isBakery ? "cursive" : (isModern ? "'Poppins', sans-serif" : (isElegant ? "serif" : "'Poppins', sans-serif")))}; 
         padding: ${isModern ? '30px' : (isMinimal ? '10px' : (isElegant ? '25px' : '20px'))}; 
         line-height: ${isMinimal ? '1.2' : '1.4'}; 
         font-size: ${isMinimal ? '11px' : '13px'}; 
