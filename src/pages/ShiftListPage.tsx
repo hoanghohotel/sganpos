@@ -84,12 +84,12 @@ const ShiftListPage = () => {
   );
 
   return (
-    <div className="h-full flex flex-col bg-slate-50">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-950">
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 px-8 py-6 flex justify-between items-center">
+      <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 py-6 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Danh sách ca</h1>
-          <p className="text-slate-500 font-medium tracking-tight">Quản lý lịch sử và doanh thu theo ca</p>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Danh sách ca</h1>
+          <p className="text-slate-500 dark:text-slate-400 font-medium tracking-tight">Quản lý lịch sử và doanh thu theo ca</p>
         </div>
         
         <div className="relative w-80">
@@ -99,7 +99,7 @@ const ShiftListPage = () => {
             placeholder="Tìm theo mã ca hoặc nhân viên..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-medium transition-all"
+            className="w-full h-12 pl-12 pr-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-medium transition-all text-slate-900 dark:text-white"
           />
         </div>
       </header>
@@ -109,7 +109,7 @@ const ShiftListPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {loading ? (
             Array(6).fill(0).map((_, i) => (
-              <div key={i} className="h-48 bg-white rounded-3xl border border-slate-200 animate-pulse" />
+              <div key={i} className="h-48 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 animate-pulse" />
             ))
           ) : filteredShifts.length > 0 ? (
             filteredShifts.map((shift) => (
@@ -117,50 +117,50 @@ const ShiftListPage = () => {
                 key={shift._id}
                 whileHover={{ y: -4, shadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
                 onClick={() => handleViewDetails(shift)}
-                className="bg-white rounded-3xl border border-slate-200 p-6 cursor-pointer transition-all border-l-8 border-l-transparent hover:border-l-emerald-500 group"
+                className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 cursor-pointer transition-all border-l-8 border-l-transparent hover:border-l-emerald-500 group shadow-sm"
               >
                 <div className="flex justify-between items-start mb-6">
                   <div className="flex items-center gap-3">
                     <div className={cn(
                       "w-12 h-12 rounded-2xl flex items-center justify-center",
-                      shift.status === 'OPEN' ? "bg-emerald-50 text-emerald-600" : "bg-slate-50 text-slate-400"
+                      shift.status === 'OPEN' ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-600"
                     )}>
                       <History className="w-6 h-6" />
                     </div>
                     <div>
-                      <h3 className="font-black text-slate-900 tracking-tight leading-none mb-1">
+                      <h3 className="font-black text-slate-900 dark:text-white tracking-tight leading-none mb-1">
                         CA-{shift.code || 'N/A'}
                       </h3>
                       <span className={cn(
                         "text-[10px] uppercase font-black tracking-widest px-2 py-0.5 rounded-full",
-                        shift.status === 'OPEN' ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"
+                        shift.status === 'OPEN' ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
                       )}>
                         {shift.status === 'OPEN' ? 'Đang mở' : 'Đã đóng'}
                       </span>
                     </div>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-emerald-500 transition-colors" />
+                  <ChevronRight className="w-5 h-5 text-slate-300 dark:text-slate-700 group-hover:text-emerald-500 transition-colors" />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   <div className="space-y-1">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Nhân viên</span>
-                    <div className="flex items-center gap-1.5 text-slate-700 font-bold">
+                    <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block">Nhân viên</span>
+                    <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-bold">
                       <User className="w-3.5 h-3.5" />
                       {shift.userName}
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Doanh thu</span>
-                    <div className="flex items-center gap-1.5 text-emerald-600 font-black">
+                    <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block">Doanh thu</span>
+                    <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-black">
                       <DollarSign className="w-3.5 h-3.5" />
                       {shift.totalSales?.toLocaleString('vi-VN')}đ
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-2 pt-4 border-t border-slate-100">
-                  <div className="flex items-center justify-between text-xs font-bold text-slate-500">
+                <div className="space-y-2 pt-4 border-t border-slate-100 dark:border-slate-800/50">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
                     <div className="flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5" />
                       {format(new Date(shift.startTime), 'HH:mm dd/MM', { locale: vi })}
@@ -285,17 +285,17 @@ const ShiftListPage = () => {
                 </div>
 
                 {/* Orders List Content */}
-                <div className="flex-1 flex flex-col bg-white overflow-hidden">
-                  <header className="p-8 border-b border-slate-100 flex justify-between items-center">
+                <div className="flex-1 flex flex-col bg-white dark:bg-slate-900 overflow-hidden">
+                  <header className="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
                     <div>
-                      <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase">Danh sách đơn hàng</h3>
+                      <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight uppercase">Danh sách đơn hàng</h3>
                       <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mt-1">
                         {shiftOrders.length} Giao dịch trong ca này
                       </p>
                     </div>
                     <button 
                       onClick={() => setSelectedShift(null)}
-                      className="hidden lg:flex w-12 h-12 bg-slate-50 text-slate-400 rounded-2xl items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all group"
+                      className="hidden lg:flex w-12 h-12 bg-slate-50 dark:bg-slate-800 text-slate-400 rounded-2xl items-center justify-center hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-500 transition-all group"
                     >
                       <X className="w-6 h-6 group-hover:rotate-90 transition-transform" />
                     </button>
@@ -303,7 +303,7 @@ const ShiftListPage = () => {
 
                   <div className="flex-1 overflow-auto p-8">
                     {loadingDetails ? (
-                      <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-300">
+                      <div className="flex flex-col items-center justify-center h-full gap-4 text-slate-300 dark:text-slate-700">
                         <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}>
                           <History className="w-12 h-12" />
                         </motion.div>
@@ -311,7 +311,7 @@ const ShiftListPage = () => {
                       </div>
                     ) : shiftOrders.length > 0 ? (
                       <div className="space-y-4">
-                        <div className="grid grid-cols-5 px-6 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        <div className="grid grid-cols-5 px-6 py-2 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                           <div>Đơn / Món</div>
                           <div>Bàn / Loại</div>
                           <div>Thời gian</div>
@@ -321,11 +321,11 @@ const ShiftListPage = () => {
                         {shiftOrders.map((order) => (
                           <div 
                             key={order._id}
-                            className="flex flex-col bg-slate-50 hover:bg-emerald-50 rounded-3xl transition-colors group cursor-default p-6 border border-transparent hover:border-emerald-100"
+                            className="flex flex-col bg-slate-50 dark:bg-slate-800/50 hover:bg-emerald-50 dark:hover:bg-emerald-500/5 rounded-3xl transition-colors group cursor-default p-6 border border-transparent hover:border-emerald-100 dark:hover:border-emerald-900"
                           >
                             <div className="grid grid-cols-5 items-center">
                               <div className="flex flex-col">
-                                <span className="font-black text-slate-900 text-sm">#{order.orderNumber}</span>
+                                <span className="font-black text-slate-900 dark:text-white text-sm">#{order.orderNumber}</span>
                                 <span className={cn(
                                   "text-[9px] font-black uppercase tracking-widest w-fit",
                                   order.status === 'COMPLETED' ? "text-emerald-500" : "text-amber-500"
@@ -333,22 +333,22 @@ const ShiftListPage = () => {
                                   {order.status === 'COMPLETED' ? 'Hoàn thành' : 'Đang xử lý'}
                                 </span>
                               </div>
-                              <div className="text-xs font-bold text-slate-600">
+                              <div className="text-xs font-bold text-slate-600 dark:text-slate-400">
                                 {order.tableId?.name || (order.orderType === 'TAKEAWAY' ? 'Mang về' : 'Ship')}
                               </div>
-                              <div className="text-xs font-bold text-slate-500">
+                              <div className="text-xs font-bold text-slate-500 dark:text-slate-500">
                                 {format(new Date(order.createdAt), 'HH:mm:ss')}
                               </div>
                               <div>
                                  <span className={cn(
                                    "text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-widest",
-                                   order.paymentMethod === 'CASH' ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"
+                                   order.paymentMethod === 'CASH' ? "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400" : "bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400"
                                  )}>
                                    {order.paymentMethod === 'CASH' ? 'Tiền mặt' : 'Chuyển khoản'}
                                  </span>
                               </div>
                               <div className="flex items-center justify-end gap-4">
-                                <div className="text-right font-black text-slate-900 group-hover:text-emerald-600 transition-colors">
+                                <div className="text-right font-black text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                                   {order.total.toLocaleString('vi-VN')}đ
                                 </div>
                                 {order.status === 'COMPLETED' && (
@@ -365,7 +365,7 @@ const ShiftListPage = () => {
                                         createdAt: order.createdAt
                                       }, settings);
                                     }}
-                                    className="w-10 h-10 bg-white border border-slate-200 text-slate-400 rounded-xl flex items-center justify-center hover:bg-emerald-50 hover:text-emerald-600 transition-all shadow-sm"
+                                    className="w-10 h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 rounded-xl flex items-center justify-center hover:bg-emerald-50 dark:hover:bg-emerald-500/10 hover:text-emerald-600 transition-all shadow-sm"
                                     title="In lại hóa đơn"
                                   >
                                     <Printer size={18} />
@@ -375,16 +375,16 @@ const ShiftListPage = () => {
                             </div>
 
                             {/* Order Items Detail */}
-                            <div className="mt-4 pt-4 border-t border-slate-200/50 space-y-2">
+                            <div className="mt-4 pt-4 border-t border-slate-200/50 dark:border-slate-800 space-y-2">
                               {(order as any).items?.map((item: any, iIdx: number) => (
                                 <div key={iIdx} className="flex justify-between items-center text-[11px]">
                                   <div className="flex items-center gap-2">
-                                    <div className="w-5 h-5 rounded bg-white border border-slate-200 flex items-center justify-center font-black text-emerald-600">
+                                    <div className="w-5 h-5 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center font-black text-emerald-600">
                                       {item.quantity}
                                     </div>
-                                    <span className="font-bold text-slate-700 uppercase tracking-tight">{item.name}</span>
+                                    <span className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-tight">{item.name}</span>
                                   </div>
-                                  <span className="font-mono text-slate-400">{(item.price * item.quantity).toLocaleString('vi-VN')}đ</span>
+                                  <span className="font-mono text-slate-400 dark:text-slate-500">{(item.price * item.quantity).toLocaleString('vi-VN')}đ</span>
                                 </div>
                               ))}
                             </div>

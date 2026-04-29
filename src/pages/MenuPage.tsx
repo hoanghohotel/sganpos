@@ -157,11 +157,11 @@ const MenuPage = () => {
 
   if (!canManageMenu) {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-500">
-        <div className="w-24 h-24 bg-red-50 rounded-[32px] flex items-center justify-center mb-6">
-          <ShieldAlert size={48} className="text-red-500 opacity-20" />
-        </div>
-        <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-2">Truy cập bị từ chối</h2>
+      <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-500 bg-white dark:bg-slate-950">
+      <div className="w-24 h-24 bg-red-50 dark:bg-red-500/10 rounded-[32px] flex items-center justify-center mb-6">
+        <ShieldAlert size={48} className="text-red-500 opacity-20" />
+      </div>
+      <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">Truy cập bị từ chối</h2>
         <p className="max-w-md font-medium">Bạn không có quyền truy cập vào chức năng quản lý thực đơn. Vui lòng liên hệ quản trị viên.</p>
       </div>
     );
@@ -171,8 +171,8 @@ const MenuPage = () => {
     <div className="p-4 sm:p-8 h-full flex flex-col gap-6 overflow-hidden">
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
-          <p className="text-emerald-600 font-bold text-sm uppercase tracking-widest mb-1">Quản lý Menu</p>
-          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tighter uppercase whitespace-nowrap">Danh sách món</h1>
+          <p className="text-emerald-600 dark:text-emerald-400 font-bold text-sm uppercase tracking-widest mb-1">Quản lý Menu</p>
+          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase whitespace-nowrap">Danh sách món</h1>
         </div>
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <button 
@@ -180,7 +180,7 @@ const MenuPage = () => {
               setEditingProduct({ name: '', category: '', basePrice: 0 });
               setIsModalOpen(true);
             }}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-emerald-600 text-white px-5 py-3 rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 text-sm"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-emerald-600 text-white px-5 py-3 rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 dark:shadow-none text-sm"
           >
             <Plus size={18} />
             Thêm món
@@ -188,7 +188,7 @@ const MenuPage = () => {
           <div className="flex gap-2 w-full sm:w-auto">
             <button 
               onClick={() => importInputRef.current?.click()}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white text-slate-700 border border-slate-200 px-4 py-3 rounded-xl font-bold hover:bg-slate-50 transition-all text-xs uppercase tracking-widest"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-400 border border-slate-200 dark:border-slate-800 px-4 py-3 rounded-xl font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-xs uppercase tracking-widest"
             >
               <Upload size={16} />
               Import
@@ -196,7 +196,7 @@ const MenuPage = () => {
             <input type="file" ref={importInputRef} onChange={handleImport} accept=".xlsx, .xls" className="hidden" />
             <button 
               onClick={handleExport}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white text-slate-700 border border-slate-200 px-4 py-3 rounded-xl font-bold hover:bg-slate-50 transition-all text-xs uppercase tracking-widest"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-400 border border-slate-200 dark:border-slate-800 px-4 py-3 rounded-xl font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all text-xs uppercase tracking-widest"
             >
               <Download size={16} />
               Export
@@ -211,7 +211,7 @@ const MenuPage = () => {
           <input 
             type="text"
             placeholder="Tìm kiếm sản phẩm..."
-            className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-base sm:text-lg font-medium shadow-sm"
+            className="w-full pl-12 pr-4 py-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all text-base sm:text-lg font-medium shadow-sm text-slate-900 dark:text-white"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -225,8 +225,8 @@ const MenuPage = () => {
               className={cn(
                 "px-5 py-2.5 rounded-xl font-black uppercase tracking-widest text-[9px] sm:text-[10px] border transition-all whitespace-nowrap",
                 selectedCategory === cat 
-                  ? "bg-slate-900 border-slate-900 text-white shadow-lg shadow-slate-200" 
-                  : "bg-white border-slate-100 text-slate-400 hover:border-slate-200 hover:text-slate-600"
+                  ? "bg-slate-900 dark:bg-white border-slate-900 dark:border-white text-white dark:text-slate-900 shadow-lg shadow-slate-200 dark:shadow-none" 
+                  : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-400 hover:border-slate-200 dark:hover:border-slate-700 hover:text-slate-600 dark:hover:text-slate-200"
               )}
             >
               {cat}
@@ -235,10 +235,10 @@ const MenuPage = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-hidden bg-white border border-slate-200 rounded-3xl shadow-sm flex flex-col">
+      <div className="flex-1 overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm flex flex-col">
         <div className="flex-1 overflow-auto">
           <table className="w-full text-left min-w-[600px]">
-            <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-10">
+            <thead className="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-10">
               <tr>
                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Hình ảnh</th>
                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">Tên món</th>
@@ -247,28 +247,28 @@ const MenuPage = () => {
                 <th className="px-6 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-center">Thao tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
             {filteredProducts.map((product) => (
-              <tr key={product._id} className="hover:bg-slate-50/50 transition-colors group">
+              <tr key={product._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors group">
                 <td className="px-6 py-4">
-                  <div className="w-16 h-16 bg-slate-100 rounded-xl flex items-center justify-center overflow-hidden">
+                  <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center overflow-hidden">
                     {product.image ? (
                       <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
                     ) : (
-                      <Coffee className="text-slate-300" />
+                      <Coffee className="text-slate-300 dark:text-slate-600" />
                     )}
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <p className="font-bold text-slate-900 uppercase tracking-tighter">{product.name}</p>
+                  <p className="font-bold text-slate-900 dark:text-white uppercase tracking-tighter">{product.name}</p>
                 </td>
                 <td className="px-6 py-4">
-                  <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs font-black uppercase tracking-widest">
+                  <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg text-xs font-black uppercase tracking-widest">
                     {product.category}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-right">
-                  <p className="font-black text-emerald-600 font-mono">
+                  <p className="font-black text-emerald-600 dark:text-emerald-400 font-mono">
                     {product.basePrice.toLocaleString('vi-VN')}đ
                   </p>
                 </td>
@@ -279,13 +279,13 @@ const MenuPage = () => {
                         setEditingProduct(product);
                         setIsModalOpen(true);
                       }}
-                      className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                      className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg transition-all"
                     >
                       <Edit2 size={18} />
                     </button>
                     <button 
                       onClick={() => handleDeleteProduct(product._id)}
-                      className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                      className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-all"
                     >
                       <Trash2 size={18} />
                     </button>
@@ -319,15 +319,15 @@ const MenuPage = () => {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative bg-white w-full max-w-xl rounded-[32px] shadow-2xl overflow-hidden"
+              className="relative bg-white dark:bg-slate-900 w-full max-w-xl rounded-[32px] shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800"
             >
               <div className="p-8">
                 <header className="flex justify-between items-center mb-8">
-                  <h2 className="text-2xl font-black text-slate-900 tracking-tighter uppercase">
+                  <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">
                     {editingProduct?._id ? 'Chỉnh sửa món' : 'Thêm món mới'}
                   </h2>
-                  <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                    <X size={24} />
+                  <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+                    <X size={24} className="dark:text-slate-400" />
                   </button>
                 </header>
 
@@ -335,7 +335,7 @@ const MenuPage = () => {
                   <div className="flex gap-6">
                     <div 
                       onClick={() => fileInputRef.current?.click()}
-                      className="w-32 h-32 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 transition-all overflow-hidden relative"
+                      className="w-32 h-32 bg-slate-50 dark:bg-slate-950 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-all overflow-hidden relative"
                     >
                       {editingProduct?.image ? (
                         <>
@@ -346,8 +346,8 @@ const MenuPage = () => {
                         </>
                       ) : (
                         <>
-                          <ImageIcon className="text-slate-300" />
-                          <span className="text-xs font-black text-slate-400 uppercase">Ảnh</span>
+                          <ImageIcon className="text-slate-300 dark:text-slate-700" />
+                          <span className="text-xs font-black text-slate-400 dark:text-slate-600 uppercase">Ảnh</span>
                         </>
                       )}
                     </div>
@@ -355,19 +355,19 @@ const MenuPage = () => {
 
                     <div className="flex-1 flex flex-col gap-4">
                       <div>
-                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1 block">Tên món</label>
+                        <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1 block">Tên món</label>
                         <input 
                           type="text"
-                          className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-bold"
+                          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-bold text-slate-900 dark:text-white"
                           value={editingProduct?.name || ''}
                           onChange={(e) => setEditingProduct(prev => prev ? { ...prev, name: e.target.value } : null)}
                         />
                       </div>
                       <div>
-                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1 block">Giá cơ bản (VNĐ)</label>
+                        <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1 block">Giá cơ bản (VNĐ)</label>
                         <input 
                           type="number"
-                          className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-mono font-black"
+                          className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-mono font-black text-slate-900 dark:text-white"
                           value={editingProduct?.basePrice || 0}
                           onChange={(e) => setEditingProduct(prev => prev ? { ...prev, basePrice: Number(e.target.value) } : null)}
                         />
@@ -376,10 +376,10 @@ const MenuPage = () => {
                   </div>
 
                   <div>
-                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1 block">Danh mục</label>
+                    <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1 block">Danh mục</label>
                     <input 
                       type="text"
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-bold"
+                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-bold text-slate-900 dark:text-white"
                       value={editingProduct?.category || ''}
                       placeholder="VD: Cà phê, Trà sữa, Bánh mỳ..."
                       onChange={(e) => setEditingProduct(prev => prev ? { ...prev, category: e.target.value } : null)}
@@ -390,13 +390,13 @@ const MenuPage = () => {
                 <div className="mt-10 flex gap-3">
                   <button 
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 px-6 py-4 bg-slate-50 text-slate-600 rounded-2xl font-bold hover:bg-slate-100 transition-all"
+                    className="flex-1 px-6 py-4 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-bold hover:bg-slate-100 dark:hover:bg-slate-750 transition-all"
                   >
                     Hủy
                   </button>
                   <button 
                     onClick={handleSaveProduct}
-                    className="flex-3 px-6 py-4 bg-emerald-600 text-white rounded-2xl font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 flex items-center justify-center gap-2"
+                    className="flex-3 px-6 py-4 bg-emerald-600 text-white rounded-2xl font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 dark:shadow-none flex items-center justify-center gap-2"
                   >
                     <Save size={20} />
                     Lưu sản phẩm

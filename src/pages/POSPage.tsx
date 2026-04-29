@@ -1073,15 +1073,15 @@ const POSPage = () => {
 
   if (loading) {
     return (
-      <div className="h-full flex items-center justify-center bg-[#F8FAFC]">
+      <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-slate-950">
         <div className="w-12 h-12 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="flex h-full overflow-hidden bg-[#F8FAFC] justify-center">
-      <div className="flex w-full max-w-[1440px] h-full overflow-hidden bg-white lg:bg-transparent shadow-2xl lg:shadow-none">
+    <div className="flex h-full overflow-hidden bg-slate-50 dark:bg-slate-950 justify-center">
+      <div className="flex w-full max-w-[1440px] h-full overflow-hidden bg-white dark:bg-slate-950 lg:bg-transparent shadow-2xl lg:shadow-none">
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col overflow-hidden relative">
           <AnimatePresence mode="wait">
@@ -1472,7 +1472,7 @@ const POSPage = () => {
                     {total.toLocaleString('vi-VN')}đ
                   </div>
                 </div>
-                <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
+                        <div className="h-10 w-10 rounded-full bg-slate-900/10 dark:bg-white/20 flex items-center justify-center">
                    <CircleDollarSign size={24} />
                 </div>
               </div>

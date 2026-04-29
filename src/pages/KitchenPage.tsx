@@ -154,17 +154,17 @@ const KitchenPage = () => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-[#F8FAFC]">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-950">
       {/* Top Header */}
-      <header className="p-6 bg-white border-b border-slate-200 flex justify-between items-center shadow-sm z-10">
+      <header className="p-6 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center shadow-sm z-10">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-100">
+          <div className="w-14 h-14 bg-emerald-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-100 dark:shadow-none">
             <img src="/logo.svg" alt="Logo" className="w-10 h-10" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Khu vực Nhà Bếp</h1>
-            <p className="text-xs text-slate-400 uppercase tracking-widest flex items-center gap-1 font-bold">
-              <Clock size={12} className="text-emerald-500" /> Cập nhật: {lastRefreshed.toLocaleTimeString('vi-VN')}
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Khu vực Nhà Bếp</h1>
+            <p className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1 font-bold">
+              <Clock size={12} className="text-emerald-500 dark:text-emerald-400" /> Cập nhật: {lastRefreshed.toLocaleTimeString('vi-VN')}
             </p>
           </div>
         </div>
@@ -180,8 +180,8 @@ const KitchenPage = () => {
             className={cn(
               "p-3 rounded-xl border transition-all flex items-center gap-2",
               isNotificationsEnabled 
-                ? "bg-emerald-50 border-emerald-200 text-emerald-600" 
-                : "bg-slate-50 border-slate-200 text-slate-400"
+                ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400" 
+                : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500"
             )}
           >
             {isNotificationsEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
@@ -198,26 +198,26 @@ const KitchenPage = () => {
             transition={{ duration: 1.5, ease: "easeInOut" }}
             className={cn(
               "w-12 h-12 rounded-xl flex items-center justify-center border transition-colors",
-              isRinging ? "bg-rose-500 text-white border-rose-400 shadow-lg shadow-rose-200" : "bg-white text-slate-400 border-slate-100"
+              isRinging ? "bg-rose-500 text-white border-rose-400 shadow-lg shadow-rose-200 dark:shadow-none" : "bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-500 border-slate-100 dark:border-slate-800"
             )}
           >
             <Bell size={24} className={isRinging ? "animate-pulse" : ""} />
           </motion.div>
 
-          <div className="bg-slate-50 px-6 py-2 rounded-2xl border border-slate-100 flex items-center gap-4">
+          <div className="bg-slate-50 dark:bg-slate-950 px-6 py-2 rounded-2xl border border-slate-100 dark:border-slate-800 flex items-center gap-4">
             <div className="flex flex-col text-center">
-              <span className="text-2xl font-black text-rose-600 leading-none">{pendingCount}</span>
-              <span className="text-xs text-slate-400 uppercase font-black tracking-tighter">Mới</span>
+              <span className="text-2xl font-black text-rose-600 dark:text-rose-400 leading-none">{pendingCount}</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500 uppercase font-black tracking-tighter">Mới</span>
             </div>
-            <div className="w-px h-8 bg-slate-200" />
+            <div className="w-px h-8 bg-slate-200 dark:bg-slate-800" />
             <div className="flex flex-col text-center">
-              <span className="text-2xl font-black text-orange-600 leading-none">{preparingCount}</span>
-              <span className="text-xs text-slate-400 uppercase font-black tracking-tighter">Đang làm</span>
+              <span className="text-2xl font-black text-orange-600 dark:text-orange-400 leading-none">{preparingCount}</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500 uppercase font-black tracking-tighter">Đang làm</span>
             </div>
-            <div className="w-px h-8 bg-slate-200" />
+            <div className="w-px h-8 bg-slate-200 dark:bg-slate-800" />
             <div className="flex flex-col text-center">
-              <span className="text-2xl font-black text-emerald-600 leading-none">{orders.length}</span>
-              <span className="text-xs text-slate-400 uppercase font-black tracking-tighter">Tổng đơn</span>
+              <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400 leading-none">{orders.length}</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500 uppercase font-black tracking-tighter">Tổng đơn</span>
             </div>
           </div>
         </div>
@@ -252,15 +252,15 @@ const KitchenPage = () => {
                     exit={{ opacity: 0, scale: 0.95 }}
                     key={groupKey}
                     className={cn(
-                      "flex flex-col bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden transition-all",
-                      isNew ? "ring-2 ring-rose-500 ring-offset-4 bg-rose-50/5 animate-pulse-subtle" : ""
+                      "flex flex-col bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden transition-all",
+                      isNew ? "ring-2 ring-rose-500 ring-offset-4 dark:ring-offset-slate-950 bg-rose-50/5 animate-pulse-subtle" : ""
                     )}
                   >
                     {/* Header: Table Info */}
-                    <div className="p-5 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                    <div className="p-5 border-b border-slate-50 dark:border-slate-800/50 flex justify-between items-center bg-slate-50/50 dark:bg-slate-950/50">
                       <div>
-                        <h3 className="font-black text-slate-900 uppercase tracking-tighter text-xl italic">{tableName}</h3>
-                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest leading-none mt-1">
+                        <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-tighter text-xl italic">{tableName}</h3>
+                        <p className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mt-1">
                           {groupOrders.length} Yêu cầu • <Clock size={10} className="inline mb-0.5" /> {Math.floor((new Date().getTime() - new Date(oldestOrder.createdAt).getTime()) / 60000)}p
                         </p>
                       </div>
@@ -302,21 +302,21 @@ const KitchenPage = () => {
                                 )}>
                                   <div className={cn(
                                     "w-7 h-7 shrink-0 rounded-lg flex items-center justify-center font-black text-xs",
-                                    isFinished ? "bg-slate-100 text-slate-400" : "bg-emerald-100 text-emerald-600 shadow-sm"
+                                    isFinished ? "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600" : "bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-sm"
                                   )}>
                                     {item.quantity}
                                   </div>
                                   <div className="flex-1 min-w-0">
                                     <p className={cn(
                                       "font-bold text-sm uppercase tracking-tighter transition-all",
-                                      isFinished ? "text-slate-400 line-through decoration-2" : "text-slate-900",
-                                      isNew ? "text-rose-600 scale-105 origin-left" : ""
+                                      isFinished ? "text-slate-400 dark:text-slate-600 line-through decoration-2" : "text-slate-900 dark:text-slate-100",
+                                      isNew ? "text-rose-600 dark:text-rose-400 scale-105 origin-left" : ""
                                     )}>
                                       {item.name}
                                       {isNew && <span className="ml-2 text-[10px] px-1.5 py-0.5 bg-rose-500 text-white rounded-md tracking-widest animate-pulse">MỚI</span>}
                                     </p>
                                     {item.notes && (
-                                      <p className="text-xs text-rose-500 font-bold mt-0.5 italic flex items-center gap-1">
+                                      <p className="text-xs text-rose-500 dark:text-rose-400 font-bold mt-0.5 italic flex items-center gap-1">
                                         <AlertCircle size={10} /> {item.notes}
                                       </p>
                                     )}
@@ -331,13 +331,13 @@ const KitchenPage = () => {
                       {/* Order Actions */}
                       <div className="mt-4 space-y-2">
                         {groupOrders.map(order => (
-                          <div key={order._id} className="flex items-center justify-between border-t border-slate-50 pt-2 first:border-0 first:pt-0">
-                            <span className="text-xs font-black text-slate-400 uppercase tracking-widest">#{order.orderNumber}</span>
+                          <div key={order._id} className="flex items-center justify-between border-t border-slate-50 dark:border-slate-800/50 pt-2 first:border-0 first:pt-0">
+                            <span className="text-xs font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">#{order.orderNumber}</span>
                             <div className="flex gap-2">
                               {order.status === 'PENDING' && (
                                 <button
                                   onClick={() => updateStatus(order._id, 'PREPARING')}
-                                  className="px-3 py-1 bg-slate-900 text-white rounded-lg text-[10px] font-black uppercase tracking-widest"
+                                  className="px-3 py-1 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg text-[10px] font-black uppercase tracking-widest"
                                 >
                                   Làm
                                 </button>
@@ -353,7 +353,7 @@ const KitchenPage = () => {
                               {order.status === 'READY' && (
                                 <button
                                   onClick={() => updateStatus(order._id, 'DELIVERED')}
-                                  className="px-3 py-1 bg-white border border-emerald-600 text-emerald-600 rounded-lg text-[10px] font-black uppercase tracking-widest"
+                                  className="px-3 py-1 bg-white dark:bg-slate-800 border border-emerald-600 text-emerald-600 dark:text-emerald-400 rounded-lg text-[10px] font-black uppercase tracking-widest"
                                 >
                                   Giao
                                 </button>
