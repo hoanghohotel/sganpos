@@ -1,0 +1,55 @@
+workflows:
+react-web-to-android:
+name: React Web → Android (Capacitor)
+max_build_duration: 60
+
+```
+environment:
+  node: 18
+  java: 17
+
+triggering:
+  events:
+    - push
+  branch_patterns:
+    - pattern: main
+      include: true
+
+scripts:
+  - name: Install dependencies
+    script: |
+      npm ci
+
+  - name: Build React app
+    script: |
+      npm run build
+
+  - name: Install Capacitor
+    script: |
+      npm install @capacitor/core @capacitor/cli @capacitor/android
+
+  - name: Init Capacitor (only if first time)
+    script: |
+      npx cap init sganpos com.sganpos.app || true
+
+  - name: Add Android platform (if not exists)
+    script: |
+      npx cap add android || true
+
+  - name: Sync project to Android
+    script: |
+      npx cap sync android
+
+  - name: Build Android APK
+    script: |
+      cd android
+      ./gradlew assembleDebug
+
+artifacts:
+  - android/app/build/outputs/**/*.apk
+
+publishing:
+  email:
+    recipients:
+      - taxvui@gmail.com
+```
