@@ -1,11 +1,56 @@
-triggers:
-  push:
-    branches:
-      - main
-      - develop
-  pull_request:
-    branches:
-      - main
-      - develop
-
-max_build_duration: ...
+workflows:
+  ionic_capacitor_android:
+    name: Ionic Capacitor Android Workflow
+    on:
+      push:
+        branches:
+          - main
+          - develop
+      pull_request:
+        branches:
+          - main
+          - develop
+    max_build_duration: 180
+    env:
+      NODE_ENV: production
+      GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+      APP_ENV: production
+    jobs:
+      build:
+        docker:
+          - image: cirrusci/flutter:3.0.0
+        steps:
+          - checkout
+          - install_npm_dependencies:
+              name: Install NPM dependencies
+              script:
+                - npm install
+          - run_web_compilation:
+              name: Web Compilation
+              script:
+                - npm run build
+          - sync_capacitor:
+              name: Capacitor Sync
+              script:
+                - npx cap sync
+          - android_release_build:
+              name: Android Release Build
+              script:
+                - cd android && ./gradlew assembleRelease
+          - save_gradle_cache:
+              name: Save Gradle Cache
+              path: ~/.gradle/caches
+          - publish_artifacts:
+              name: Publish Artifacts
+              script:
+                - upload-artifact --name release --path android/app/build/outputs/apk/release/
+          - publish_to_google_play:
+              name: Publish to Google Play
+              script:
+                - ./gradlew publishToPlayStore
+          - send_email_notification:
+              name: Send Email Notification
+              script:
+                - echo "Build completed!" | mail -s "Build Notification" your-email@example.com
+    artifacts:
+      - android/app/build/outputs/apk/release/*
