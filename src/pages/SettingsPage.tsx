@@ -1261,11 +1261,11 @@ const SettingsPage = () => {
                                    createdAt: new Date().toISOString()
                                  };
                                  printOrder(testOrderData, { 
-                                   ...settings, 
+                                   ...(settings as any), 
                                    brand: pr.brand, 
                                    printWidth: pr.printWidth || pr.width || '80mm',
                                    templateFields: templateFields && templateFields.length > 0 ? templateFields : undefined
-                                 });
+                                 } as any);
                                }}
                              >
                                <Printer size={16} />
