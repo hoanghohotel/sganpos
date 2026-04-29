@@ -16,7 +16,6 @@ function DialogTrigger({ asChild, render, children, ...props }: DialogPrimitive.
     <DialogPrimitive.Trigger
       data-slot="dialog-trigger"
       render={asChild ? (children as any) : render}
-      nativeButton={asChild ? false : undefined}
       {...props}
     >
       {asChild ? undefined : children}
@@ -33,7 +32,6 @@ function DialogClose({ asChild, render, children, ...props }: DialogPrimitive.Cl
     <DialogPrimitive.Close
       data-slot="dialog-close"
       render={asChild ? (children as any) : render}
-      nativeButton={asChild ? false : undefined}
       {...props}
     >
       {asChild ? undefined : children}
@@ -80,7 +78,6 @@ function DialogContent({
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
-            nativeButton={false}
             render={
               <Button
                 variant="ghost"
@@ -128,7 +125,7 @@ function DialogFooter({
     >
       {children}
       {showCloseButton && (
-        <DialogPrimitive.Close nativeButton={false} render={<Button variant="outline" />}>
+        <DialogPrimitive.Close render={<Button variant="outline" />}>
           Close
         </DialogPrimitive.Close>
       )}

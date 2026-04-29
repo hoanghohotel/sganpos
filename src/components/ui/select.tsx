@@ -46,7 +46,6 @@ function SelectTrigger({
         className
       )}
       render={asChild ? (children as any) : render}
-      nativeButton={asChild ? false : undefined}
       {...props}
     >
       {asChild ? undefined : children}

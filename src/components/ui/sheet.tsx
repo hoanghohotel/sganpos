@@ -14,7 +14,6 @@ function SheetTrigger({ asChild, render, children, ...props }: SheetPrimitive.Tr
     <SheetPrimitive.Trigger
       data-slot="sheet-trigger"
       render={asChild ? (children as any) : render}
-      nativeButton={asChild ? false : undefined}
       {...props}
     >
       {asChild ? undefined : children}
@@ -27,7 +26,6 @@ function SheetClose({ asChild, render, children, ...props }: SheetPrimitive.Clos
     <SheetPrimitive.Close
       data-slot="sheet-close"
       render={asChild ? (children as any) : render}
-      nativeButton={asChild ? false : undefined}
       {...props}
     >
       {asChild ? undefined : children}
@@ -78,7 +76,6 @@ function SheetContent({
         {showCloseButton && (
           <SheetPrimitive.Close
             data-slot="sheet-close"
-            nativeButton={false}
             render={
               <Button
                 variant="ghost"

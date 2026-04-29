@@ -65,7 +65,6 @@ function TabsTrigger({ className, asChild, render, children, ...props }: TabsPri
         className
       )}
       render={asChild ? (children as any) : render}
-      nativeButton={asChild ? false : undefined}
       {...props}
     >
       {asChild ? undefined : children}
