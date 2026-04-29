@@ -34,7 +34,7 @@ function Badge({
   asChild,
   children,
   ...props
-}: useRender.ComponentProps<"span"> & VariantProps<typeof badgeVariants> & { asChild?: boolean }) {
+}: React.ComponentPropsWithoutRef<"span"> & VariantProps<typeof badgeVariants> & { asChild?: boolean; render?: any }) {
   return useRender({
     defaultTagName: "span",
     props: mergeProps<"span">(
@@ -44,7 +44,7 @@ function Badge({
       },
       props as any
     ),
-    render: asChild ? children : render,
+    render: asChild ? (children as any) : render,
     state: {
       slot: "badge",
       variant,

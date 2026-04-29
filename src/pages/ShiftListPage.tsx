@@ -30,6 +30,7 @@ interface OrderItem {
   status: string;
   tableId?: { name: string };
   orderType: string;
+  paymentStatus?: string;
 }
 
 const ShiftListPage = () => {
@@ -119,7 +120,7 @@ const ShiftListPage = () => {
             filteredShifts.map((shift) => (
               <motion.div
                 key={shift._id}
-                whileHover={{ y: -4, shadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
+                whileHover={{ y: -4, boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
                 onClick={() => handleViewDetails(shift)}
                 className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 cursor-pointer transition-all border-l-8 border-l-transparent hover:border-l-emerald-500 group shadow-sm"
               >

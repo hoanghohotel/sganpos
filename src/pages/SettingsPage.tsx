@@ -998,9 +998,9 @@ const SettingsPage = () => {
                           createdAt: new Date().toISOString()
                         };
                         printOrder(testOrderData, { 
-                          ...settings, 
+                          ...(settings as any), 
                           templateFields: templateFields.length > 0 ? templateFields : undefined 
-                        });
+                        } as any);
                       }}
                       className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20"
                     >
@@ -1264,7 +1264,7 @@ const SettingsPage = () => {
                                    ...settings, 
                                    brand: pr.brand, 
                                    printWidth: pr.printWidth || pr.width || '80mm',
-                                   templateFields: settings.templateFields && settings.templateFields.length > 0 ? settings.templateFields : undefined
+                                   templateFields: templateFields && templateFields.length > 0 ? templateFields : undefined
                                  });
                                }}
                              >
