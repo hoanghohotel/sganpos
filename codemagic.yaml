@@ -1,44 +1,11 @@
-# Codemagic Configuration
+triggers:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
 
-# Optimized settings for building projects
-version: 2.0
-
-# Increase max build duration
-max_build_duration: 180 # in minutes
-
-# Java heap memory optimization
-java_options: '-Xmx2048m -Xms512m'
-
-# Caching configuration
-cache:
-  paths:
-    - node_modules/**
-    - .gradle/caches/**
-    - .gradle/wrapper/**
-
-# Use npm ci instead of npm install
-scripts:
-  install:
-    - npm ci
-
-# Enable parallel gradle builds
-parallel_builds:
-  enabled: true
-
-# Fixed shell script syntax
-scripts:
-  # Add your build commands here
-
-# Artifacts configuration
-artifacts:
-  - path: build/app/outputs/bundle/release/app-release.aab
-    type: aab
-
-# Publishing settings
-publish:
-  android:
-    github:
-      owner: taxvui
-      repo: sganpos
-
-# End of configuration
+max_build_duration: ...
