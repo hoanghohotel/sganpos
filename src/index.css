@@ -4,7 +4,7 @@
 
 @font-face {
   font-family: 'Poppins';
-  src: url('https://cdn.jsdelivr.net/gh/taxvui/Poppins@main/Poppins-Light.ttf') format('truetype');
+  src: url('https://cdn.jsdelivr.net/gh/taxvui/Poppins@main/Poppins-Light.otf') format('opentype');
   font-weight: 300;
   font-style: normal;
   font-display: swap;
@@ -12,7 +12,7 @@
 
 @font-face {
   font-family: 'Poppins';
-  src: url('https://cdn.jsdelivr.net/gh/taxvui/Poppins@main/Poppins-Regular.ttf') format('truetype');
+  src: url('https://cdn.jsdelivr.net/gh/taxvui/Poppins@main/Poppins-Regular.otf') format('opentype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -20,7 +20,7 @@
 
 @font-face {
   font-family: 'Poppins';
-  src: url('https://cdn.jsdelivr.net/gh/taxvui/Poppins@main/Poppins-Medium.ttf') format('truetype');
+  src: url('https://cdn.jsdelivr.net/gh/taxvui/Poppins@main/Poppins-Medium.otf') format('opentype');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
@@ -28,7 +28,7 @@
 
 @font-face {
   font-family: 'Poppins';
-  src: url('https://cdn.jsdelivr.net/gh/taxvui/Poppins@main/Poppins-SemiBold.ttf') format('truetype');
+  src: url('https://cdn.jsdelivr.net/gh/taxvui/Poppins@main/Poppins-SemiBold.otf') format('opentype');
   font-weight: 600;
   font-style: normal;
   font-display: swap;
@@ -36,7 +36,7 @@
 
 @font-face {
   font-family: 'Poppins';
-  src: url('https://cdn.jsdelivr.net/gh/taxvui/Poppins@main/Poppins-Bold.ttf') format('truetype');
+  src: url('https://cdn.jsdelivr.net/gh/taxvui/Poppins@main/Poppins-Bold.otf') format('opentype');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -44,7 +44,7 @@
 
 @font-face {
   font-family: 'Poppins';
-  src: url('https://cdn.jsdelivr.net/gh/taxvui/Poppins@main/Poppins-ExtraBold.ttf') format('truetype');
+  src: url('https://cdn.jsdelivr.net/gh/taxvui/Poppins@main/Poppins-ExtraBold.otf') format('opentype');
   font-weight: 800;
   font-style: normal;
   font-display: swap;
@@ -52,7 +52,7 @@
 
 @font-face {
   font-family: 'Poppins';
-  src: url('https://cdn.jsdelivr.net/gh/taxvui/Poppins@main/Poppins-Black.ttf') format('truetype');
+  src: url('https://cdn.jsdelivr.net/gh/taxvui/Poppins@main/Poppins-Black.otf') format('opentype');
   font-weight: 900;
   font-style: normal;
   font-display: swap;

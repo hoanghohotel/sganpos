@@ -66,12 +66,12 @@ export const generatePrintHTML = (order: PrintOrderData, settings: PrintSettings
     <style>
       @font-face {
         font-family: 'Poppins';
-        src: url('https://cdn.jsdelivr.net/gh/taxvui/Poppins@main/Poppins-Regular.ttf') format('truetype');
+        src: url('https://cdn.jsdelivr.net/gh/taxvui/Poppins@main/Poppins-Regular.otf') format('opentype');
         font-weight: 400;
       }
       @font-face {
         font-family: 'Poppins';
-        src: url('https://cdn.jsdelivr.net/gh/taxvui/Poppins@main/Poppins-Bold.ttf') format('truetype');
+        src: url('https://cdn.jsdelivr.net/gh/taxvui/Poppins@main/Poppins-Bold.otf') format('opentype');
         font-weight: 700;
       }
       
