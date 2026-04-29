@@ -336,4 +336,51 @@ router.get('/check-availability', async (req, res) => {
   }
 });
 
+// Refresh Token (for mobile apps)
+// Accepts a valid JWT and returns a new one
+router.post('/refresh', async (req: any, res) => {
+  try {
+    const token = req.cookies?.token || req.headers.authorization?.split(' ')[1];
+    
+    if (!token) {
+      return res.status(401).json({ error: 'Token required for refresh' });
+    }
+
+    try {
+      const decoded: any = jwt.verify(token, JWT_SECRET);
+      const user = await User.findOne({ _id: decoded.id, tenantId: decoded.tenantId }).select('-password');
+      
+      if (!user || !user.isActive) {
+        return res.status(401).json({ error: 'User not found or inactive' });
+      }
+
+      // Issue new token with same expiry period
+      const newToken = jwt.sign({ id: user._id, tenantId: user.tenantId }, JWT_SECRET, { expiresIn: '7d' });
+      
+      res.cookie('token', newToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      });
+
+      res.json({
+        token: newToken,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          role: user.role
+        }
+      });
+    } catch (jwtError) {
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+  } catch (error: any) {
+    console.error('Token refresh error:', error);
+    res.status(500).json({ error: 'Token refresh failed' });
+  }
+});
+
 export default router;
