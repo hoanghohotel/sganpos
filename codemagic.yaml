@@ -8,17 +8,9 @@ workflows:
 
     environment:
 
-      android_signing:
-
-        - keystore_reference
-
-      groups:
-
-        - google_play
-
       vars:
 
-        PACKAGE_NAME: "io.codemagic.ionicsample"
+        PACKAGE_NAME: "pos.monday.com.vn"
 
         GOOGLE_PLAY_TRACK: alpha
 
