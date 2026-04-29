@@ -1,4 +1,6 @@
+import { IonPage, IonContent } from '@ionic/react';
 import React, { useState, useEffect } from 'react';
+// ... rest of imports
 import { Plus, Search, Trash2, Edit2, QrCode, SlidersHorizontal, Table as TableIcon, Users } from 'lucide-react';
 import api from '../lib/api';
 import { cn } from '../lib/utils';
@@ -118,18 +120,24 @@ const TablesPage = () => {
 
   if (!canManageTables) {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-500 bg-white dark:bg-slate-950">
-      <div className="w-24 h-24 bg-red-50 dark:bg-red-500/10 rounded-[32px] flex items-center justify-center mb-6">
-        <ShieldAlert size={48} className="text-red-500 opacity-20" />
-      </div>
-      <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">Truy cập bị từ chối</h2>
-        <p className="max-w-md font-medium">Bạn không có quyền truy cập vào chức năng quản lý bàn. Vui lòng liên hệ quản trị viên.</p>
-      </div>
+      <IonPage>
+        <IonContent>
+          <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-500 bg-white dark:bg-slate-950">
+            <div className="w-24 h-24 bg-red-50 dark:bg-red-500/10 rounded-[32px] flex items-center justify-center mb-6">
+              <ShieldAlert size={48} className="text-red-500 opacity-20" />
+            </div>
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">Truy cập bị từ chối</h2>
+              <p className="max-w-md font-medium">Bạn không có quyền truy cập vào chức năng quản lý bàn. Vui lòng liên hệ quản trị viên.</p>
+          </div>
+        </IonContent>
+      </IonPage>
     );
   }
 
   return (
-    <div className="p-8 h-full flex flex-col gap-6">
+    <IonPage>
+      <IonContent>
+        <div className="p-8 h-full flex flex-col gap-6">
       <header className="flex justify-between items-end">
         <div>
           <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight mb-2">QUẢN LÝ BÀN</h1>
@@ -476,6 +484,8 @@ const TablesPage = () => {
         )}
       </AnimatePresence>
     </div>
+    </IonContent>
+  </IonPage>
   );
 };
 

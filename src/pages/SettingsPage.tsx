@@ -1,4 +1,6 @@
+import { IonPage, IonContent } from '@ionic/react';
 import React, { useState, useEffect } from 'react';
+// ... rest of imports
 import api from '../lib/api';
 import axios from 'axios';
 import { ShieldAlert, Save, Building2, CreditCard, Upload, CheckCircle2, AlertCircle, ChevronDown, Search, Globe, Link as LinkIcon, User, Plus, Move, Trash2, GripVertical, Type, List, Hash, Layout, Printer, Eye, Wifi } from 'lucide-react';
@@ -544,26 +546,36 @@ const SettingsPage = () => {
 
   if (loading) {
     return (
-      <div className="p-10 flex items-center justify-center h-full">
-        <div className="w-10 h-10 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin" />
-      </div>
+      <IonPage>
+        <IonContent>
+          <div className="p-10 flex items-center justify-center h-full">
+            <div className="w-10 h-10 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin" />
+          </div>
+        </IonContent>
+      </IonPage>
     );
   }
 
   if (!canManageSettings) {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-500">
-        <div className="w-24 h-24 bg-red-50 dark:bg-rose-500/10 rounded-[32px] flex items-center justify-center mb-6 border dark:border-rose-500/20">
-          <ShieldAlert size={48} className="text-red-500 opacity-20 dark:opacity-40" />
-        </div>
-        <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">Truy cập bị từ chối</h2>
-        <p className="max-w-md font-medium dark:text-slate-400">Bạn không có quyền truy cập vào chức năng cài đặt. Vui lòng liên hệ quản trị viên.</p>
-      </div>
+      <IonPage>
+        <IonContent>
+          <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-500">
+            <div className="w-24 h-24 bg-red-50 dark:bg-rose-500/10 rounded-[32px] flex items-center justify-center mb-6 border dark:border-rose-500/20">
+              <ShieldAlert size={48} className="text-red-500 opacity-20 dark:opacity-40" />
+            </div>
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">Truy cập bị từ chối</h2>
+            <p className="max-w-md font-medium dark:text-slate-400">Bạn không có quyền truy cập vào chức năng cài đặt. Vui lòng liên hệ quản trị viên.</p>
+          </div>
+        </IonContent>
+      </IonPage>
     );
   }
 
   return (
-    <div className="p-10 max-w-4xl h-full overflow-auto outline-none no-scrollbar">
+    <IonPage>
+      <IonContent>
+        <div className="p-10 max-w-4xl h-full overflow-auto outline-none no-scrollbar text-slate-800">
       <header className="mb-10">
         <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter uppercase mb-2 italic">Cài đặt hệ thống</h1>
         <p className="text-slate-500 dark:text-slate-400 font-medium">Quản lý định danh thương hiệu và cấu hình thanh toán của bạn.</p>
@@ -1422,6 +1434,8 @@ const SettingsPage = () => {
         </div>
       </form>
     </div>
+    </IonContent>
+  </IonPage>
   );
 };
 

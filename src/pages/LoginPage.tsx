@@ -1,4 +1,6 @@
+import { IonPage, IonContent } from '@ionic/react';
 import React, { useState, useEffect } from 'react';
+// ... rest of imports
 import { useAuthStore } from '../store/authStore';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { motion } from 'motion/react';
@@ -125,7 +127,9 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
+    <IonPage>
+      <IonContent>
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -255,6 +259,8 @@ const LoginPage = () => {
         </div>
       </motion.div>
     </div>
+    </IonContent>
+  </IonPage>
   );
 };
 

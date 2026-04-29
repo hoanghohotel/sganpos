@@ -1,4 +1,6 @@
+import { IonPage, IonContent } from '@ionic/react';
 import React, { useState, useEffect } from 'react';
+// ... rest of imports
 import { useSearchParams } from 'react-router-dom';
 import api from '../lib/api';
 import axios from 'axios';
@@ -271,24 +273,34 @@ const CustomerOrderPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="w-10 h-10 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin" />
-      </div>
+      <IonPage>
+        <IonContent>
+          <div className="min-h-screen flex items-center justify-center bg-slate-50">
+            <div className="w-10 h-10 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin" />
+          </div>
+        </IonContent>
+      </IonPage>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-white text-center">
-        <Info size={48} className="text-slate-300 mb-4" />
-        <h2 className="text-xl font-bold text-slate-800 mb-2">{typeof error === 'string' ? error : JSON.stringify(error)}</h2>
-        <p className="text-slate-500 text-sm italic">Cảm ơn bạn đã ghé thăm quán!</p>
-      </div>
+      <IonPage>
+        <IonContent>
+          <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-white text-center">
+            <Info size={48} className="text-slate-300 mb-4" />
+            <h2 className="text-xl font-bold text-slate-800 mb-2">{typeof error === 'string' ? error : JSON.stringify(error)}</h2>
+            <p className="text-slate-500 text-sm italic">Cảm ơn bạn đã ghé thăm quán!</p>
+          </div>
+        </IonContent>
+      </IonPage>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col sm:max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto shadow-2xl">
+    <IonPage>
+      <IonContent>
+        <div className="min-h-screen bg-slate-50 flex flex-col sm:max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto shadow-2xl text-slate-800">
       {/* Header */}
       <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-xl border-b border-slate-100 p-4 pt-6">
         <div className="flex justify-between items-center mb-5">
@@ -718,6 +730,8 @@ const CustomerOrderPage = () => {
         )}
       </AnimatePresence>
     </div>
+    </IonContent>
+  </IonPage>
   );
 };
 

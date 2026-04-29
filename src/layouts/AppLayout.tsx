@@ -1,3 +1,4 @@
+import { IonPage, IonContent } from '@ionic/react';
 import { Routes, Route, Link, useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { Coffee, CookingPot, Settings, LayoutDashboard, QrCode, UtensilsCrossed, History, Grid2X2, Users, ArrowRight, LogOut, Menu, Bell, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -76,47 +77,51 @@ const AppLayout = () => {
 
   if (isMainLanding && !isAuthPage) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center overflow-hidden relative">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] shadow-primary" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 rounded-full blur-[120px] shadow-blue-500" />
-        
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="relative z-10 flex flex-col items-center"
-        >
-          <Logo size="xl" className="mb-8" />
-          <h1 className="text-4xl sm:text-6xl font-black text-foreground tracking-tight leading-tight mb-8">
-            Quản lý vận hành <br/> 
-            <span className="text-primary">với đẳng cấp mới</span>
-          </h1>
-          <p className="text-muted-foreground text-sm sm:text-lg font-medium max-w-xl mb-12 mx-auto leading-relaxed">
-            Hệ sinh thái thông minh chuyên biệt cho chuỗi cà phê & nhà hàng hiện đại. 
-            Tối ưu quy trình, bứt phá doanh thu.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-6 justify-center w-full max-w-lg">
-            <Button size="lg" className="h-16 px-12 text-lg font-bold rounded-2xl shadow-xl shadow-primary/20 group" asChild>
-              <Link to="/login">
-                Truy cập hệ thống
-                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            </Button>
-            {!fromHostname && (
-              <Button size="lg" variant="outline" className="h-16 px-12 text-lg font-bold rounded-2xl" asChild>
-                <Link to="/register">
-                  Mở chi nhánh mới
-                </Link>
-              </Button>
-            )}
+      <IonPage>
+        <IonContent>
+          <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center overflow-hidden relative">
+            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] shadow-primary" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 rounded-full blur-[120px] shadow-blue-500" />
+            
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="relative z-10 flex flex-col items-center"
+            >
+              <Logo size="xl" className="mb-8" />
+              <h1 className="text-4xl sm:text-6xl font-black text-foreground tracking-tight leading-tight mb-8">
+                Quản lý vận hành <br/> 
+                <span className="text-primary">với đẳng cấp mới</span>
+              </h1>
+              <p className="text-muted-foreground text-sm sm:text-lg font-medium max-w-xl mb-12 mx-auto leading-relaxed">
+                Hệ sinh thái thông minh chuyên biệt cho chuỗi cà phê & nhà hàng hiện đại. 
+                Tối ưu quy trình, bứt phá doanh thu.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-6 justify-center w-full max-w-lg">
+                <Button size="lg" className="h-16 px-12 text-lg font-bold rounded-2xl shadow-xl shadow-primary/20 group" asChild>
+                  <Link to="/login">
+                    Truy cập hệ thống
+                    <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                </Button>
+                {!fromHostname && (
+                  <Button size="lg" variant="outline" className="h-16 px-12 text-lg font-bold rounded-2xl" asChild>
+                    <Link to="/register">
+                      Mở chi nhánh mới
+                    </Link>
+                  </Button>
+                )}
+              </div>
+              <div className="mt-24 pt-10 border-t border-border/50 flex flex-wrap justify-center gap-12 opacity-50 items-center">
+                <span className="font-black tracking-tighter text-2xl text-slate-800 dark:text-slate-200">MONDAY.COM.VN</span>
+                <div className="w-1.5 h-1.5 bg-muted-foreground/30 rounded-full" />
+                <span className="font-bold text-sm uppercase tracking-widest text-muted-foreground">Professional POS Solutions</span>
+              </div>
+            </motion.div>
           </div>
-          <div className="mt-24 pt-10 border-t border-border/50 flex flex-wrap justify-center gap-12 opacity-50 items-center">
-            <span className="font-black tracking-tighter text-2xl">MONDAY.COM.VN</span>
-            <div className="w-1.5 h-1.5 bg-muted-foreground/30 rounded-full" />
-            <span className="font-bold text-sm uppercase tracking-widest text-muted-foreground">Professional POS Solutions</span>
-          </div>
-        </motion.div>
-      </div>
+        </IonContent>
+      </IonPage>
     );
   }
 
@@ -295,8 +300,8 @@ const AppLayout = () => {
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto bg-muted/30 p-4 lg:p-6 no-scrollbar">
-          <div className="max-w-[1920px] mx-auto h-full">
+        <main className="flex-1 relative bg-muted/30 p-4 lg:p-6 overflow-hidden">
+          <div className="max-w-[1920px] mx-auto h-full relative">
             <AnimatePresence mode="wait">
               <motion.div 
                 key={location.pathname} 

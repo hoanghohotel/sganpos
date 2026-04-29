@@ -1,4 +1,6 @@
+import { IonPage, IonContent } from '@ionic/react';
 import React, { useState, useEffect } from 'react';
+// ... rest of imports
 import api from '../lib/api';
 import { CookingPot, CheckCircle, Clock, ChefHat, AlertCircle, Bell, Volume2, VolumeX } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -154,7 +156,9 @@ const KitchenPage = () => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-950">
+    <IonPage>
+      <IonContent>
+        <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-950">
       {/* Top Header */}
       <header className="p-6 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center shadow-sm z-10">
         <div className="flex items-center gap-4">
@@ -381,6 +385,8 @@ const KitchenPage = () => {
         }
       `}</style>
     </div>
+    </IonContent>
+  </IonPage>
   );
 };
 

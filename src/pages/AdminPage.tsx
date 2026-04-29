@@ -1,4 +1,6 @@
+import { IonPage, IonContent } from '@ionic/react';
 import React, { useState, useEffect } from 'react';
+// ... rest of imports
 import api from '../lib/api';
 import { Users, UserPlus, Shield, Edit2, Trash2, Mail, Phone, Lock, Check, X, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -146,26 +148,36 @@ const AdminPage = () => {
 
   if (loading) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-slate-200 border-t-emerald-600 rounded-full animate-spin" />
-      </div>
+      <IonPage>
+        <IonContent>
+          <div className="h-full flex items-center justify-center">
+            <div className="w-10 h-10 border-4 border-slate-200 border-t-emerald-600 rounded-full animate-spin" />
+          </div>
+        </IonContent>
+      </IonPage>
     );
   }
 
   if (!canManageUsers) {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-500">
-        <div className="w-24 h-24 bg-red-50 rounded-[32px] flex items-center justify-center mb-6">
-          <ShieldAlert size={48} className="text-red-500 opacity-20" />
-        </div>
-        <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-2">Truy cập bị từ chối</h2>
-        <p className="max-w-md font-medium">Bạn không có quyền truy cập vào chức năng quản lý nhân sự. Vui lòng liên hệ quản trị viên.</p>
-      </div>
+      <IonPage>
+        <IonContent>
+          <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-500">
+            <div className="w-24 h-24 bg-red-50 rounded-[32px] flex items-center justify-center mb-6">
+              <ShieldAlert size={48} className="text-red-500 opacity-20" />
+            </div>
+            <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-2">Truy cập bị từ chối</h2>
+            <p className="max-w-md font-medium">Bạn không có quyền truy cập vào chức năng quản lý nhân sự. Vui lòng liên hệ quản trị viên.</p>
+          </div>
+        </IonContent>
+      </IonPage>
     );
   }
 
   return (
-    <div className="p-4 sm:p-8 max-w-7xl mx-auto">
+    <IonPage>
+      <IonContent>
+        <div className="p-4 sm:p-8 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
@@ -463,6 +475,8 @@ const AdminPage = () => {
         )}
       </AnimatePresence>
     </div>
+    </IonContent>
+  </IonPage>
   );
 };
 

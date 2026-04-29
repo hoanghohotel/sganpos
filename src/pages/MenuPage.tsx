@@ -1,4 +1,6 @@
+import { IonPage, IonContent } from '@ionic/react';
 import React, { useState, useEffect, useRef } from 'react';
+// ... rest of imports
 import api from '../lib/api';
 import { Coffee, Plus, Search, Upload, Download, Edit2, Trash2, X, Save, Image as ImageIcon, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -157,18 +159,24 @@ const MenuPage = () => {
 
   if (!canManageMenu) {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-500 bg-white dark:bg-slate-950">
-      <div className="w-24 h-24 bg-red-50 dark:bg-red-500/10 rounded-[32px] flex items-center justify-center mb-6">
-        <ShieldAlert size={48} className="text-red-500 opacity-20" />
-      </div>
-      <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">Truy cập bị từ chối</h2>
-        <p className="max-w-md font-medium">Bạn không có quyền truy cập vào chức năng quản lý thực đơn. Vui lòng liên hệ quản trị viên.</p>
-      </div>
+      <IonPage>
+        <IonContent>
+          <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-500 bg-white dark:bg-slate-950">
+            <div className="w-24 h-24 bg-red-50 dark:bg-red-500/10 rounded-[32px] flex items-center justify-center mb-6">
+              <ShieldAlert size={48} className="text-red-500 opacity-20" />
+            </div>
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">Truy cập bị từ chối</h2>
+              <p className="max-w-md font-medium">Bạn không có quyền truy cập vào chức năng quản lý thực đơn. Vui lòng liên hệ quản trị viên.</p>
+          </div>
+        </IonContent>
+      </IonPage>
     );
   }
 
   return (
-    <div className="p-4 sm:p-8 h-full flex flex-col gap-6 overflow-hidden">
+    <IonPage>
+      <IonContent>
+        <div className="p-4 sm:p-8 h-full flex flex-col gap-6 overflow-hidden">
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
           <p className="text-emerald-600 dark:text-emerald-400 font-bold text-sm uppercase tracking-widest mb-1">Quản lý Menu</p>
@@ -408,6 +416,8 @@ const MenuPage = () => {
         )}
       </AnimatePresence>
     </div>
+    </IonContent>
+  </IonPage>
   );
 };
 

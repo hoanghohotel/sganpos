@@ -1,4 +1,6 @@
+import { IonPage, IonContent } from '@ionic/react';
 import React, { useState, useEffect } from 'react';
+// ... rest of imports
 import { motion, AnimatePresence } from 'motion/react';
 import { History, Search, Calendar, ChevronRight, X, DollarSign, Package, Clock, User, Coffee as CoffeeIcon, Printer } from 'lucide-react';
 import api from '../lib/api';
@@ -84,7 +86,9 @@ const ShiftListPage = () => {
   );
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-950">
+    <IonPage>
+      <IonContent>
+        <div className="h-full flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-800">
       {/* Header */}
       <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 py-6 flex justify-between items-center">
         <div>
@@ -405,6 +409,8 @@ const ShiftListPage = () => {
         )}
       </AnimatePresence>
     </div>
+    </IonContent>
+  </IonPage>
   );
 };
 

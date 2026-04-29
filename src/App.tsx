@@ -1,4 +1,5 @@
-import { BrowserRouter as Router } from 'react-router-dom';
+import { IonApp } from '@ionic/react';
+import { BrowserRouter } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useAuthStore } from './store/authStore';
 import AppLayout from './layouts/AppLayout';
@@ -11,8 +12,10 @@ export default function App() {
   }, [checkAuth]);
 
   return (
-    <Router>
-      <AppLayout />
-    </Router>
+    <IonApp>
+      <BrowserRouter>
+        <AppLayout />
+      </BrowserRouter>
+    </IonApp>
   );
 }

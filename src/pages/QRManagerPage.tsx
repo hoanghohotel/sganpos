@@ -1,4 +1,6 @@
+import { IonPage, IonContent } from '@ionic/react';
 import React, { useState, useEffect } from 'react';
+// ... rest of imports
 import api from '../lib/api';
 import { getTenantPrefix } from '../lib/tenantUtils';
 import { QRCodeCanvas } from 'qrcode.react';
@@ -65,26 +67,36 @@ const QRManagerPage = () => {
 
   if (loading) {
     return (
-      <div className="p-8 flex items-center justify-center h-full">
-         <div className="w-10 h-10 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin" />
-      </div>
+      <IonPage>
+        <IonContent>
+          <div className="p-8 flex items-center justify-center h-full">
+             <div className="w-10 h-10 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin" />
+          </div>
+        </IonContent>
+      </IonPage>
     );
   }
 
   if (!canManageQR) {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-500">
-        <div className="w-24 h-24 bg-red-50 rounded-[32px] flex items-center justify-center mb-6">
-          <ShieldAlert size={48} className="text-red-500 opacity-20" />
-        </div>
-        <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-2">Truy cập bị từ chối</h2>
-        <p className="max-w-md font-medium">Bạn không có quyền truy cập vào chức năng quản lý mã QR. Vui lòng liên hệ quản trị viên.</p>
-      </div>
+      <IonPage>
+        <IonContent>
+          <div className="h-full flex flex-col items-center justify-center p-8 text-center text-slate-500">
+            <div className="w-24 h-24 bg-red-50 rounded-[32px] flex items-center justify-center mb-6">
+              <ShieldAlert size={48} className="text-red-500 opacity-20" />
+            </div>
+            <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight mb-2">Truy cập bị từ chối</h2>
+            <p className="max-w-md font-medium">Bạn không có quyền truy cập vào chức năng quản lý mã QR. Vui lòng liên hệ quản trị viên.</p>
+          </div>
+        </IonContent>
+      </IonPage>
     );
   }
 
   return (
-    <div className="p-8 h-full overflow-auto bg-[#F8FAFC]">
+    <IonPage>
+      <IonContent>
+        <div className="p-8 h-full overflow-auto bg-[#F8FAFC] text-slate-800">
       <header className="flex justify-between items-end mb-10">
         <div>
           <h1 className="text-4xl font-black text-slate-900 tracking-tighter uppercase mb-2">Quản lý Mã QR</h1>
@@ -157,6 +169,8 @@ const QRManagerPage = () => {
          </div>
       )}
     </div>
+    </IonContent>
+  </IonPage>
   );
 };
 

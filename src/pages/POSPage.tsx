@@ -1,3 +1,4 @@
+import { IonPage, IonContent } from '@ionic/react';
 import React, { useState, useEffect, useMemo } from 'react';
 import api from '../lib/api';
 import { 
@@ -1073,14 +1074,20 @@ const POSPage = () => {
 
   if (loading) {
     return (
-      <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <div className="w-12 h-12 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin" />
-      </div>
+      <IonPage>
+        <IonContent>
+          <div className="h-full flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+            <div className="w-12 h-12 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin" />
+          </div>
+        </IonContent>
+      </IonPage>
     );
   }
 
   return (
-    <div className="flex h-full overflow-hidden bg-slate-50 dark:bg-slate-950 justify-center">
+    <IonPage>
+      <IonContent>
+        <div className="flex h-full overflow-hidden bg-slate-50 dark:bg-slate-950 justify-center">
       <div className="flex w-full max-w-[1440px] h-full overflow-hidden bg-white dark:bg-slate-950 lg:bg-transparent shadow-2xl lg:shadow-none">
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col overflow-hidden relative">
@@ -1770,7 +1777,9 @@ const POSPage = () => {
         </DialogContent>
       </Dialog>
       </div>
-    </div>
+      </div>
+    </IonContent>
+  </IonPage>
   );
 };
 

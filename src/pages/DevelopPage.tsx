@@ -1,4 +1,6 @@
+import { IonPage, IonContent } from '@ionic/react';
 import React, { useState, useEffect } from 'react';
+// ... rest of imports
 import { 
   Shield, Users, Activity, Terminal, Lock, Trash2, Edit2, 
   Plus, Database, Wifi, Loader2, Search, Cpu, Globe,
@@ -114,30 +116,42 @@ const DevelopPage = () => {
     }
   };
 
-  if (isAuthLoading) return <div className="min-h-screen bg-slate-950 flex items-center justify-center"><Loader2 className="animate-spin text-emerald-500" /></div>;
+  if (isAuthLoading) return (
+    <IonPage>
+      <IonContent>
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center"><Loader2 className="animate-spin text-emerald-500" /></div>
+      </IonContent>
+    </IonPage>
+  );
 
   if (!authUser || authUser.role !== 'ADMIN') {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-20 h-20 bg-rose-500/10 text-rose-500 rounded-3xl flex items-center justify-center mb-6 border border-rose-500/20">
-          <Lock size={40} />
-        </div>
-        <h1 className="text-3xl font-black text-white mb-2 uppercase tracking-tight">Access Restricted</h1>
-        <p className="text-slate-500 max-w-md font-medium text-sm leading-relaxed mb-8">
-          This portal is reserved for System Administrators. Your current role ({authUser?.role || 'Guest'}) does not have clearance.
-        </p>
-        <button 
-          onClick={() => navigate('/')}
-          className="px-8 h-12 bg-white text-slate-950 rounded-xl font-bold uppercase tracking-widest hover:bg-slate-200 transition-all"
-        >
-          Return to Base
-        </button>
-      </div>
+      <IonPage>
+        <IonContent>
+          <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center text-slate-300">
+            <div className="w-20 h-20 bg-rose-500/10 text-rose-500 rounded-3xl flex items-center justify-center mb-6 border border-rose-500/20">
+              <Lock size={40} />
+            </div>
+            <h1 className="text-3xl font-black text-white mb-2 uppercase tracking-tight">Access Restricted</h1>
+            <p className="text-slate-500 max-w-md font-medium text-sm leading-relaxed mb-8">
+              This portal is reserved for System Administrators. Your current role ({authUser?.role || 'Guest'}) does not have clearance.
+            </p>
+            <button 
+              onClick={() => navigate('/')}
+              className="px-8 h-12 bg-white text-slate-950 rounded-xl font-bold uppercase tracking-widest hover:bg-slate-200 transition-all"
+            >
+              Return to Base
+            </button>
+          </div>
+        </IonContent>
+      </IonPage>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-300 font-mono flex">
+    <IonPage>
+      <IonContent>
+        <div className="min-h-screen bg-slate-950 text-slate-300 font-mono flex">
       {/* Sidebar Control */}
       <div className="w-72 border-r border-slate-900 flex flex-col p-8 gap-10">
         <div className="flex items-center gap-4 text-white">
@@ -470,6 +484,8 @@ const DevelopPage = () => {
         )}
       </AnimatePresence>
     </div>
+    </IonContent>
+  </IonPage>
   );
 };
 
