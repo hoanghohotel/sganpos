@@ -1,0 +1,70 @@
+name: waitstaff_app
+description: Flutter mobile app for waitstaff to take orders in the CàPhê POS system.
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # State Management
+  riverpod: ^2.4.0
+  flutter_riverpod: ^2.4.0
+  riverpod_generator: ^2.3.0
+
+  # HTTP & Networking
+  dio: ^5.3.0
+  socket_io_client: ^2.0.2
+
+  # Local Storage
+  flutter_secure_storage: ^9.0.0
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
+  # DateTime & Formatting
+  intl: ^0.19.0
+
+  # UI & Design
+  flutter_screenutil: ^5.9.0
+  cached_network_image: ^3.3.0
+
+  # Navigation
+  go_router: ^12.0.0
+
+  # Logging
+  logger: ^2.0.0
+
+  # Utils
+  connectivity_plus: ^5.0.0
+  uuid: ^4.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^3.0.0
+  riverpod_generator_runner: ^2.3.0
+  build_runner: ^2.4.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+
+  fonts:
+    - family: Outfit
+      fonts:
+        - asset: assets/fonts/Outfit-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Outfit-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Outfit-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Outfit-Bold.ttf
+          weight: 700
