@@ -1,0 +1,92 @@
+name: Build APK and IPA
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Java
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+    
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.16.0'
+        channel: 'stable'
+    
+    - name: Get dependencies
+      working-directory: ./waitstaff_app
+      run: flutter pub get
+    
+    - name: Generate code
+      working-directory: ./waitstaff_app
+      run: flutter pub run build_runner build --delete-conflicting-outputs
+    
+    - name: Build APK
+      working-directory: ./waitstaff_app
+      run: flutter build apk --release --target-platform android-arm64 --split-per-abi
+    
+    - name: Build App Bundle
+      working-directory: ./waitstaff_app
+      run: flutter build appbundle --release
+    
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-release-apk
+        path: waitstaff_app/build/app/outputs/flutter-apk/
+    
+    - name: Upload App Bundle
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-release-aab
+        path: waitstaff_app/build/app/outputs/bundle/release/
+
+  build-ios:
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.16.0'
+        channel: 'stable'
+    
+    - name: Get dependencies
+      working-directory: ./waitstaff_app
+      run: flutter pub get
+    
+    - name: Generate code
+      working-directory: ./waitstaff_app
+      run: flutter pub run build_runner build --delete-conflicting-outputs
+    
+    - name: Install pods
+      working-directory: ./waitstaff_app/ios
+      run: pod install --repo-update
+    
+    - name: Build iOS
+      working-directory: ./waitstaff_app
+      run: flutter build ios --release --no-codesign
+    
+    - name: Build IPA
+      working-directory: ./waitstaff_app
+      run: flutter build ipa --release --export-method app-store
+    
+    - name: Upload IPA
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-release-ipa
+        path: waitstaff_app/build/ios/ipa/
